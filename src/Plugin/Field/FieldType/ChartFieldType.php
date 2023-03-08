@@ -15,9 +15,10 @@ use Drupal\Core\TypedData\DataDefinition;
  * @FieldType(
  *   id = "more_fields_chart_field_type",
  *   label = @Translation("Chart/Diagramme field "),
- *   description = @Translation("permet de contruire rapidement un diagram"),
+ *   description = @Translation("Allows you to quickly build a diagram"),
  *   default_widget = "more_fields_chart_widget_type",
- *   default_formatter = "more_fields_chart_formatter_type"
+ *   default_formatter = "more_fields_chart_formatter_type",
+ *   category = "Complex fields"
  * )
  */
 class ChartFieldType extends FieldItemBase {

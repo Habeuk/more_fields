@@ -16,9 +16,10 @@ use Drupal\Core\TypedData\DataDefinition;
  * @FieldType(
  *   id = "more_fields_experience_type",
  *   label = @Translation("Experience CV"),
- *   description = @Translation("Permet de sauvegarder une experience en entreprise (cv)"),
+ *   description = @Translation("Allows to save a business experience (cv)"),
  *   default_widget = "experience_widget_type",
- *   default_formatter = "experience_formatter_type"
+ *   default_formatter = "experience_formatter_type",
+ *   category = "Complex fields"
  * )
  */
 class ExperienceType extends FieldItemBase {

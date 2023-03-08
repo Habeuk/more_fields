@@ -14,7 +14,7 @@ use Drupal\Core\Annotation\Translation;
  * @FieldWidget(
  *   id = "more_fields_icon_text_widget",
  *   module = "more_fields",
- *   label = @Translation("Icon text widget"),
+ *   label = @Translation("Icon text widget"), *
  *   field_types = {
  *     "more_fields_icon_text"
  *   }

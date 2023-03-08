@@ -16,9 +16,10 @@ use Drupal\Core\TypedData\DataDefinition;
  * @FieldType(
  *   id = "more_fields_icon_text",
  *   label = @Translation("Icon text"),
- *   description = @Translation("My Field Type"),
+ *   description = @Translation("Allows to generate elements icons + texts (or one or the other)"),
  *   default_widget = "more_fields_icon_text_widget",
- *   default_formatter = "more_fields_icon_text_formatter"
+ *   default_formatter = "more_fields_icon_text_formatter",
+ *   category = "Complex fields"
  * )
  */
 class IconText extends FieldItemBase {

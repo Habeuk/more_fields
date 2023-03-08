@@ -16,9 +16,10 @@ use Drupal\Core\TypedData\DataDefinition;
  * @FieldType(
  *   id = "more_fields_value_niveau_type",
  *   label = @Translation("Value Niveau"),
- *   description = @Translation("Permet d'associer à une valeur taxonomie un niveau de 1 à 5 "),
+ *   description = @Translation(" Allows you to associate a taxonomy value with a level from 1 to 5 "),
  *   default_widget = "value_niveau_widget_type",
- *   default_formatter = "value_niveau_formatter_type"
+ *   default_formatter = "value_niveau_formatter_type",
+ *   category = "Complex fields"
  * )
  */
 class ValueNiveauType extends FieldItemBase {
