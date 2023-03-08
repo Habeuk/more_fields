@@ -1,0 +1,36 @@
+{% if item %}
+  <div class="cvSectionExp-content">
+  	<div class="content-block">
+    {% if item.value %}
+      <h4 class="titre-poste">
+        {{ item.value }}
+      </h4>
+    {% endif %}
+    {% if item.description %}
+      <div>
+        {{ item.description|raw }}
+      </div>
+    {% endif %}
+    </div>
+    	{% if item.company %}
+      <div class="d-flex bloc1 font-weight-bold">
+        {{ item.company }}
+      </div>
+        {% endif %}	
+        {% if item.date_debut|has_value or item.date_fin|has_value %}
+          <div class="d-flex contenu-date">
+            {% if item.date_debut %}
+              <div class="col-md-6 date">
+                {{ item.date_debut }}
+              </div>
+            {% endif %}
+            {% if item.date_fin %}
+              <div class="col-md-6 date text-right">
+                {{ item.date_fin }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}    
+    
+  </div>
+{% endif %}

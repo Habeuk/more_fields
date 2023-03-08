@@ -1,0 +1,12 @@
+<div class="field-progress-custom row {{item.css_container}}">
+  {% if item.name %}
+    <div  class="col-md-5 h4"> {{item.name}} </div>
+  {% endif %}  
+  {% if item.niveau %}
+    <div class="col-md-7">
+    	<div class="bar">
+            {{item.niveau}}      
+        </div>
+    </div>
+  {% endif %}
+</div>

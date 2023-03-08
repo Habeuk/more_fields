@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function more_fields_theme() {
+  $hooks = [];
+  $hooks['more_fields_experience_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_experience_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_value_niveau_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_value_niveau_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_value_niveau_formatter2'] = $hooks['more_fields_value_niveau_formatter'];
+  $hooks['more_fields_experience_formatter2'] = $hooks['more_fields_experience_formatter'];
+  $hooks['more_fields_experience_formatter3'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_experience_formatter3'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_experience_formatter4'] = $hooks['more_fields_experience_formatter3'];
+  $hooks['more_fields_icon_text'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_icon_text'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_icon_text_svg'] = $hooks["more_fields_icon_text"];
+  $hooks['more_fields_field_chart'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_field_chart'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_text_bg'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_text_bg'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  return $hooks;
+}
