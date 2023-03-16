@@ -64,7 +64,7 @@ class IconTextFormatter extends FormatterBase {
     foreach ($items as $delta => $item) {
       
       $elements[$delta] = [
-        '#theme' => 'more_fields_more_fields_icon_text',
+        '#theme' => 'more_fields_icon_text',
         '#item' => [
           'value' => Html::escape($item->value),
           'text' => $item->text

@@ -55,15 +55,15 @@ class IconTextFormatter2 extends IconTextFormatter
   {
     $elements = [];
     foreach ($items as $delta => $item) {
-
+      
       $elements[$delta] = [
-        '#theme' => 'more_fields_more_fields_icon_text_svg',
+        '#theme' => 'more_fields_icon_text_svg',
         '#item' => [
           'value' => Html::escape($item->value),
           'text' => $item->text
-        ]
-      ];
-    }
+          ]
+        ];
+      }
     return $elements;
   }
 }
