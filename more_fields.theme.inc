@@ -38,3 +38,4 @@ function template_preprocess_more_fields_text_bg(&$vars) {
 function template_preprocess_more_fields_field_chart(&$vars) {
   //
 }
+

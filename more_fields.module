@@ -51,5 +51,6 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
+  
   return $hooks;
 }

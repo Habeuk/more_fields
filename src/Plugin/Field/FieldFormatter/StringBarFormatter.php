@@ -11,7 +11,7 @@ use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
  *
  * @FieldFormatter(
  *   id = "more_fields_string_bar_formatter",
- *   label = @Translation("Plain text"),
+ *   label = @Translation("String with bar"),
  *   field_types = {
  *     "string",
  *     "uri",
@@ -25,17 +25,22 @@ class StringBarFormatter extends StringFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    $elements = parent::viewElements($items, $langcode);
-    return [
-      '#type' => 'html_tag',
-      '#tag' => 'h2',
-      '#attributes' => [
-        'class' => [
-          'field-bar'
+    $elements = [];
+    foreach ($items as $delta => $item) {
+      $elements[$delta] = [
+        'value' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h2',
+          '#attributes' => [
+            'class' => [
+              'field-bar'
+            ]
+          ],
+          $this->viewValue($item)
         ]
-      ],
-      $elements
-    ];
+      ];
+    }
+    return $elements;
   }
   
   /**
