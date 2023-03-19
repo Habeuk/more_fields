@@ -25,21 +25,18 @@ class StringBarFormatter extends StringFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    $elements = [];
-    foreach ($items as $delta => $item) {
-      $elements[$delta] = [
-        'value' => [
-          '#type' => 'html_tag',
-          '#tag' => 'h2',
-          '#attributes' => [
-            'class' => [
-              'field-bar'
-            ]
-          ],
-          $this->viewValue($item)
-        ]
-      ];
-    }
+    $elements[] = [
+      'value' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#attributes' => [
+          'class' => [
+            'field-bar'
+          ]
+        ],
+        parent::viewElements($items, $langcode)
+      ]
+    ];
     return $elements;
   }
   
