@@ -32,6 +32,7 @@ class LinkHtlBtnFormatter extends LinkFormatter {
       $element['#options']['attributes']['class'][] = $this->getSetting('size');
       $element['#options']['attributes']['class'][] = $this->getSetting('variant');
       $element['#options']['attributes']['class'][] = !$this->getSetting('haslinktag') ? 'hasnotlink' : '';
+      $element['#options']['attributes']['class'][] = $this->getSetting('custom_class');
     }
     return $elements;
   }

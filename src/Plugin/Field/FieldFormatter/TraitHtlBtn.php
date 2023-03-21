@@ -21,11 +21,13 @@ trait TraitHtlBtn {
         'htl-btn--sm' => 'Small'
       ],
       'options_variant' => [
+        'none' => 'aucun',
         'htl-btn--fade' => 'hover Fade by primary',
         'htl-btn--inv' => 'hover Fade by background',
         'htl-btn--bg' => 'hover slide by primary',
         'htl-btn--bg-inv' => 'hover slide by background'
       ],
+      'custom_class' => '',
       'haslinktag' => true
     ] + parent::defaultSettings();
   }
@@ -53,11 +55,16 @@ trait TraitHtlBtn {
         '#options' => $this->getSetting('options_variant'),
         '#default_value' => $this->getSetting('variant')
       ],
+      'custom_class' => [
+        '#type' => 'textfield',
+        '#title' => 'Custom class',
+        '#default_value' => $this->getSetting('custom_class')
+      ],
       'haslinktag' => [
         '#type' => 'checkbox',
         '#title' => 'contient la balise a',
         '#default_value' => $this->getSetting('haslinktag'),
-        '#description' => "(checkoff if render not have the a tag : hasLinkTag ?? )"
+        '#description' => "(checkoff if render not have the a tag : hasLinkTag ?? <br> doit etre OFF pour les rendu suivant integer, string )"
       ]
     ] + parent::settingsForm($form, $form_state);
   }

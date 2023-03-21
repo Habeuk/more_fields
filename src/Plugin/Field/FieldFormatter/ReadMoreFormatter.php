@@ -19,8 +19,27 @@ use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
  *   }
  * )
  */
-class ReadMoreFormatter extends StringFormatter {
-  use TraitHtlBtn;
+class ReadMoreFormatter extends HtlBtn {
+  
+  public static function defaultSettings() {
+    return [
+      'text_display' => 'Read more'
+    ] + parent::defaultSettings();
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    return [
+      'text_display' => [
+        '#type' => 'textfield',
+        '#title' => 'Texte à afficher',
+        '#default_value' => $this->getSetting('text_display')
+      ]
+    ] + parent::settingsForm($form, $form_state);
+  }
   
   /**
    *
@@ -28,12 +47,17 @@ class ReadMoreFormatter extends StringFormatter {
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = parent::viewElements($items, $langcode);
-    foreach ($elements as &$element) {
-      $element['#options']['attributes']['class'][] = 'htl-btn';
-      $element['#options']['attributes']['class'][] = $this->getSetting('size');
-      $element['#options']['attributes']['class'][] = $this->getSetting('variant');
-      $element['#options']['attributes']['class'][] = !$this->getSetting('haslinktag') ? 'hasnotlink' : '';
-    }
+    if ($this->getSetting('link_to_entity'))
+      foreach ($elements as &$element) {
+        $element['#options']['attributes']['class'][] = 'htl-btn';
+        $element['#options']['attributes']['class'][] = $this->getSetting('size');
+        $element['#options']['attributes']['class'][] = $this->getSetting('variant');
+        $element['#options']['attributes']['class'][] = !$this->getSetting('haslinktag') ? 'hasnotlink' : '';
+        $element['#options']['attributes']['class'][] = $this->getSetting('custom_class');
+        //
+        if (isset($element['#title']['#context']['value']))
+          $element['#title']['#context']['value'] = $this->t($this->getSetting('text_display'));
+      }
     return $elements;
   }
   
