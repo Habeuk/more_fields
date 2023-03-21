@@ -28,7 +28,7 @@ class LinkHtlBtnFormatter extends LinkFormatter {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = parent::viewElements($items, $langcode);
     foreach ($elements as &$element) {
-      $element['#options']['attributes']['class'][] = 'htl-btn';
+      $element['#options']['attributes']['class'][] = $this->getSetting('disable_button') ? '' : 'htl-btn';
       $element['#options']['attributes']['class'][] = $this->getSetting('size');
       $element['#options']['attributes']['class'][] = $this->getSetting('variant');
       $element['#options']['attributes']['class'][] = !$this->getSetting('haslinktag') ? 'hasnotlink' : '';

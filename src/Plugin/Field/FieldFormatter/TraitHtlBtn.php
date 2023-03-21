@@ -28,7 +28,8 @@ trait TraitHtlBtn {
         'htl-btn--bg-inv' => 'hover slide by background'
       ],
       'custom_class' => '',
-      'haslinktag' => true
+      'haslinktag' => true,
+      'disable_button' => true
     ] + parent::defaultSettings();
   }
   
@@ -59,6 +60,12 @@ trait TraitHtlBtn {
         '#type' => 'textfield',
         '#title' => 'Custom class',
         '#default_value' => $this->getSetting('custom_class')
+      ],
+      'disable_button' => [
+        '#type' => 'checkbox',
+        '#title' => 'Affiche simplement le lien (sans boutton)',
+        '#default_value' => $this->getSetting('disable_button'),
+        '#description' => ""
       ],
       'haslinktag' => [
         '#type' => 'checkbox',
