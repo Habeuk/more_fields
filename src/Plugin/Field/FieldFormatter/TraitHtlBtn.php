@@ -29,7 +29,7 @@ trait TraitHtlBtn {
       ],
       'custom_class' => '',
       'haslinktag' => true,
-      'disable_button' => true
+      'disable_button' => false
     ] + parent::defaultSettings();
   }
   
