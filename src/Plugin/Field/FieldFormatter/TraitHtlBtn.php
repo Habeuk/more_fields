@@ -57,7 +57,7 @@ trait TraitHtlBtn {
         '#type' => 'checkbox',
         '#title' => 'contient la balise a',
         '#default_value' => $this->getSetting('haslinktag'),
-        '#description' => "(checkoff if render not have the a tag)"
+        '#description' => "(checkoff if render not have the a tag : hasLinkTag ?? )"
       ]
     ] + parent::settingsForm($form, $form_state);
   }
