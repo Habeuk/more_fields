@@ -15,7 +15,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @FieldType(
  *   id = "more_fields_icon_text",
- *   label = @Translation("Icon text"),
+ *   label = @Translation("Icon text ( Build icon-button ) "),
  *   description = @Translation("Allows to generate elements icons + texts (or one or the other)"),
  *   default_widget = "more_fields_icon_text_widget",
  *   default_formatter = "more_fields_icon_text_formatter",
