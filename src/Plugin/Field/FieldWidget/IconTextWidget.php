@@ -30,7 +30,7 @@ class IconTextWidget extends WidgetBase {
     return [
       'size' => 100,
       'label_1' => "Nom du reseau social",
-      'label_2' => "Svp or fontawesome"
+      'label_2' => "Svg or fontawesome"
     ] + parent::defaultSettings();
   }
   
@@ -40,7 +40,6 @@ class IconTextWidget extends WidgetBase {
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $elements = [];
-    
     $elements['size'] = [
       '#type' => 'number',
       '#title' => t('Size of textfield'),

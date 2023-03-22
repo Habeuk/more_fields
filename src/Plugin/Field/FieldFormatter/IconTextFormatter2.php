@@ -12,33 +12,30 @@ use Drupal\Core\Form\FormStateInterface;
  * Plugin implementation of the 'more_fields_icon_text_formatter' formatter.
  *
  * @FieldFormatter(
- *   id = "more_fields_icon_text_formatter 2 ",
+ *   id = "more_fields_icon_text_formatter2",
  *   label = @Translation("Icon text formatter 2"),
  *   field_types = {
  *     "more_fields_icon_text"
  *   }
  * )
  */
-class IconTextFormatter2 extends IconTextFormatter
-{
-
+class IconTextFormatter2 extends IconTextFormatter {
+  
   /**
    *
    * {@inheritdoc}
    */
-  public static function defaultSettings()
-  {
+  public static function defaultSettings() {
     return [
       'layoutgenentitystyles_view' => 'more_fields/field-icon-svg'
     ] + parent::defaultSettings();
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function settingsForm(array $form, FormStateInterface $form_state)
-  {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
     return [
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
@@ -46,13 +43,12 @@ class IconTextFormatter2 extends IconTextFormatter
       ]
     ] + parent::settingsForm($form, $form_state);
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function viewElements(FieldItemListInterface $items, $langcode)
-  {
+  public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
     foreach ($items as $delta => $item) {
       
@@ -61,9 +57,10 @@ class IconTextFormatter2 extends IconTextFormatter
         '#item' => [
           'value' => Html::escape($item->value),
           'text' => $item->text
-          ]
-        ];
-      }
+        ]
+      ];
+    }
     return $elements;
   }
+  
 }
