@@ -12,14 +12,14 @@ use Drupal\Core\Form\FormStateInterface;
  * Plugin implementation of the 'more_fields_icon_text_formatter' formatter.
  *
  * @FieldFormatter(
- *   id = "more_fields_icon_buttons_rx",
- *   label = @Translation("Buttons flat RXs whicht 2 variants BG. "),
+ *   id = "more_fields_icon_text_string",
+ *   label = @Translation("Icon text formatter string flat "),
  *   field_types = {
  *     "more_fields_icon_text"
  *   }
  * )
  */
-class IconTextButtonsRx extends FormatterBase {
+class IconTextStringFormatter extends IconTextFormatter {
   
   /**
    *
@@ -27,15 +27,10 @@ class IconTextButtonsRx extends FormatterBase {
    */
   public static function defaultSettings() {
     return [
-      'layoutgenentitystyles_view' => 'more_fields/field-buttons',
-      'custom_class' => '',
-      'show_text' => true,
-      'options_background' => [
-        'no-bg' => 'No background',
-        'field-buttons--background' => 'BG from $wbu-background',
-        'field-buttons--primary' => 'BG from $wbu-color-primary'
-      ],
-      'background' => 'field-buttons--background'
+      'layoutgenentitystyles_view' => 'more_fields/field-link',
+      'custom_class_container' => '',
+      'custom_class_text' => 'text-dark h5 mb-1',
+      'custom_class_icon' => 'text-dark'
     ] + parent::defaultSettings();
   }
   
@@ -45,26 +40,24 @@ class IconTextButtonsRx extends FormatterBase {
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     return [
-      'custom_class' => [
-        '#type' => 'textfield',
-        '#title' => 'Custom class',
-        '#default_value' => $this->getSetting('custom_class')
-      ],
-      'background' => [
-        '#type' => 'select',
-        '#title' => 'Effet au hover',
-        '#options' => $this->getSetting('options_background'),
-        '#default_value' => $this->getSetting('background')
-      ],
-      'show_text' => [
-        '#type' => 'checkbox',
-        '#title' => 'Affichez le text',
-        '#default_value' => $this->getSetting('show_text'),
-        '#description' => "Permet d'afficher par example le nom du rx social"
-      ],
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
-        '#value' => 'more_fields/field-buttons'
+        '#value' => 'more_fields/field-link'
+      ],
+      'custom_class_container' => [
+        '#type' => 'textfield',
+        '#title' => 'Custom class container',
+        '#default_value' => $this->getSetting('custom_class_container')
+      ],
+      'custom_class_text' => [
+        '#type' => 'textfield',
+        '#title' => 'Custom class text',
+        '#default_value' => $this->getSetting('custom_class_text')
+      ],
+      'custom_class_icon' => [
+        '#type' => 'textfield',
+        '#title' => 'Custom class icon',
+        '#default_value' => $this->getSetting('custom_class_icon')
       ]
     ] + parent::settingsForm($form, $form_state);
   }
@@ -81,32 +74,32 @@ class IconTextButtonsRx extends FormatterBase {
         '#tag' => 'div',
         '#attributes' => [
           'class' => [
-            'd-flex',
-            'item'
+            'link'
           ]
         ],
+        // value
         [
           '#type' => 'html_tag',
           '#tag' => 'div',
           '#attributes' => [
             'class' => [
-              'svg'
+              $this->getSetting('custom_class_text')
+            ]
+          ],
+          $this->viewValue($item->value)
+        ],
+        // icon or text.
+        [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#attributes' => [
+            'class' => [
+              $this->getSetting('custom_class_icon')
             ]
           ],
           $this->viewValue($item->text)
         ]
       ];
-      if ($this->getSetting('show_text'))
-        $elements[$delta][] = [
-          '#type' => 'html_tag',
-          '#tag' => 'div',
-          '#attributes' => [
-            'class' => [
-              'text'
-            ]
-          ],
-          $this->viewValue($item->value)
-        ];
     }
     $container[] = [
       'value' => [
@@ -114,10 +107,8 @@ class IconTextButtonsRx extends FormatterBase {
         '#tag' => 'div',
         '#attributes' => [
           'class' => [
-            'field-buttons',
-            'd-flex',
-            $this->getSetting('custom_class'),
-            $this->getSetting('background')
+            'field-links',
+            $this->getSetting('custom_class_container')
           ]
         ],
         $elements

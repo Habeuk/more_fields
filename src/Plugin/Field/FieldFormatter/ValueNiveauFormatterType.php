@@ -2,46 +2,40 @@
 
 namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
-use Drupal\Component\Utility\Html;
-use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "value_niveau_formatter_type",
- *   label = @Translation("Value Niveau formatter type"),
+ *   id = "more_fields_value_niveau",
+ *   label = @Translation("Value Niveau formatter simple string "),
  *   field_types = {
  *     "more_fields_value_niveau_type"
  *   }
  * )
  */
-class ValueNiveauFormatterType extends FormatterBase
-{
-
+class ValueNiveauFormatterType extends FormatterBase {
+  
   /**
    *
    * {@inheritdoc}
    */
-  public static function defaultSettings()
-  {
+  public static function defaultSettings() {
     return [
       'css_container' => 'd-flex time-line flex-wrap align-items-baseline',
       'css_label' => 'mr-3 h4',
       'css_text' => ''
     ] + parent::defaultSettings();
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function settingsForm(array $form, FormStateInterface $form_state)
-  {
+  public function settingsForm(array $form, FormStateInterface $form_state) {
     $elements = parent::settingsForm($form, $form_state);
     $elements['css_container'] = [
       '#type' => 'textfield',
@@ -60,24 +54,22 @@ class ValueNiveauFormatterType extends FormatterBase
     ];
     return $elements;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function settingsSummary()
-  {
+  public function settingsSummary() {
     $summary = [];
     // Implement settings summary.
     return $summary;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function viewElements(FieldItemListInterface $items, $langcode)
-  {
+  public function viewElements(FieldItemListInterface $items, $langcode) {
     $niveau = [
       1 => t('Weak'),
       2 => t('Base'),
@@ -94,7 +86,7 @@ class ValueNiveauFormatterType extends FormatterBase
     if (!empty($settings['settings']['niveau_options'])) {
       $niveau = $settings['settings']['niveau_options'];
     }
-
+    
     $elements = [];
     $taxonomy_term = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
     /**
@@ -103,7 +95,7 @@ class ValueNiveauFormatterType extends FormatterBase
      *
      * @var array $niveau
      */
-
+    
     foreach ($items as $delta => $item) {
       $term = $taxonomy_term->load($item->target_id);
       $name = null;
@@ -125,4 +117,25 @@ class ValueNiveauFormatterType extends FormatterBase
     }
     return $elements;
   }
+  
+  /**
+   * Generate the output appropriate for one field item.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *        One field item.
+   *        
+   * @return array The textual output generated as a render array.
+   */
+  protected function viewValue($value) {
+    // The text value has no text format assigned to it, so the user input
+    // should equal the output, including newlines.
+    return [
+      '#type' => 'inline_template',
+      '#template' => '{{ value|raw }}',
+      '#context' => [
+        'value' => $value
+      ]
+    ];
+  }
+  
 }

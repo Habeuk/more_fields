@@ -13,7 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
  *
  * @FieldFormatter(
  *   id = "more_fields_icon_text_formatter",
- *   label = @Translation("Icon text formatter"),
+ *   label = @Translation("Icon text formatter icon in trapeze"),
  *   field_types = {
  *     "more_fields_icon_text"
  *   }

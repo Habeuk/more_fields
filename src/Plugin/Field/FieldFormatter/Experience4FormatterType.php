@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "experience4_formatter_type",
+ *   id = "more_fields_experience4",
  *   label = @Translation("Experience formatter model avec les dates en bas à droite "),
  *   field_types = {
  *     "more_fields_experience_type"
@@ -69,7 +69,7 @@ class Experience4FormatterType extends ExperienceFormatterType {
           'address' => Html::escape($item->address),
           'date_debut' => $date_debut,
           'date_fin' => $date_fin,
-          'description' => $item->description
+          'description' => $this->viewValue($item->description)
         ]
       ];
     }

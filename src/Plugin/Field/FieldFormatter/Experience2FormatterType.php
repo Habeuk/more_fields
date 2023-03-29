@@ -10,7 +10,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "experience2_formatter_type",
+ *   id = "more_fields_experience2",
  *   label = @Translation(" Experience formatter model avec les dates en dessous "),
  *   field_types = {
  *     "more_fields_experience_type"

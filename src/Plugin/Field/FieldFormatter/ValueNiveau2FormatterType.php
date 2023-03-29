@@ -2,19 +2,15 @@
 
 namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
-use Drupal\Component\Utility\Html;
-use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "value_niveau_formatter_type2",
- *   label = @Translation("Value Niveau formatter type 2"),
+ *   id = "more_fields_value_niveau_2",
+ *   label = @Translation("Value Niveau formatter with arrow direction"),
  *   field_types = {
  *     "more_fields_value_niveau_type"
  *   }

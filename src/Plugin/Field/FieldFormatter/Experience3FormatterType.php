@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "experience3_formatter_type",
+ *   id = "more_fields_experience3",
  *   label = @Translation("Experience formatter model avec les dates à droite "),
  *   field_types = {
  *     "more_fields_experience_type"

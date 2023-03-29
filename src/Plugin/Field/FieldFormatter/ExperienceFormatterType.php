@@ -13,7 +13,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
  * Plugin implementation of the 'experience_formatter_type' formatter.
  *
  * @FieldFormatter(
- *   id = "experience_formatter_type",
+ *   id = "more_fields_experience",
  *   label = @Translation("Experience formatter type"),
  *   field_types = {
  *     "more_fields_experience_type"
@@ -100,12 +100,27 @@ class ExperienceFormatterType extends FormatterBase {
    * @param \Drupal\Core\Field\FieldItemInterface $item
    *        One field item.
    *        
-   * @return string The textual output generated.
+   * @return array The textual output generated as a render array.
    */
-  protected function viewValue(FieldItemInterface $item) {
+  protected function viewValue($value) {
     // The text value has no text format assigned to it, so the user input
     // should equal the output, including newlines.
-    return nl2br(Html::escape($item->value));
+    return [
+      '#type' => 'inline_template',
+      '#template' => '{{ value|raw }}',
+      '#context' => [
+        'value' => $value
+      ]
+    ];
+  }
+  
+  protected function getDate($date_string, $format = "m/Y") {
+    if (!empty($date_string)) {
+      $date = DrupalDateTime::createFromTimestamp($date_string);
+      if ($date)
+        return $date->format("m/Y");
+    }
+    return null;
   }
   
 }
