@@ -54,7 +54,7 @@ function more_fields_theme()
   ];
   $hooks['more_fields_accordion_field_formatter'] = [
     'preprocess functions' => [
-      'template_preprocess_more_fields_text_bg'
+      'more_fields_accordion_field_formatter'
     ],
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'

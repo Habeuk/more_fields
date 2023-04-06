@@ -41,7 +41,7 @@ function template_preprocess_more_fields_text_bg(&$vars)
 }
 function more_fields_accordion_field_formatter(&$vars)
 {
-  dump($vars);
+  // dump($vars);
   $vars['item'] = [];
   if (!empty($vars['element']['#item'])) {
     $vars['item'] = $vars['element']['#item'];

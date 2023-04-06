@@ -1,23 +1,20 @@
-<div class="field-box mb-3">
-  <div class="field-meta btn btn-block p-0 border-0" data-toggle="collapse" data-target="#{{ element.description }}" aria-expanded="true" aria-controls="{{ element.description }}">
-    {% if element.icon %}
+<div class="field-box mb-3 accordion">
+  <div class="field-meta btn btn-block p-0 border-0" data-toggle="collapse" data-target="#{{ item.id }}" aria-expanded="true" aria-controls="{{ item.id }}">
+    {% if item.icon %}
       <div class="field-icon text-light">
-        {{ element.icon }}
+        {{ item.icon|raw }}
       </div>
     {% endif %}
-    {% if element.title %}
+    {% if item.title %}
       <div class="field-title font-weight-bold">
-        {{ element.title }}
+        {{ item.title }}
       </div>
     {% endif %}
   </div>
-  ddd
-      
-    
-  {% if element.description %}
-    <div id="{{ element.id }}" class="collapse" data-parent="#accordion-parent-element">
+  {% if item.description %}
+    <div id="{{ item.id }}" class="collapse">
       <div class="field-description h6 text-black-50">
-        {{ element.description }}
+        {{ item.description|raw }}
       </div>
     {% endif %}
   </div>

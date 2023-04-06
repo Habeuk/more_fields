@@ -71,9 +71,9 @@ class AccordionFieldFormatter extends FormatterBase
             $elements[$delta] = [
                 '#theme' => 'more_fields_accordion_field_formatter',
                 '#item' => [
-                    'icon' => Html::escape($item->icon),
+                    'icon' => $item->icon,
                     'title' => Html::escape($item->title),
-                    'description' => Html::escape($item->description),
+                    'description' => $item->description,
                     'id' => $this->getName(15)
                 ]
             ];
