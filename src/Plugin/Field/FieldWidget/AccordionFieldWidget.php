@@ -30,8 +30,8 @@ class AccordionFieldWidget extends WidgetBase
     public static function defaultSettings()
     {
         return [
-            'label_1' => "Icon",
-            'label_2' => "Title",
+            'label_1' => "Title",
+            'label_2' => "Icon",
             'label_3' => "Description"
         ] + parent::defaultSettings();
     }
@@ -42,7 +42,6 @@ class AccordionFieldWidget extends WidgetBase
      */
     public function settingsForm(array $form, FormStateInterface $form_state)
     {
-        $elements = [];
         $elements['label_1'] = [
             '#type' => 'textfield',
             '#title' => t('label 1'),
@@ -85,15 +84,20 @@ class AccordionFieldWidget extends WidgetBase
             '#type' => 'textfield',
             '#default_value' => isset($items[$delta]->title) ? $items[$delta]->title : NULL
         ] + $element;
+        $elts['field'] = [
+            '#type' => 'details',
+            '#title' => t('Description + Icon'),
+            '#tree'  => True,
+        ];
         //
-        $elts['icon'] = [
+        $elts['field']['icon'] = [
             '#title' => $this->t('Icon'),
             '#type' => 'text_format',
             '#format' => 'full_html',
             '#default_value' => isset($items[$delta]->icon) ? $items[$delta]->icon : NULL
         ] + $element;
         //
-        $elts['description'] = [
+        $elts['field']['description'] = [
             '#title' => $this->t('Description'),
             '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'basic_html',
             '#type' => 'text_format',
@@ -105,14 +109,14 @@ class AccordionFieldWidget extends WidgetBase
     {
         $vals = parent::massageFormValues($values, $form, $form_state);
         foreach ($vals as &$val) {
-            if (isset($val['description']['format'])) {
-                $val['format'] = $val['description']['format'];
+            if (isset($val['field']['description']['format'])) {
+                $val['format'] = $val['field']['description']['format'];
             }
             if (isset($val['icon']['format'])) {
-                $val['format'] = $val['icon']['format'];
+                $val['format'] = $val['field']['icon']['format'];
             }
-            $val['description'] = $val['description']['value'];
-            $val['icon'] = $val['icon']['value'];
+            $val['description'] = $val['field']['description']['value'];
+            $val['icon'] = $val['field']['icon']['value'];
         }
         return $vals;
     }
