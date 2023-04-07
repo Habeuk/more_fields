@@ -18,7 +18,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *   label = @Translation("accordion field(event on header) "),
  *   description = @Translation("Allows to generate an element of an accordion"),
  *   default_widget = "more_fields_accordion_field_widget",
- *   default_formatter = "more_fields_accirdion_field_formatter",
+ *   default_formatter = "more_fields_accordion_field_formatter",
  *   category = "Complex fields"
  * )
  */

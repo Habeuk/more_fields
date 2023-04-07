@@ -80,33 +80,33 @@ class AccordionFieldWidget extends WidgetBase
         $elements = [];
         if (!empty($element['#title_display']))
             unset($element['#title_display']);
-        $elements['title'] = [
+        $elts['title'] = [
             '#title' => $this->t('Title'),
             '#type' => 'textfield',
             '#default_value' => isset($items[$delta]->title) ? $items[$delta]->title : NULL
         ] + $element;
         //
-        $elements['icon'] = [
+        $elts['icon'] = [
             '#title' => $this->t('Icon'),
             '#type' => 'text_format',
-            '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'basic_html',
+            '#format' => 'full_html',
             '#default_value' => isset($items[$delta]->icon) ? $items[$delta]->icon : NULL
         ] + $element;
         //
-        $elements['description'] = [
+        $elts['description'] = [
             '#title' => $this->t('Description'),
+            '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'basic_html',
             '#type' => 'text_format',
             '#default_value' => isset($items[$delta]->description) ? $items[$delta]->description : NULL
         ] + $element;
-        return $elements;
+        return $elts;
     }
     function massageFormValues($values, $form, $form_state)
     {
         $vals = parent::massageFormValues($values, $form, $form_state);
-        dump($values);
         foreach ($vals as &$val) {
-            if (isset($val['text']['format'])) {
-                $val['format'] = $val['text']['format'];
+            if (isset($val['description']['format'])) {
+                $val['format'] = $val['description']['format'];
             }
             if (isset($val['icon']['format'])) {
                 $val['format'] = $val['icon']['format'];
