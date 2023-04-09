@@ -9,7 +9,7 @@ use Drupal\Core\Url;
  * Plugin implementation of the 'string' formatter.
  *
  * @FieldFormatter(
- *   id = "more_fields_link_htl_formatter",
+ *   id = "more_fields_uri_htl_formatter",
  *   label = @Translation("Button Htl Btn"),
  *   description = "ideal for link elements, i.e. containing the a tag",
  *   field_types = {
