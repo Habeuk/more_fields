@@ -45,7 +45,7 @@ class IconTextFormatter2 extends IconTextFormatter {
       'custom_class_container' => '',
       'custom_class_sub_container' => 'd-flex',
       'custom_class_icon' => '',
-      'custom_class_text' => 'font-weight-bold'
+      'custom_class_text' => 'font-weight-bold d-flex align-items-center'
     ] + parent::defaultSettings();
   }
   
@@ -129,8 +129,6 @@ class IconTextFormatter2 extends IconTextFormatter {
           '#attributes' => [
             'class' => [
               'text',
-              'd-flex',
-              'align-items-center',
               $this->getSetting('custom_class_text')
             ]
           ],
@@ -138,6 +136,7 @@ class IconTextFormatter2 extends IconTextFormatter {
         ]
       ];
     }
+    
     $container[] = [
       'value' => [
         '#type' => 'html_tag',
