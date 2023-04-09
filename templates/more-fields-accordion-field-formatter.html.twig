@@ -1,0 +1,21 @@
+<div class="field-box mb-3">
+  <div class="field-meta btn btn-block p-0 border-0" data-toggle="collapse" data-target="#{{ item.id }}" aria-expanded="true" aria-controls="{{ item.id }}">
+    {% if item.icon %}
+      <div class="field-icon text-light">
+        {{ item.icon|raw }}
+      </div>
+    {% endif %}
+    {% if item.title %}
+      <div class="field-title font-weight-bold">
+        {{ item.title }}
+      </div>
+    {% endif %}
+  </div>
+  {% if item.description %}
+    <div id="{{ item.id }}" class="collapse">
+      <div class="field-description h6 text-black-50">
+        {{ item.description|raw }}
+      </div>
+    {% endif %}
+  </div>
+</div>

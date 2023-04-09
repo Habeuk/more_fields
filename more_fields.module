@@ -3,7 +3,8 @@
 /**
  * Implements hook_theme().
  */
-function more_fields_theme() {
+function more_fields_theme()
+{
   $hooks = [];
   $hooks['more_fields_experience_formatter'] = [
     'preprocess functions' => [
@@ -51,6 +52,13 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  
+  $hooks['more_fields_accordion_field_formatter'] = [
+    'preprocess functions' => [
+      'more_fields_accordion_field_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+
   return $hooks;
 }
