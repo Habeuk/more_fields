@@ -7,6 +7,7 @@ use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Template\Attribute;
 
 /**
  * Plugin implementation of the 'more_fields_accordion_field' formatter.
@@ -19,102 +20,152 @@ use Drupal\Core\Form\FormStateInterface;
  *   }
  * )
  */
-class AccordionFieldFormatter extends FormatterBase
-{
-
-    /**
-     *
-     * {@inheritdoc}
-     */
-    public static function defaultSettings()
-    {
-        return [
-            'layoutgenentitystyles_view' => 'more_fields/field-accordion'
-        ] + parent::defaultSettings();
+class AccordionFieldFormatter extends FormatterBase {
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public static function defaultSettings() {
+    return [
+      'layoutgenentitystyles_view' => 'more_fields/field-accordion',
+      'open_action' => 'fisrt',
+      'custom_class' => ''
+    ] + parent::defaultSettings();
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    return [
+      // utilile pour mettre à jour le style
+      'layoutgenentitystyles_view' => [
+        '#type' => 'hidden',
+        '#value' => 'more_fields/field-accordion'
+      ],
+      'open_action' => [
+        '#type' => 'select',
+        "#title" => "Open accordion",
+        "#options" => [
+          '' => 'None',
+          'fisrt' => 'open first',
+          "all" => "all open"
+        ],
+        '#default_value' => $this->getSetting('open_action')
+      ],
+      'custom_class' => [
+        '#type' => 'textfield',
+        '#title' => 'Custom class for accordion',
+        '#default_value' => $this->getSetting('custom_class')
+      ]
+    ] + parent::settingsForm($form, $form_state);
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+    $summary = [];
+    // Implement settings summary.
+    
+    return $summary;
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public function viewElements(FieldItemListInterface $items, $langcode) {
+    $id = 'habeuk-' . $this->getName(8);
+    $attribute = new Attribute([
+      'class' => [
+        'accordion',
+        'fields-box',
+        $this->getSetting('custom_class')
+      ],
+      'id' => $id
+    ]);
+    $attribute_box = new Attribute([
+      'class' => [
+        'field-box',
+        'mb-3'
+      ]
+    ]);
+    $elements = [
+      '#theme' => 'more_fields_accordion_field_formatter',
+      '#items' => [],
+      '#attribute' => $attribute,
+      '#attribute_box' => $attribute_box
+    ];
+    $open_action = $this->getSetting('open_action');
+    foreach ($items as $delta => $item) {
+      $attribute_t = new Attribute([
+        'class' => [
+          'field-meta',
+          'btn btn-block p-0 border-0'
+        ],
+        'data-toggle' => "collapse",
+        'data-target' => "#" . $id . '-' . $delta,
+        'aria-expanded' => "true",
+        'aria-controls' => $id
+      ]);
+      $attr_desc = new Attribute([
+        'class' => [
+          'collapse',
+          ($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all') ? 'show' : ''
+        ],
+        'data-parent' => "#" . $id,
+        'id' => $id . '-' . $delta
+      ]);
+      $elements['#items'][$delta] = [
+        'icon' => $this->viewValue($item->icon),
+        'title' => $this->viewValue($item->title),
+        'description' => $this->viewValue($item->description),
+        'attribute_title' => $attribute_t,
+        'attribute_content' => $attr_desc
+      ];
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     */
-    public function settingsForm(array $form, FormStateInterface $form_state)
-    {
-        return [
-            // utilile pour mettre à jour le style
-            'layoutgenentitystyles_view' => [
-                '#type' => 'hidden',
-                '#value' => 'more_fields/field-accordion'
-            ]
-        ] + parent::settingsForm($form, $form_state);
+    return $elements;
+  }
+  
+  /**
+   * Generate the output appropriate for one field item.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *        One field item.
+   *        
+   * @return array The textual output generated as a render array.
+   */
+  protected function viewValue($value) {
+    // The text value has no text format assigned to it, so the user input
+    // should equal the output, including newlines.
+    return [
+      '#type' => 'inline_template',
+      '#template' => '{{ value|raw }}',
+      '#context' => [
+        'value' => $value
+      ]
+    ];
+  }
+  
+  /**
+   *
+   * @param
+   *        $n
+   * @return string
+   */
+  public function getName($n) {
+    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $lgt = strlen($characters);
+    $randomString = '';
+    for ($i = 0; $i < $n; $i++) {
+      $index = rand(0, $lgt - 1);
+      $randomString .= $characters[$index];
     }
-
-    /**
-     *
-     * {@inheritdoc}
-     */
-    public function settingsSummary()
-    {
-        $summary = [];
-        // Implement settings summary.
-
-        return $summary;
-    }
-
-    /**
-     *
-     * {@inheritdoc}
-     */
-    public function viewElements(FieldItemListInterface $items, $langcode)
-    {
-        $elements = [];
-        foreach ($items as $delta => $item) {
-            $elements[$delta] = [
-                '#theme' => 'more_fields_accordion_field_formatter',
-                '#item' => [
-                    'icon' => $item->icon,
-                    'title' => Html::escape($item->title),
-                    'description' => $item->description,
-                    'id' => $this->getName(15)
-                ]
-            ];
-        }
-
-        return $elements;
-    }
-
-
-    /**
-     * Generate the output appropriate for one field item.
-     *
-     * @param \Drupal\Core\Field\FieldItemInterface $item
-     *        One field item.
-     *        
-     * @return array The textual output generated as a render array.
-     */
-    protected function viewValue($value)
-    {
-        // The text value has no text format assigned to it, so the user input
-        // should equal the output, including newlines.
-        return [
-            '#type' => 'inline_template',
-            '#template' => '{{ value|raw }}',
-            '#context' => [
-                'value' => $value
-            ]
-        ];
-    }
-
-
-    public function getName($n)
-    {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $randomString = '';
-
-        for ($i = 0; $i < $n; $i++) {
-            $index = rand(0, strlen($characters) - 1);
-            $randomString .= $characters[$index];
-        }
-
-        return $randomString;
-    }
+    return $randomString;
+  }
+  
 }

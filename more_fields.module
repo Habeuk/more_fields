@@ -3,8 +3,7 @@
 /**
  * Implements hook_theme().
  */
-function more_fields_theme()
-{
+function more_fields_theme() {
   $hooks = [];
   $hooks['more_fields_experience_formatter'] = [
     'preprocess functions' => [
@@ -37,7 +36,9 @@ function more_fields_theme()
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  // $hooks['more_fields_icon_text_svg'] = $hooks["more_fields_icon_text"];
+  /**
+   * --
+   */
   $hooks['more_fields_field_chart'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_field_chart'
@@ -45,6 +46,9 @@ function more_fields_theme()
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
+  /**
+   * --
+   */
   $hooks['more_fields_text_bg'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_text_bg'
@@ -59,6 +63,6 @@ function more_fields_theme()
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
+  
   return $hooks;
 }
