@@ -11,10 +11,12 @@ use Drupal\Core\Annotation\Translation;
 /**
  * Plugin implementation of the 'more_fields_icon_text_widget' widget.
  *
+ * @deprecated will be remove before 2x.
+ *            
  * @FieldWidget(
  *   id = "more_fields_icon_text_widget",
  *   module = "more_fields",
- *   label = @Translation("Icon text widget"), *
+ *   label = @Translation("Icon text widget (@deprecated will be remove before 2x, use 'Icon text description widget') "),
  *   field_types = {
  *     "more_fields_icon_text"
  *   }

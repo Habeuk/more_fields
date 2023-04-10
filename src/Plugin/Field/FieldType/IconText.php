@@ -17,7 +17,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *   id = "more_fields_icon_text",
  *   label = @Translation("Icon text ( Build icon-button ) "),
  *   description = @Translation("Allows to generate elements icons + texts (or one or the other)"),
- *   default_widget = "more_fields_icon_text_widget",
+ *   default_widget = "more_fields_icon_text_description_widget",
  *   default_formatter = "more_fields_icon_text_formatter",
  *   category = "Complex fields"
  * )
@@ -29,9 +29,7 @@ class IconText extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function defaultStorageSettings() {
-    return [
-      'max_length' => 100
-    ] + parent::defaultStorageSettings();
+    return [] + parent::defaultStorageSettings();
   }
   
   /**
@@ -41,7 +39,7 @@ class IconText extends FieldItemBase {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     // @see grep -nr "@DataType" web/core/
     // Prevent early t() calls by using the TranslatableMarkup.
-    $properties['value'] = DataDefinition::create('string')->setLabel(new TranslatableMarkup('Text value'))->setSetting('case_sensitive', $field_definition->getSetting('case_sensitive'))->setRequired(TRUE);
+    $properties['value'] = DataDefinition::create('string')->setLabel(new TranslatableMarkup('Text value'))->setRequired(TRUE);
     $properties['text'] = DataDefinition::create('string')->setLabel(new TranslatableMarkup('text'))->setRequired(TRUE);
     $properties['format'] = DataDefinition::create('filter_format')->setLabel(t('Text format'));
     return $properties;
@@ -54,11 +52,17 @@ class IconText extends FieldItemBase {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     $schema = [
       'columns' => [
+        // 'value' => [
+        // 'type' => $field_definition->getSetting('is_ascii') === TRUE ?
+        // 'varchar_ascii' : 'varchar',
+        // 'length' => (int) $field_definition->getSetting('max_length'),
+        // 'binary' => $field_definition->getSetting('case_sensitive'),
+        // 'unsigned' => FALSE
+        // ],
         'value' => [
-          'type' => $field_definition->getSetting('is_ascii') === TRUE ? 'varchar_ascii' : 'varchar',
-          'length' => (int) $field_definition->getSetting('max_length'),
-          'binary' => $field_definition->getSetting('case_sensitive'),
-          'unsigned' => FALSE
+          'type' => 'text',
+          'unsigned' => FALSE,
+          'binary' => ''
         ],
         'text' => [
           'type' => 'text',
@@ -81,20 +85,21 @@ class IconText extends FieldItemBase {
   public function getConstraints() {
     $constraints = parent::getConstraints();
     
-    if ($max_length = $this->getSetting('max_length')) {
-      $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
-      $constraints[] = $constraint_manager->create('ComplexData', [
-        'value' => [
-          'Length' => [
-            'max' => $max_length,
-            'maxMessage' => t('%name: may not be longer than @max characters.', [
-              '%name' => $this->getFieldDefinition()->getLabel(),
-              '@max' => $max_length
-            ])
-          ]
-        ]
-      ]);
-    }
+    // if ($max_length = $this->getSetting('max_length')) {
+    // $constraint_manager =
+    // \Drupal::typedDataManager()->getValidationConstraintManager();
+    // $constraints[] = $constraint_manager->create('ComplexData', [
+    // 'value' => [
+    // 'Length' => [
+    // 'max' => $max_length,
+    // 'maxMessage' => t('%name: may not be longer than @max characters.', [
+    // '%name' => $this->getFieldDefinition()->getLabel(),
+    // '@max' => $max_length
+    // ])
+    // ]
+    // ]
+    // ]);
+    // }
     
     return $constraints;
   }
@@ -105,7 +110,8 @@ class IconText extends FieldItemBase {
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
     $random = new Random();
-    $values['value'] = $random->word(mt_rand(1, $field_definition->getSetting('max_length')));
+    $values['value'] = $random->word(10);
+    $values['text'] = $random->word(15);
     return $values;
   }
   

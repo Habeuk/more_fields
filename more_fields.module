@@ -1,6 +1,124 @@
 <?php
 
 /**
+ * Proceduire:
+ * On met à jour le schema du champs, cela va etre valide pour les prochaines
+ * champs.
+ * Mais pour ce qui est des champs deja creer
+ * il faut les recuperer et faire la MAJ de chacun.
+ * change value => varchar to text
+ *
+ * implement hook_update_8001
+ *
+ * @see https://www.drupal.org/node/2554097
+ * @see https://www.drupal.org/docs/drupal-apis/update-api/introduction-to-update-api-for-drupal-8
+ * @see https://www.drupal.org/docs/7/api/schema-api/updating-tables-hook_update_n-functions
+ */
+function more_fields_update_8001() {
+  // On recupere tous les champs.
+  $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
+  $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
+  // on filtre les champs creer à partir de "more_fields_icon_text".
+  foreach ($field_config_entities as $field_config_entity) {
+    /**
+     *
+     * @var \Drupal\field\Entity\FieldStorageConfig $field_config_entity
+     */
+    if ($field_config_entity->get('type') == 'more_fields_icon_text') {
+      __more_fields_update_schema_value_to_text($field_config_entity->get('entity_type'), $field_config_entity->get('field_name'), 'value');
+    }
+  }
+}
+
+/**
+ * Update value max_length from 50 to 250.
+ *
+ * implement hook_update_8001
+ *
+ * @see https://www.drupal.org/node/2554097
+ * @see https://www.drupal.org/docs/drupal-apis/update-api/introduction-to-update-api-for-drupal-8
+ */
+function __more_fields_update_schema_value_to_text($entity_type_id, $field_name, $property_name) {
+  // Retrieve existing field data.
+  $database = \Drupal::database();
+  $table = $entity_type_id . '__' . $field_name;
+  $datas = $database->select($table, 'et')->fields('et', [])->execute()->fetchAll(\PDO::FETCH_ASSOC);
+  /**
+   *
+   * @var \Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface $updateManager
+   */
+  // Remove old definition field, ceci entrainne la suppresion de la table.
+  $updateManager = \Drupal::entityDefinitionUpdateManager();
+  $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
+  $updateManager->uninstallFieldStorageDefinition($storagedef);
+  
+  // Load new definition field in code.
+  /**
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManager $fieldManager
+   */
+  $fieldManager = \Drupal::service('entity_field.manager');
+  // $fields = $fieldManager->getFieldStorageDefinitions($entity_type_id);
+  $updateManager->installFieldStorageDefinition($field_name, $entity_type_id, "more_fields", $storagedef);
+  // Restore entity data in the new schema.
+  foreach ($datas as $data) {
+    $database->insert($table)->fields($data)->execute();
+  }
+}
+
+/**
+ *
+ * @param
+ *        $vars
+ */
+function more_fields_preprocess_html(&$vars) {
+  // // On recupere les entites. ensuite on filtre pour garder ceux qui possede
+  // une
+  // // table.
+  // // @see
+  // //
+  // https://drupal.stackexchange.com/questions/211057/how-to-get-a-list-of-fields-that-are-used-in-entities
+  // $entities = \Drupal::entityTypeManager()->getDefinitions();
+  // $contentEntities = [];
+  // foreach ($entities as $entity) {
+  // if (!empty($entity->getBaseTable())) {
+  // /**
+  // *
+  // * @var \Drupal\Core\Entity\ContentEntityType $entity
+  // */
+  // $contentEntities[] = $entity;
+  // }
+  // }
+  // // On recherche tous les entites qui implemente le champs de type
+  // // "more_fields_icon_text"
+  // // foreach ($contentEntities as $entity) {
+  // // $entity->getF
+  // // }
+  // //
+  // //
+  // Get a list of storage fields
+  // $field_config_ids = \Drupal::entityQuery('field_storage_config')->
+  // // Allow access to all regardless of permissons.
+  // accessCheck(FALSE)->condition('status', 1)->execute();
+  // // Load all the fields.
+  // $field_config_entities =
+  // \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
+  // $validEntities = [];
+  // foreach ($field_config_entities as $key => $field_config_entity) {
+  // /**
+  // *
+  // * @var \Drupal\field\Entity\FieldStorageConfig $field_config_entity
+  // */
+  // if ($field_config_entity->get('type') == 'more_fields_icon_text') {
+  // // on recupere les tables qui doivent etre MAJ.
+  // $table = $field_config_entity->get('entity_type') . '__' .
+  // $field_config_entity->get('field_name');
+  // }
+  // }
+  // // dump($validEntities);
+}
+
+/**
  * Implements hook_theme().
  */
 function more_fields_theme() {
