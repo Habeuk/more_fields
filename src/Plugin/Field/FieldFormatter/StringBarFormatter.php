@@ -60,18 +60,18 @@ class StringBarFormatter extends StringFormatter {
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     return [
-      // utilile pour mettre à jour le style
+      // Utilile pour mettre à jour le style.
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
         '#value' => 'more_fields/field-bar'
       ],
       'tag_render' => [
-        '#type' => 'text_field',
+        '#type' => 'textfield',
         '#title' => 'Balise rendu',
         '#default_value' => $this->getSetting('tag_render')
       ],
       'class_css' => [
-        '#type' => 'text_field',
+        '#type' => 'textfield',
         '#title' => 'Class css',
         '#default_value' => $this->getSetting('class_css')
       ]
