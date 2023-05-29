@@ -39,7 +39,7 @@ class IconTextStringFormatter extends IconTextFormatter {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
-    return [
+    return parent::settingsForm($form, $form_state) + [
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
         '#value' => 'more_fields/field-link'
@@ -59,7 +59,7 @@ class IconTextStringFormatter extends IconTextFormatter {
         '#title' => 'Custom class icon',
         '#default_value' => $this->getSetting('custom_class_icon')
       ]
-    ] + parent::settingsForm($form, $form_state);
+    ];
   }
   
   /**

@@ -29,10 +29,11 @@ class StringBarFormatter extends StringFormatter {
     $elements[] = [
       'value' => [
         '#type' => 'html_tag',
-        '#tag' => 'h2',
+        '#tag' => $this->getSetting('tag_render'),
         '#attributes' => [
           'class' => [
-            'field-bar'
+            'field-bar',
+            $this->getSetting('class_css')
           ]
         ],
         parent::viewElements($items, $langcode)
@@ -47,7 +48,9 @@ class StringBarFormatter extends StringFormatter {
    */
   public static function defaultSettings() {
     return [
-      'layoutgenentitystyles_view' => 'more_fields/field-bar'
+      'layoutgenentitystyles_view' => 'more_fields/field-bar',
+      'tag_render' => 'h2',
+      'class_css' => ''
     ] + parent::defaultSettings();
   }
   
@@ -61,6 +64,16 @@ class StringBarFormatter extends StringFormatter {
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
         '#value' => 'more_fields/field-bar'
+      ],
+      'tag_render' => [
+        '#type' => 'text_field',
+        '#title' => 'Balise rendu',
+        '#default_value' => $this->getSetting('tag_render')
+      ],
+      'class_css' => [
+        '#type' => 'text_field',
+        '#title' => 'Class css',
+        '#default_value' => $this->getSetting('class_css')
       ]
     ] + parent::settingsForm($form, $form_state);
   }
