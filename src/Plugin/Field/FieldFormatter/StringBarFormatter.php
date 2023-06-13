@@ -72,7 +72,7 @@ class StringBarFormatter extends StringFormatter {
       ],
       'class_css' => [
         '#type' => 'textfield',
-        '#title' => 'Class css',
+        '#title' => 'Class css (for value)',
         '#default_value' => $this->getSetting('class_css')
       ]
     ] + parent::settingsForm($form, $form_state);
