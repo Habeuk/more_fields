@@ -10,5 +10,7 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+    	"drupal/better_exposed_filters": "^6.0"
+    }
 }

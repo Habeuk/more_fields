@@ -176,7 +176,22 @@ function more_fields_theme() {
   ];
   $hooks['more_fields_accordion_field_formatter'] = [
     'preprocess functions' => [
-      'more_fields_accordion_field_formatter'
+      'template_preprocess_more_fields_accordion_field_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_bef_checkboxes'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_bef_checkboxes'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  // more_fields_bef_radios
+  $hooks['more_fields_bef_radios'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_bef_radios'
     ],
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
