@@ -23,7 +23,8 @@ class ReadMoreFormatter extends HtlBtn {
   
   public static function defaultSettings() {
     return [
-      'text_display' => 'Read more'
+      'text_display' => 'Read more',
+      'text_display' => true
     ] + parent::defaultSettings();
   }
   
@@ -36,7 +37,9 @@ class ReadMoreFormatter extends HtlBtn {
       'text_display' => [
         '#type' => 'textfield',
         '#title' => 'Texte à afficher',
-        '#default_value' => $this->getSetting('text_display')
+        '#default_value' => $this->getSetting('text_display'),
+        '#required' => true,
+        '#description' => "don't forget to active linck to content"
       ]
     ] + parent::settingsForm($form, $form_state);
   }
