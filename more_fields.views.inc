@@ -14,14 +14,19 @@ function more_fields_views_data_alter(&$data) {
   foreach ($data as $table_name => $table_data) {
     foreach ($table_data as $field_name => $field_data) {
       if (!empty($field_data['filter']) && $field_data['filter']['id'] == 'taxonomy_index_tid') {
-        $mf = [
-          'title' => t('Custom filter term taxonomy'),
-          'group' => t('More fields'),
-          'filter' => $data[$table_name][$field_name]['filter']
-        ];
-        $mf['filter']['id'] = 'more_fields_checkbox_list';
-        $mf['filter']['title'] = $data[$table_name][$field_name]['title'];
-        $data[$table_name]['more_fields_' . $field_name] = $mf;
+        if (!empty($data[$table_name][$field_name]['title'])) {
+          $mf = [
+            'title' => t('Custom filter term taxonomy'),
+            'group' => t('More fields'),
+            'filter' => $data[$table_name][$field_name]['filter']
+          ];
+          $mf['filter']['id'] = 'more_fields_checkbox_list';
+          $mf['filter']['title'] = $data[$table_name][$field_name]['title'];
+          $data[$table_name]['more_fields_' . $field_name] = $mf;
+        }
+        else {
+          \Stephane888\Debug\debugLog::kintDebugDrupal($data[$table_name], $table_name . '--empty--' . $field_name, true);
+        }
       }
     }
   }
