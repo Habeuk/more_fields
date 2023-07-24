@@ -32,7 +32,9 @@ class restrainedTextLongFormatter extends StringFormatter
     public static function defaultSettings()
     {
         return [
+            'layoutgenentitystyles_view' => 'more_fields/restrained-field',
             'resumed' => 300,
+            'blur_size' => '20%',
         ] + parent::defaultSettings();
     }
     /**
@@ -43,10 +45,19 @@ class restrainedTextLongFormatter extends StringFormatter
     {
         return [
             // utilile pour mettre à jour le style
+            'layoutgenentitystyles_view' => [
+                '#type' => 'hidden',
+                "#value" => $this->getSetting("layoutgenentitystyles_view"),
+            ],
             'resumed' => [
                 '#title' => t('Nombre de caractère'),
                 '#type' => 'number',
                 '#default_value' => $this->getSetting("resumed"),
+            ],
+            'blur_size' => [
+                '#title' => t('taille de la zone masquée'),
+                '#type' => 'textfield',
+                '#value' => $this->getsetting("blur_size"),
             ]
         ] + parent::settingsForm($form, $form_state);
     }
@@ -62,11 +73,17 @@ class restrainedTextLongFormatter extends StringFormatter
         foreach ($items as $delta => $item) {
             // $escapedItem = Html::escape($item->value);
             $escapedItem = $item->value;
-            $value =  (\Drupal::currentUser()->id()) ? $escapedItem : Truncator::truncate($escapedItem, $this->getSetting("resumed"));
-            $elements[$delta] = $this->viewValue($value);
+            $value =  !(\Drupal::currentUser()->id()) ? $escapedItem : Truncator::truncate($escapedItem, $this->getSetting("resumed"));
+            $elements[$delta] = [
+                '#theme' => 'restrained_text_formatter',
+                '#item' => [
+                    'value' => $value,
+                    'blur_size' => $this->getSetting("blur_size")
+                ]
+            ];
         }
         // dd($elements);
-        return $elements;
+        return $elements[0];
     }
 
     /**

@@ -34,4 +34,14 @@ vuejs:
     url: https://github.com/vuejs/vue/blob/dev/LICENSE
     gpl-compatible: true
   js:
-    https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.4/vue.min.js: {type: external, minified: true}
+    https://cdnjs.cloudflare.com/ajax/libs/vue/2.3.4/vue.min.js:
+      { type: external, minified: true }
+
+restrained_field:
+  js:
+    js/field-restrained.js: {}
+  css:
+    component:
+      css/field-restrained.css: {}
+  dependencies:
+    - core/drupalSettings

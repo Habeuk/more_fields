@@ -14,7 +14,8 @@
  * @see https://www.drupal.org/docs/drupal-apis/update-api/introduction-to-update-api-for-drupal-8
  * @see https://www.drupal.org/docs/7/api/schema-api/updating-tables-hook_update_n-functions
  */
-function more_fields_update_8001() {
+function more_fields_update_8001()
+{
   // On recupere tous les champs.
   $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
   $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
@@ -38,7 +39,8 @@ function more_fields_update_8001() {
  * @see https://www.drupal.org/node/2554097
  * @see https://www.drupal.org/docs/drupal-apis/update-api/introduction-to-update-api-for-drupal-8
  */
-function __more_fields_update_schema_value_to_text($entity_type_id, $field_name, $property_name) {
+function __more_fields_update_schema_value_to_text($entity_type_id, $field_name, $property_name)
+{
   // Retrieve existing field data.
   $database = \Drupal::database();
   $table = $entity_type_id . '__' . $field_name;
@@ -51,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-  
+
   // Load new definition field in code.
   /**
    *
@@ -71,7 +73,8 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
  * @param
  *        $vars
  */
-function more_fields_preprocess_html(&$vars) {
+function more_fields_preprocess_html(&$vars)
+{
   // // On recupere les entites. ensuite on filtre pour garder ceux qui possede
   // une
   // // table.
@@ -121,7 +124,8 @@ function more_fields_preprocess_html(&$vars) {
 /**
  * Implements hook_theme().
  */
-function more_fields_theme() {
+function more_fields_theme()
+{
   $hooks = [];
   $hooks['more_fields_experience_formatter'] = [
     'preprocess functions' => [
@@ -196,6 +200,12 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  
+  $hooks['restrained_text_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_restrained_text_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
   return $hooks;
 }

@@ -1,0 +1,14 @@
+.restrained-field {
+    position: relative;
+    overflow: hidden;
+}
+.restrained-field:after {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    display: block;
+    width: 100%;
+    padding-top: 100px;
+    background-image: linear-gradient(to bottom, transparent, white);
+    content: ""
+}
