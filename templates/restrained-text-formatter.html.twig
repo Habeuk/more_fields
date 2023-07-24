@@ -1,5 +1,22 @@
-<div class="restrained-field">
-    {% if item.value %}
-        {{ item.value | raw }}
+<div class="restrainded-field-container">
+    <div class="restrained-field">
+        {% if item.value %}
+            {{ item.value | raw }}
+        {% endif %}
+    </div>
+    {% if item.offlineConfig %}
+        <div class="restrained-field-footer">
+            {% if item.offlineConfig.message %}
+                <span "restrained-field-label">
+                    {{ item.offlineConfig.message }}
+                </span>
+                <span class="restrained-field-link">
+                    <a href="{{ item.offlineConfig.link }}">
+                        {{ item.offlineConfig.link_label }}
+                    </a>
+                </span>
+            {% endif %}
+        </div>
     {% endif %}
+
 </div>

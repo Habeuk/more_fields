@@ -12,3 +12,14 @@
     background-image: linear-gradient(to bottom, transparent, white);
     content: ""
 }
+
+.restrained-field-footer{
+    margin-top: 15px;
+    padding: 15px 15px 0;
+    border-top: 3px solid #8D44AB;
+    font-weight: bold;
+}
+
+.restrainded-field-container{
+    margin-bottom: 40px;
+}

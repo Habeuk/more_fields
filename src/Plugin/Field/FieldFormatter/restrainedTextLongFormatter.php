@@ -34,7 +34,9 @@ class restrainedTextLongFormatter extends StringFormatter
         return [
             'layoutgenentitystyles_view' => 'more_fields/restrained-field',
             'resumed' => 300,
-            'blur_size' => '20%',
+            'message' => t("Connectez vous pour avoir un accès complet à l'article"),
+            "link_label" => t("connexion"),
+            "link" => "/user/login"
         ] + parent::defaultSettings();
     }
     /**
@@ -50,15 +52,20 @@ class restrainedTextLongFormatter extends StringFormatter
                 "#value" => $this->getSetting("layoutgenentitystyles_view"),
             ],
             'resumed' => [
-                '#title' => t('Nombre de caractère'),
+                '#title' => t('Number of characters'),
                 '#type' => 'number',
                 '#default_value' => $this->getSetting("resumed"),
             ],
-            'blur_size' => [
-                '#title' => t('taille de la zone masquée'),
+            'message' => [
+                '#title' => t('message for non subscribers'),
                 '#type' => 'textfield',
-                '#value' => $this->getsetting("blur_size"),
-            ]
+                '#value' => $this->getsetting("message"),
+            ],
+            'link_label' => [
+                '#title' => t('label for redirect link'),
+                '#type' => 'textfield',
+                '#value' => $this->getsetting("link_label"),
+            ],
         ] + parent::settingsForm($form, $form_state);
     }
 
@@ -70,19 +77,23 @@ class restrainedTextLongFormatter extends StringFormatter
         $elements = [];
         // The ProcessedText element already handles cache context & tag bubbling.
         // @see \Drupal\filter\Element\ProcessedText::preRenderText()
+        $state = (\Drupal::currentUser()->id()) ? true : false;
         foreach ($items as $delta => $item) {
             // $escapedItem = Html::escape($item->value);
             $escapedItem = $item->value;
-            $value =  !(\Drupal::currentUser()->id()) ? $escapedItem : Truncator::truncate($escapedItem, $this->getSetting("resumed"));
+            $value =  ($state) ? $escapedItem : Truncator::truncate($escapedItem, $this->getSetting("resumed"));
             $elements[$delta] = [
                 '#theme' => 'restrained_text_formatter',
                 '#item' => [
                     'value' => $value,
-                    'blur_size' => $this->getSetting("blur_size")
+                    'offlineConfig' => $state ? false : [
+                        "message" => (string) $this->getSetting("message"),
+                        "link" => (string)$this->getSetting("link"),
+                        "link_label" => (string)$this->getSetting("link_label")
+                    ],
                 ]
             ];
         }
-        // dd($elements);
         return $elements[0];
     }
 
