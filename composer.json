@@ -1,16 +1,16 @@
 {
-    "name": "stephane888/more_fields",
-    "description": "more fields",
-    "type": "drupal-custom-module",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "kouwa stephane",
-            "email": "kksasteph888@gmail.com"
-        }
-    ],
-    "minimum-stability": "dev",
-    "require": {
-    	"drupal/better_exposed_filters": "^6.0"
+  "name": "habeuk/more_fields",
+  "description": "more fields",
+  "type": "drupal-custom-module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "kouwa stephane",
+      "email": "kksasteph888@gmail.com"
     }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "drupal/better_exposed_filters": "^6.0"
+  }
 }

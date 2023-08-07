@@ -48,7 +48,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     // on ajoute la possibilite d'afficher ou pas le nombre d'entité
     $form['show_entities_numbers'] = [
       '#type' => 'checkbox',
-      '#title' => "Affiche le nombre d'entité",
+      '#title' => "Affiche le nombre d'entité par termes",
       '#default_value' => $this->options['show_entities_numbers']
     ];
   }
