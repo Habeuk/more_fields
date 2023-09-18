@@ -8,6 +8,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\more_fields\Truncator;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 /**
  * Plugin implementation of the 'text_long, text_with_summary' formatter.
@@ -66,11 +67,14 @@ class RelativeDateFormatter extends StringFormatter {
     public function viewElements(FieldItemListInterface $items, $langcode) {
         $elements = [];
         foreach ($items as $delta => $item) {
+            // $temp = format_date(REQUEST_TIME, 'custom', $this->getSetting("format"));
+            $time = new DrupalDateTime();
+            // dump($temp->getTimestamp());
             $baseTime = $this->getSetting("base_time");
-            $time = strtotime($item->value, ($baseTime) ? $baseTime : null);
-            $time = $time ? $time : null;
+            $baseTime = strtotime($item->value, ($baseTime) ? $baseTime : null);
+            $baseTime = $baseTime ? $baseTime : null;
             // $elements[$delta] = (string) Date($item->value, $time);
-            $elements[$delta] = $this->viewValue((string) Date((string) $this->getSetting("format"), $time));
+            $elements[$delta] = $this->viewValue((string) Date((string) $this->getSetting("format"), ($baseTime) ? $baseTime : $time->getTimestamp()));
         }
         return $elements;
     }
