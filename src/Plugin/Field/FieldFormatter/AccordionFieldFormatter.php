@@ -30,7 +30,9 @@ class AccordionFieldFormatter extends FormatterBase {
     return [
       'layoutgenentitystyles_view' => 'more_fields/field-accordion',
       'open_action' => 'fisrt',
-      'custom_class' => ''
+      'custom_class' => '',
+      'attribute_content' => 'h6 text-black-50',
+      'attribute_header' => ''
     ] + parent::defaultSettings();
   }
   
@@ -59,6 +61,16 @@ class AccordionFieldFormatter extends FormatterBase {
         '#type' => 'textfield',
         '#title' => 'Custom class for accordion',
         '#default_value' => $this->getSetting('custom_class')
+      ],
+      'attribute_header' => [
+        '#type' => 'textfield',
+        '#title' => 'attribute_header',
+        '#default_value' => $this->getSetting('attribute_header')
+      ],
+      'attribute_content' => [
+        '#type' => 'textfield',
+        '#title' => 'attribute_content',
+        '#default_value' => $this->getSetting('attribute_content')
       ]
     ] + parent::settingsForm($form, $form_state);
   }
@@ -112,6 +124,7 @@ class AccordionFieldFormatter extends FormatterBase {
         'aria-expanded' => "true",
         'aria-controls' => $id
       ]);
+      $attribute_t->addClass($this->getSetting('attribute_header'));
       $attr_desc = new Attribute([
         'class' => [
           'collapse',
@@ -120,6 +133,7 @@ class AccordionFieldFormatter extends FormatterBase {
         'data-parent' => "#" . $id,
         'id' => $id . '-' . $delta
       ]);
+      $attr_desc->addClass($this->getSetting('attribute_content'));
       $elements['#items'][$delta] = [
         'icon' => $this->viewValue($item->icon),
         'title' => $this->viewValue($item->title),
