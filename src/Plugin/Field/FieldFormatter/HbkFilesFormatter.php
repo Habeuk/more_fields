@@ -8,11 +8,14 @@ use Drupal\file\Plugin\Field\FieldFormatter\GenericFileFormatter;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\video\ProviderManagerInterface;
-use Drupal\video\Plugin\Field\FieldFormatter\VideoEmbedPlayerFormatter;
+use Drupal\video\Plugin\Field\FieldFormatter\VideoPlayerListFormatter;
 use Drupal\image\Plugin\Field\FieldFormatter\ImageFormatter;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
+use Drupal\file\Entity\File;
+use Drupal\file\Plugin\Field\FieldType\FileFieldItemList;
+use Google\Service\HangoutsChat\Resource\Dms;
 
 /**
  * Plugin implementation of the 'text_long, text_with_summary' formatter.
@@ -53,8 +56,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
      */
     public function __construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, ProviderManagerInterface $provider_manager, AccountInterface $current_user, EntityStorageInterface $image_style_storage, FileUrlGeneratorInterface $file_url_generator = NULL) {
         parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
-        $this->providerManager = $provider_manager;
-        $this->videoFormatter = new VideoEmbedPlayerFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $this->providerManager);
+        $this->videoFormatter = new VideoPlayerListFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user);
         $this->imageFormatter = new ImageFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user, $image_style_storage, $file_url_generator);
     }
 
@@ -82,9 +84,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
      */
     public static function defaultSettings() {
         $default = [
-            "video_settings" => VideoEmbedPlayerFormatter::defaultSettings(),
+            "video_settings" => VideoPlayerListFormatter::defaultSettings(),
             "image_settings" => ImageFormatter::defaultSettings(),
-            "layoutgenentitystyles_view" => null,
+            "layoutgenentitystyles_view" => "more_fields/field-files",
             "my_element" => "myddd element",
         ];
         $default["video_settings"]["field_extension"] = "mp4, ogv, webm";
@@ -96,6 +98,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
      * {@inheritdoc}
      */
     public function settingsForm(array $form, FormStateInterface $form_state) {
+        // dump(VideoPlayerListFormatter::defaultSettings());
         $default_configs = $this->defaultSettings();
         $configs = $this->getSettings();
         // dump($configs);
@@ -104,7 +107,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         // dump([$default_configs, $image_settings]);
         $temp_form = [];
         $image_settings_fields = ['image_style', 'image_link', 'field_extension'];
-        $video_settings_fields = ['width', 'height', 'autoplay', 'related_videos', 'field_extension'];
+        $video_settings_fields = ["width", "height", "controls", "autoplay",  "loop", "muted", "preload", 'field_extension'];
 
 
         $temp_form['video_settings'] = [
@@ -139,7 +142,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
             // utilile pour mettre à jour le style
             'layoutgenentitystyles_view' => [
                 '#type' => 'hidden',
-                "#value" => null,
+                // "#value" => "more_fields/field-files",
+                "#value" => $this->getSetting("layoutgenentitystyles_view"),
             ]
         ];
         // dump($video_settings);
@@ -158,9 +162,6 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
 
         // dump($temp_form);
         $settings_form = array_merge($settings_form, $temp_form);
-        // $settings_form["#submit"] = [static::class, 'my_form_submit'];
-        // dump($settings_form);
-        // dump($configs);
         return $settings_form + parent::settingsForm($form, $form_state);
     }
 
@@ -168,10 +169,85 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
      * {@inheritdoc}
      */
     public function viewElements(FieldItemListInterface $items, $langcode) {
+
+        /**
+         * @var Drupal\more_fields\Plugin\Field\FieldType\HbkFiles $item
+         */
+        $image_settings = $this->getSetting("image_settings");
+        $video_settings = $this->getSetting("video_settings");
+        $images = [];
+        $images_render_array = [];
+        $videos = [];
+        $videos_render_array = [];
+        $otherFiles = [];
+        $other_files_array = [];
+        $order_array = [];
+        foreach ($items as  $delta => $item) {
+            /**
+             * @var File $file
+             */
+            $file = File::load($item->target_id);
+            $file_extension = pathinfo($file->getFileUri(), PATHINFO_EXTENSION);
+            if (strpos($image_settings["field_extension"], $file_extension) !== false) {
+                $images[$delta] = $item;
+                $order_array[] = 1;
+            } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
+                $videos[$delta] = $item;
+                $order_array[] = 2;
+            } else {
+                $otherFiles[$delta] = $item;
+                $order_array[] = 0;
+            }
+        }
+
+        //Handling images
+
+        $this->videoFormatter->setSettings($video_settings);
+        $this->imageFormatter->setSettings($image_settings);
+
+        $video_render_array = $this->videoFormatter->viewElements($items, $langcode);
+        $image_render_array = $this->imageFormatter->viewElements($items, $langcode);
+        $other_file_render_array = parent::viewElements($items, $langcode);
+
         $elements = [];
-        return $elements;
+        foreach ($order_array as $key => $value) {
+            switch ($value) {
+                case 1:
+                    $elements[$key] = $image_render_array[$key];
+                    break;
+                case 2:
+                    $elements[$key] = $video_render_array;
+                    $videos_render_array[$key][0]["#items"] = [];
+                    $videos_render_array[$key][0]["#items"][] = $video_render_array[0]["#items"][$key] ?? "";
+                    break;
+                case 0:
+                    $elements[$key] = $other_file_render_array[$key];
+                    break;
+                default:
+                    break;
+            }
+        }
+
+
+        return [
+            "#theme" => "more_field_file_image_video",
+            "items" => $elements
+        ];
     }
-    public function my_form_submit(&$form, &$form_state) {
-        dump($form_state);
+
+
+    public function buildRenderArray($formatter, $order_array, $context, $settings_array, $items, $langcode) {
+        $result =  [];
+        $formatter->setSettings($settings_array);
+        $render_array = $formatter->viewElements($items, $langcode);
+        dd($render_array);
+        foreach ($order_array as $key => $value) {
+            if ($value == $context) {
+                $result[$key] = $render_array[$key];
+            }
+        }
+        return $result;
     }
+    // Implement other methods as needed.
+
 }

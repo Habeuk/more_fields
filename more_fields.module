@@ -1,4 +1,5 @@
 <?php
+
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -52,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-  
+
   // Load new definition field in code.
   /**
    *
@@ -278,6 +279,14 @@ function more_fields_theme() {
   $hooks['more_fields_bef_radios'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_bef_radios'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+  //hbk file
+  $hooks['more_field_file_image_video'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_field_file_image_video'
     ],
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
