@@ -34,7 +34,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
   protected $fileUrlGenerator;
   protected $videoFormatter;
   protected $imageFormatter;
-
+  
   /**
    * Constructs a new instance of the plugin.
    *
@@ -66,27 +66,15 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     }
     $this->fileUrlGenerator = $file_url_generator;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $plugin_id,
-      $plugin_definition,
-      $configuration['field_definition'],
-      $configuration['settings'],
-      $configuration['label'],
-      $configuration['view_mode'],
-      $configuration['third_party_settings'],
-      $container->get('video.provider_manager'),
-      $container->get('current_user'),
-      $container->get('entity_type.manager')->getStorage('image_style'),
-      $container->get('file_url_generator')
-    );
+    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('video.provider_manager'), $container->get('current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('file_url_generator'));
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -102,7 +90,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $default["image_settings"]["field_extension"] = "png, gif, jpg, jpeg, webp";
     return $default;
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -131,7 +119,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "preload",
       'field_extension'
     ];
-
+    
     $temp_form['video_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Video Settings'),
@@ -144,10 +132,10 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#tree' => TRUE,
       '#open' => FALSE
     ];
-
+    
     $video_settings_form = $this->videoFormatter->settingsForm($form, $form_state);
     $image_settings_form = $this->imageFormatter->settingsForm($form, $form_state);
-
+    
     $field_extension = [
       "#title" => $this->t("field type extension"),
       "#type" => "textfield",
@@ -155,10 +143,10 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     ];
     $temp_form["video_settings"]["field_extension"] = $field_extension;
     $temp_form["image_settings"]["field_extension"] = $field_extension;
-
+    
     $temp_form['image_settings'] = array_merge($temp_form['image_settings'], $image_settings_form);
     $temp_form['video_settings'] = array_merge($temp_form['video_settings'], $video_settings_form);
-
+    
     $settings_form = [
       // utilile pour mettre à jour le style
       'layoutgenentitystyles_view' => [
@@ -172,17 +160,17 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     foreach ($video_settings_fields as $value) {
       $temp_form["video_settings"][$value]["#default_value"] = $video_settings[$value];
     }
-
+    
     // update default value for image
     foreach ($image_settings_fields as $value) {
       $temp_form["image_settings"][$value]["#default_value"] = $image_settings[$value];
     }
-
+    
     // dump($temp_form);
     $settings_form = array_merge($settings_form, $temp_form);
     return $settings_form + parent::settingsForm($form, $form_state);
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -192,9 +180,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $entity = $items->getEntity();
     $image_settings = $this->getSetting("image_settings");
     $video_settings = $this->getSetting("video_settings");
-
+    
     $files = $this->getEntitiesToView($items, $langcode);
-
+    
     $url = NULL;
     $image_link_setting = $image_settings["image_link"] ?? "file";
     // Check if the formatter involves a link.
@@ -202,10 +190,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       if (!$entity->isNew()) {
         $url = $entity->toUrl();
       }
-    } elseif ($image_link_setting == 'file') {
+    }
+    elseif ($image_link_setting == 'file') {
       $link_file = TRUE;
     }
-
+    
     $image_style_setting = $this->getSetting("image_settings")['image_style'];
     $image_loading_settings = $image_settings['image_loading'];
     // Collect cache tags to be added for each item in the field.
@@ -214,34 +203,39 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $image_style = $this->imageStyleStorage->load($image_style_setting);
       $base_cache_tags = $image_style->getCacheTags();
     }
-
+    
     /**
+     *
      * @var File $file
      */
     foreach ($files as $delta => $file) {
-      //get file extension
+      // get file extension
       $file_extension = pathinfo($file->getFileUri(), PATHINFO_EXTENSION);
       if (strpos($image_settings["field_extension"], $file_extension) !== false) {
-        //Gestion des images
+        // Gestion des images
         $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
-      } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
-        //Gestion des videos
-        $this->viewVideoElement([$file], $elements, $delta);
-      } else {
-        //Autres types de fichiers
-        $this->viewParentElement($file, $elemnets, $delta);
+      }
+      elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
+        // Gestion des videos
+        $this->viewVideoElement([
+          $file
+        ], $elements, $delta);
+      }
+      else {
+        // Autres types de fichiers
+        $this->viewParentElement($file, $elements, $delta);
       }
     }
-
+    
     return [
       "#theme" => "more_field_file_image_video",
       "items" => $elements
     ];
   }
-
+  
   protected function viewVideoElement(array $files, &$elements, $delta) {
     $video_items = [];
-    foreach ($files as  $file) {
+    foreach ($files as $file) {
       $video_items[] = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
     }
     $elements[$delta] = [
@@ -250,8 +244,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#player_attributes' => $this->getSetting('video_settings')
     ];
   }
-
+  
   /**
+   *
    * @param File $file
    */
   protected function viewImageElement($file, &$elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, $link_file = NULL) {
@@ -260,15 +255,15 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $url = $this->fileUrlGenerator->generate($image_uri);
     }
     $cache_tags = Cache::mergeTags($base_cache_tags, $file->getCacheTags());
-
+    
     // Extract field item attributes for the theme function, and unset them
     // from the $item so that the field template does not re-render them.
     $item = $file->_referringItem;
     $item_attributes = $item->_attributes;
     unset($item->_attributes);
-
+    
     $item_attributes['loading'] = $image_loading_settings['attribute'];
-
+    
     $elements[$delta] = [
       '#theme' => 'image_formatter',
       '#item' => $item,
@@ -276,27 +271,30 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#image_style' => $image_style_setting,
       '#url' => $url,
       '#cache' => [
-        'tags' => $cache_tags,
-      ],
+        'tags' => $cache_tags
+      ]
     ];
   }
-
+  
   protected function viewParentElement($file, &$elements, $delta) {
     $item = $file->_referringItem;
     $elements[$delta] = [
       '#theme' => 'file_link',
       '#file' => $file,
       '#cache' => [
-        'tags' => $file->getCacheTags(),
-      ],
+        'tags' => $file->getCacheTags()
+      ]
     ];
     // Pass field item attributes to the theme function.
     if (isset($item->_attributes)) {
-      $elements[$delta] += ['#attributes' => []];
+      $elements[$delta] += [
+        '#attributes' => []
+      ];
       $elements[$delta]['#attributes'] += $item->_attributes;
       // Unset field item attributes since they have been included in the
       // formatter output and should not be rendered in the field template.
       unset($item->_attributes);
     }
   }
+  
 }
