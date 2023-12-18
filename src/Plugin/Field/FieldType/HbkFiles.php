@@ -15,7 +15,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *
  * @FieldType(
  *   id = "more_fields_hbk_file",
- *   label = @Translation("Galleries Files (videos and images) "),
+ *   label = @Translation("HBK Galleries Files (videos and images) "),
  *   description = @Translation("This field stores the ID of a file(video or image) as an integer value."),
  *   default_widget = "file_generic",
  *   default_formatter = "more_fields_hbk_file_formatter",
