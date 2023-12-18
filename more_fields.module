@@ -274,7 +274,7 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  // more_fields_bef_radios
+  // more_fields_bef_radioselement.items
   $hooks['more_fields_bef_radios'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_bef_radios'
@@ -288,10 +288,12 @@ function more_fields_theme() {
       'template_preprocess_more_field_file_image_video'
     ],
     'variables' => [
-      'items' => [],
-      'thumbs' => [],
-      'items_attributes' => [],
-      'thumbs_attributes' => []
+      'main_slider_items' => [],
+      'main_slider_attributes' => [],
+      'main_slider_setting' => [],
+      'thumbs_slider_items' => [],
+      'thumbs_slider_attributes' => [],
+      'thumbs_slider_settings' => []
     ],
     'file' => 'more_fields.theme.inc'
   ];

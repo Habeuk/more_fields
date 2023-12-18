@@ -1,41 +1,39 @@
-<pre>
-	{{ dump() }}
-</pre>
-<section {{attributes.addClass(["space_bottom"])}}>
-	<div class="container">
-		<div class="galleries-main-thumbs d-flex flex-column flex-lg-row">
-			<div class="swiper galleries-main swiper-full-options" {{element.swiper_attributes}} data-is-parent="true">
-				<div class="swiper-wrapper">
-					{% for item in element.items %}
-						<div class="swiper-slide">{{item}}</div>
-					{% endfor %}
-				</div>
-				<!-- If we need pagination -->
-				<div class="swiper-pagination"></div>
-
-				<!-- If we need navigation buttons -->
-				<div class="swiper-button-prev"></div>
-				<div class="swiper-button-next"></div>
-
-				<!-- If we need scrollbar -->
-				<div class="swiper-scrollbar"></div>
+<div {{ attributes.addClass(['galleries-main-thumbs','d-flex','flex-column','flex-lg-row']) }}>
+	<div {{main_slider_attributes.addClass(['galleries-main']).setAttribute('data-is-parent','true')}}>
+		<div class="swiper-wrapper">
+			{% for item in main_slider_items %}
+			<div class="swiper-slide">
+				{{item}}
 			</div>
-			<div class="swiper galleries-thumb swiper-full-options" {{element.swiper_attributes}} data-is-children="true">
-				<div class="swiper-wrapper">
-					{% for item in element.items %}
-						<div class="swiper-slide">{{item}}</div>
-					{% endfor %}
-				</div>
-				<!-- If we need pagination -->
-				<div class="swiper-pagination"></div>
-
-				<!-- If we need navigation buttons -->
-				<div class="swiper-button-prev"></div>
-				<div class="swiper-button-next"></div>
-
-				<!-- If we need scrollbar -->
-				<div class="swiper-scrollbar"></div>
-			</div>
+			{% endfor %}
 		</div>
+		<!-- If we need pagination -->
+		<div class="swiper-pagination"></div>
+
+		<!-- If we need navigation buttons -->
+		<div class="swiper-button-prev"></div>
+		<div class="swiper-button-next"></div>
+
+		<!-- If we need scrollbar -->
+		<div class="swiper-scrollbar"></div>
 	</div>
-</section>
+	<div {{ thumbs_slider_attributes.addClass(['galleries-thumb']).setAttribute('data-is-children','true') }}>
+		<div class="swiper-wrapper">
+			{% for item in thumbs_slider_items %}
+			<div class="swiper-slide">
+				{{item}}
+			</div>
+			{% endfor %}
+		</div>
+		<!-- If we need pagination -->
+		<div class="swiper-pagination"></div>
+
+		<!-- If we need navigation buttons -->
+		<div class="swiper-button-prev"></div>
+		<div class="swiper-button-next"></div>
+
+		<!-- If we need scrollbar -->
+		<div class="swiper-scrollbar"></div>
+	</div>
+</div>
+
