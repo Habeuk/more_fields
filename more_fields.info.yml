@@ -3,3 +3,6 @@ type: module
 description: This module offers compound fields allowing to create somewhat complex display blocks
 package: Custom
 core_version_requirement: ^9 || ^10
+dependencies:
+  - fullswiperoptions:fullswiperoptions
+  - video:video

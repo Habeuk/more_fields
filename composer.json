@@ -12,6 +12,7 @@
   "minimum-stability": "dev",
   "require": {
     "drupal/better_exposed_filters": "^6.0",
-    "habeuk/fullswiperoptions": "^1.2|dev-1x"
+    "habeuk/fullswiperoptions": "^1.2|dev-1x",
+    "drupal/video": "^3.0"
   }
 }
