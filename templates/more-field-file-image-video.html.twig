@@ -1,28 +1,41 @@
-<div class="commerce-swiper-container d-flex">
-	<div class="commerce-swiper swiper col-9">
-		<!-- Additional required wrapper -->
-		<div class="swiper-wrapper">
-			<!-- Slides -->
-			{% for item in element.items %}
-				<div class="swiper-slide">
-					{{item}}
+<pre>
+	{{ dump() }}
+</pre>
+<section {{attributes.addClass(["space_bottom"])}}>
+	<div class="container">
+		<div class="galleries-main-thumbs d-flex flex-column flex-lg-row">
+			<div class="swiper galleries-main swiper-full-options" {{element.swiper_attributes}} data-is-parent="true">
+				<div class="swiper-wrapper">
+					{% for item in element.items %}
+						<div class="swiper-slide">{{item}}</div>
+					{% endfor %}
 				</div>
-			{% endfor %}
-		</div>
-		<!-- controller -->
-		<div class="swiper-button-next"></div>
-		<div class="swiper-button-prev"></div>
-	</div>
-	<div
-		class="commerce-swiper-thumb mt-3">
-		<!-- Additional required wrapper -->
-		<div class="swiper-wrapper">
-			<!-- Slides -->
-			{% for item in element.items %}
-				<div class="swiper-slide">
-					{{item}}
+				<!-- If we need pagination -->
+				<div class="swiper-pagination"></div>
+
+				<!-- If we need navigation buttons -->
+				<div class="swiper-button-prev"></div>
+				<div class="swiper-button-next"></div>
+
+				<!-- If we need scrollbar -->
+				<div class="swiper-scrollbar"></div>
+			</div>
+			<div class="swiper galleries-thumb swiper-full-options" {{element.swiper_attributes}} data-is-children="true">
+				<div class="swiper-wrapper">
+					{% for item in element.items %}
+						<div class="swiper-slide">{{item}}</div>
+					{% endfor %}
 				</div>
-			{% endfor %}
+				<!-- If we need pagination -->
+				<div class="swiper-pagination"></div>
+
+				<!-- If we need navigation buttons -->
+				<div class="swiper-button-prev"></div>
+				<div class="swiper-button-next"></div>
+
+				<!-- If we need scrollbar -->
+				<div class="swiper-scrollbar"></div>
+			</div>
 		</div>
 	</div>
-</div>
+</section>
