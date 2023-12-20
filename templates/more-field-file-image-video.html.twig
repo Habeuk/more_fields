@@ -2,38 +2,48 @@
 	<div {{main_slider_attributes.addClass(['galleries-main']).setAttribute('data-is-parent','true')}}>
 		<div class="swiper-wrapper">
 			{% for item in main_slider_items %}
-			<div class="swiper-slide">
-				{{item}}
-			</div>
+				<div class="swiper-slide">
+					{{item}}
+				</div>
 			{% endfor %}
 		</div>
 		<!-- If we need pagination -->
-		<div class="swiper-pagination"></div>
+		{% if main_slider_settings.pagination.enabled %}
+			<div class="swiper-pagination"></div>
+		{% endif %}
 
 		<!-- If we need navigation buttons -->
-		<div class="swiper-button-prev"></div>
-		<div class="swiper-button-next"></div>
+		{% if main_slider_settings.navigation.enabled %}
+			<div class="swiper-button-prev"></div>
+			<div class="swiper-button-next"></div>
+		{% endif %}
 
 		<!-- If we need scrollbar -->
-		<div class="swiper-scrollbar"></div>
+		{% if main_slider_settings.scrollbar.enabled %}
+			<div class="swiper-scrollbar"></div>
+		{% endif %}
 	</div>
 	<div {{ thumbs_slider_attributes.addClass(['galleries-thumb']).setAttribute('data-is-children','true') }}>
 		<div class="swiper-wrapper">
 			{% for item in thumbs_slider_items %}
-			<div class="swiper-slide">
-				{{item}}
-			</div>
+				<div class="swiper-slide">
+					{{item}}
+				</div>
 			{% endfor %}
 		</div>
 		<!-- If we need pagination -->
-		<div class="swiper-pagination"></div>
+		{% if thumbs_slider_settings.pagination.enabled %}
+			<div class="swiper-pagination"></div>
+		{% endif %}
 
 		<!-- If we need navigation buttons -->
-		<div class="swiper-button-prev"></div>
-		<div class="swiper-button-next"></div>
-
+		{% if thumbs_slider_settings.navigation.enabled %}
+			<div class="swiper-button-prev"></div>
+			<div class="swiper-button-next"></div>
+		{% endif %}
 		<!-- If we need scrollbar -->
-		<div class="swiper-scrollbar"></div>
+		{% if thumbs_slider_settings.scrollbar.enabled %}
+			<div class="swiper-scrollbar"></div>
+		{% endif %}
 	</div>
 </div>
-

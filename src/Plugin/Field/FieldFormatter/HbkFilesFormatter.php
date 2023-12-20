@@ -35,7 +35,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
   protected $fileUrlGenerator;
   protected $videoFormatter;
   protected $imageFormatter;
-  
+
   /**
    * Constructs a new instance of the plugin.
    *
@@ -67,7 +67,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     }
     $this->fileUrlGenerator = $file_url_generator;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -75,7 +75,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('video.provider_manager'), $container->get('current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('file_url_generator'));
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -91,9 +91,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     ];
     $default["video_settings"]["field_extension"] = "mp4, ogv, webm";
     $default["image_settings"]["field_extension"] = "png, gif, jpg, jpeg, webp";
+    unset($default['video_settings']['width']);
+    unset($default['video_settings']['height']);
     return $default;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -103,7 +105,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     // dump(VideoPlayerListFormatter::defaultSettings());
     $default_configs = $this->defaultSettings();
     $configs = $this->getSettings();
-    // dump($configs);
+    // dump($default_configs);
     $video_settings = $configs['video_settings'] ?? $default_configs["video_default"];
     $image_settings = $configs['image_settings'] ?? $default_configs["image_default"];
     // dump([$default_configs, $image_settings]);
@@ -114,8 +116,6 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       'field_extension'
     ];
     $video_settings_fields = [
-      "width",
-      "height",
       "controls",
       "autoplay",
       "loop",
@@ -123,7 +123,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "preload",
       'field_extension'
     ];
-    
+
     $temp_form['video_settings'] = [
       '#type' => 'details',
       '#title' => $this->t('Video Settings'),
@@ -136,10 +136,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#tree' => TRUE,
       '#open' => FALSE
     ];
-    
+
     $video_settings_form = $this->videoFormatter->settingsForm($form, $form_state);
     $image_settings_form = $this->imageFormatter->settingsForm($form, $form_state);
-    
+    unset($video_settings_form["width"]);
+    unset($video_settings_form["height"]);
     $field_extension = [
       "#title" => $this->t("field type extension"),
       "#type" => "textfield",
@@ -147,48 +148,50 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     ];
     $temp_form["video_settings"]["field_extension"] = $field_extension;
     $temp_form["image_settings"]["field_extension"] = $field_extension;
-    
+
     $temp_form['image_settings'] = array_merge($temp_form['image_settings'], $image_settings_form);
     $temp_form['video_settings'] = array_merge($temp_form['video_settings'], $video_settings_form);
-    
+
     // utilile pour mettre à jour le style
     $form['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
       // "#value" => "more_fields/field-files",
       "#value" => $this->getSetting("layoutgenentitystyles_view")
     ];
-    
+
     // dump($video_settings);
     // update default value for video
     foreach ($video_settings_fields as $value) {
       $temp_form["video_settings"][$value]["#default_value"] = $video_settings[$value];
     }
-    
+
     // update default value for image
     foreach ($image_settings_fields as $value) {
       $temp_form["image_settings"][$value]["#default_value"] = $image_settings[$value];
     }
     $swiper_main_options = $this->getSetting('swiper_main');
-    
+
     $form['swiper_main'] = [
       '#title' => t('Main slider'),
       '#type' => 'fieldset',
       '#open' => false
     ];
+    // Fullswiperoptions::buildSwiperjsOptions($form['swiper_main'], []);
     Fullswiperoptions::buildSwiperjsOptions($form['swiper_main'], $swiper_main_options);
     $swiper_thumb_options = $this->getSetting('swiper_thumb');
-    
+
     $form['swiper_thumb'] = [
       '#title' => t('Thumbs slider'),
       '#type' => 'fieldset',
       '#open' => false
     ];
     Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], $swiper_thumb_options);
-    
+    // Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], []);
+
     $form = array_merge($form, $temp_form);
     return $form;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -198,9 +201,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $entity = $items->getEntity();
     $image_settings = $this->getSetting("image_settings");
     $video_settings = $this->getSetting("video_settings");
-    
+
     $files = $this->getEntitiesToView($items, $langcode);
-    
+
     $url = NULL;
     $image_link_setting = $image_settings["image_link"] ?? "file";
     // Check if the formatter involves a link.
@@ -208,11 +211,10 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       if (!$entity->isNew()) {
         $url = $entity->toUrl();
       }
-    }
-    elseif ($image_link_setting == 'file') {
+    } elseif ($image_link_setting == 'file') {
       $link_file = TRUE;
     }
-    
+
     $image_style_setting = $this->getSetting("image_settings")['image_style'];
     $image_loading_settings = $image_settings['image_loading'];
     // Collect cache tags to be added for each item in the field.
@@ -221,7 +223,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $image_style = $this->imageStyleStorage->load($image_style_setting);
       $base_cache_tags = $image_style->getCacheTags();
     }
-    
+
     /**
      *
      * @var File $file
@@ -232,23 +234,21 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       if (strpos($image_settings["field_extension"], $file_extension) !== false) {
         // Gestion des images
         $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
-      }
-      elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
+      } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
         // Gestion des videos
         $this->viewVideoElement([
           $file
         ], $elements, $delta);
-      }
-      else {
+      } else {
         // Autres types de fichiers
         $this->viewParentElement($file, $elements, $delta);
       }
     }
-    
+
     // generation swiper id
     $base_class = 'hbk3-gallery-';
     $random_id = rand(1000000, 9999999);
-    
+
     $main_slider_attributes = new Attribute([
       "data-key-parent" => $base_class . "parent-" . (string) $random_id,
       "data-key-children" => $base_class . "thumbs-" . (string) $random_id,
@@ -265,37 +265,67 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         'swiper'
       ]
     ]);
-    //
+    //constructing attributes of the main slide
     $swiper_main_options = Fullswiperoptions::formatOptions($this->getSetting('swiper_main'));
     $main_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_main_options));
-    //
+    $main_slider_items_attributes = new Attribute([
+      "class" => [
+        "slide-item",
+        "main-slide-item"
+      ],
+    ]);
+    //constructing attributes of the thumbs slide
     $swiper_thumb_options = Fullswiperoptions::formatOptions($this->getSetting('swiper_thumb'));
-    
     $thumbs_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_thumb_options));
+    $thumbs_slider_items_attributes = new Attribute([
+      "class" => [
+        "slide-item",
+        "thumb-slide-item"
+      ],
+    ]);
     //
+
     return [
       "#theme" => "more_field_file_image_video",
       "#main_slider_items" => $elements,
+      "#main_slider_items_attributes" => $main_slider_items_attributes,
       "#main_slider_attributes" => $main_slider_attributes,
-      '#main_slider_setting' => $swiper_main_options,
+      '#main_slider_settings' => $swiper_main_options,
       "#thumbs_slider_items" => $elements,
+      "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
       "#thumbs_slider_attributes" => $thumbs_slider_attributes,
       '#thumbs_slider_settings' => $swiper_thumb_options
     ];
   }
-  
+
   protected function viewVideoElement(array $files, &$elements, $delta) {
+    // dump($this->getSetting("video_settings"));
     $video_items = [];
     foreach ($files as $file) {
       $video_items[] = \Drupal::service('file_url_generator')->generateAbsoluteString($file->getFileUri());
     }
+    $video_settings = $this->getSetting('video_settings');
+    // dump($video_settings);
+    $attributes = [
+      "class" => [
+        "swiper-video-full"
+      ]
+    ];
+
+    $attributes["preload"] = $video_settings["preload"] ?? "";
+    if (isset($video_settings["autoplay"]) && $video_settings["autoplay"]) $attributes["autoplay"] = "";
+    if (isset($video_settings["loop"]) && $video_settings["loop"]) $attributes["loop"] = "";
+    if (isset($video_settings["muted"]) && $video_settings["muted"]) $attributes["muted"] = "";
+    if (isset($video_settings["controls"]) && $video_settings["controls"]) $attributes["controls"] = "";
+    // dump($attributes);
+    $video_attributes = new Attribute($attributes);
     $elements[$delta] = [
-      '#theme' => 'video_player_formatter',
+      '#theme' => 'more_fields_video_player_formatter',
       '#items' => $video_items,
-      '#player_attributes' => $this->getSetting('video_settings')
+      '#video_attributes' => $video_attributes
     ];
   }
-  
+
   /**
    *
    * @param File $file
@@ -306,15 +336,16 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $url = $this->fileUrlGenerator->generate($image_uri);
     }
     $cache_tags = Cache::mergeTags($base_cache_tags, $file->getCacheTags());
-    
+
     // Extract field item attributes for the theme function, and unset them
     // from the $item so that the field template does not re-render them.
     $item = $file->_referringItem;
     $item_attributes = $item->_attributes;
     unset($item->_attributes);
-    
+
     $item_attributes['loading'] = $image_loading_settings['attribute'];
-    
+    $item_attributes["class"] = ["swiper-image-full"];
+    // dump($item_attributes);
     $elements[$delta] = [
       '#theme' => 'image_formatter',
       '#item' => $item,
@@ -326,7 +357,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       ]
     ];
   }
-  
+
   protected function viewParentElement($file, &$elements, $delta) {
     $item = $file->_referringItem;
     $elements[$delta] = [
@@ -347,5 +378,4 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       unset($item->_attributes);
     }
   }
-  
 }
