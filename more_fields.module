@@ -1,4 +1,5 @@
 <?php
+
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -52,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-  
+
   // Load new definition field in code.
   /**
    *
@@ -289,13 +290,24 @@ function more_fields_theme() {
     ],
     'variables' => [
       'main_slider_items' => [],
+      'main_slider_items_attributes' => [],
       'main_slider_attributes' => [],
-      'main_slider_setting' => [],
+      'main_slider_settings' => [],
       'thumbs_slider_items' => [],
+      'thumbs_slider_items_attributes' => [],
       'thumbs_slider_attributes' => [],
       'thumbs_slider_settings' => []
     ],
     'file' => 'more_fields.theme.inc'
+  ];
+  $hooks['more_fields_video_player_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_field_file_image_video'
+    ],
+    'variables' => [
+      'items' => [],
+      'video_attributes' => []
+    ]
   ];
   $hooks['restrained_text_formatter'] = [
     'preprocess functions' => [
@@ -304,6 +316,6 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  
+
   return $hooks;
 }

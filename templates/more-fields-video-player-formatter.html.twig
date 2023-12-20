@@ -1,0 +1,20 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a formatted video field.
+ *
+ * Available variables:
+ * - items: A collection of videos.
+ * - player_attributes: Player options including the following:
+ *   - width: The width of the video (if known).
+ *   - height: The height of the video (if known).
+ *   - autoplay: Autoplay on or off
+ *
+ * @ingroup themeable
+ */
+#}
+<video {{video_attributes}}>
+	{% for user in items %}
+		<source src="{{ user }}"/>
+	{% endfor %}
+</video>
