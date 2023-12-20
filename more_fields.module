@@ -124,6 +124,7 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
      * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
      */
     $field_image = $content->get($element['#field_name']);
+    return null;
     /**
      *
      * @var \Drupal\field\Entity\FieldConfig $FieldConfig
