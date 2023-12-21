@@ -203,7 +203,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $video_settings = $this->getSetting("video_settings");
 
     $files = $this->getEntitiesToView($items, $langcode);
-
+    //array containing the field type at a given index ("image" or "video")
+    $items_types = [];
     $url = NULL;
     $image_link_setting = $image_settings["image_link"] ?? "file";
     // Check if the formatter involves a link.
@@ -233,9 +234,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $file_extension = pathinfo($file->getFileUri(), PATHINFO_EXTENSION);
       if (strpos($image_settings["field_extension"], $file_extension) !== false) {
         // Gestion des images
+        $items_types[] = 'image';
         $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
       } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
         // Gestion des videos
+        $items_types[] = 'video';
         $this->viewVideoElement([
           $file
         ], $elements, $delta);
@@ -290,11 +293,13 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "#main_slider_items" => $elements,
       "#main_slider_items_attributes" => $main_slider_items_attributes,
       "#main_slider_attributes" => $main_slider_attributes,
-      '#main_slider_settings' => $swiper_main_options,
+      "#main_slider_settings" => $swiper_main_options,
       "#thumbs_slider_items" => $elements,
       "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
       "#thumbs_slider_attributes" => $thumbs_slider_attributes,
-      '#thumbs_slider_settings' => $swiper_thumb_options
+      "#thumbs_slider_settings" => $swiper_thumb_options,
+      "#items_types" => $items_types,
+      "#videos_settings" => $video_settings
     ];
   }
 
@@ -308,7 +313,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     // dump($video_settings);
     $attributes = [
       "class" => [
-        "swiper-video-full"
+        "swiper-video-full",
+        "swiper-zoom-target"
       ]
     ];
 
@@ -344,7 +350,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     unset($item->_attributes);
 
     $item_attributes['loading'] = $image_loading_settings['attribute'];
-    $item_attributes["class"] = ["swiper-image-full"];
+    $item_attributes["class"] = ["swiper-image-full", "swiper-zoom-target"];
     // dump($item_attributes);
     $elements[$delta] = [
       '#theme' => 'image_formatter',
@@ -354,7 +360,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#url' => $url,
       '#cache' => [
         'tags' => $cache_tags
-      ]
+      ],
     ];
   }
 

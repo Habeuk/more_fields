@@ -1,9 +1,30 @@
+{% set video_play_button_classes = "video-play-button" %}
+{% if videos_settings.autoplay %}
+	{% set video_play_button_classes = video_play_button_classes ~ " video-onplay" %}
+{% else %}
+	{% set video_play_button_classes = video_play_button_classes ~ " video-onpause" %}
+{% endif %}
+
 <div {{ attributes.addClass(['galleries-main-thumbs','d-flex','flex-column','flex-lg-row']) }}>
 	<div {{main_slider_attributes.addClass(['galleries-main']).setAttribute('data-is-parent','true')}}>
 		<div class="swiper-wrapper">
 			{% for item in main_slider_items %}
 				<div class="swiper-slide">
-					{{item}}
+					{% if items_types[loop.index0] == 'video' %}
+						<span class="{{video_play_button_classes}}">
+							<span class="button-part-circle">
+								<svg class="play-svg action-svg" fill="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.54 9 8.88 3.46a3.42 3.42 0 0 0-5.13 3v11.12A3.42 3.42 0 0 0 7.17 21a3.43 3.43 0 0 0 1.71-.46L18.54 15a3.42 3.42 0 0 0 0-5.92Zm-1 4.19-9.66 5.62a1.44 1.44 0 0 1-1.42 0 1.42 1.42 0 0 1-.71-1.23V6.42a1.42 1.42 0 0 1 .71-1.23A1.51 1.51 0 0 1 7.17 5a1.54 1.54 0 0 1 .71.19l9.66 5.58a1.42 1.42 0 0 1 0 2.46Z"/></svg>
+								<svg class="pause-svg action-svg" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 3a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm8 0a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="currentColor"/></svg>
+							</span>
+						</span>
+					{% endif %}
+					{% if main_slider_settings.zoom %}
+						<div class="swiper-zoom-container">
+							{{item}}
+						</div>
+					{% else %}
+						{{item}}
+					{% endif %}
 				</div>
 			{% endfor %}
 		</div>
@@ -27,7 +48,13 @@
 		<div class="swiper-wrapper">
 			{% for item in thumbs_slider_items %}
 				<div class="swiper-slide">
-					{{item}}
+					{% if thumbs_slider_settings.zoom %}
+						<div class="swiper-zoom-container">
+							{{item}}
+						</div>
+					{% else %}
+						{{item}}
+					{% endif %}
 				</div>
 			{% endfor %}
 		</div>

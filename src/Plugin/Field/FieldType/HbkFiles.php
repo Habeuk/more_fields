@@ -17,7 +17,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *   id = "more_fields_hbk_file",
  *   label = @Translation("HBK Galleries Files (videos and images) "),
  *   description = @Translation("This field stores the ID of a file(video or image) as an integer value."),
- *   default_widget = "file_generic",
+ *   default_widget = "hbk_file_generic",
  *   default_formatter = "more_fields_hbk_file_formatter",
  *   category = "Complex fields",
  *   list_class = "\Drupal\file\Plugin\Field\FieldType\FileFieldItemList",
@@ -25,7 +25,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  * )
  */
 class HbkFiles extends FileItem {
-  
+
   /**
    *
    * {@inheritdoc}
@@ -41,11 +41,11 @@ class HbkFiles extends FileItem {
       'video_extensions' => 'mp4, ogv, webm'
     ] + $parentFieldSettings;
   }
-  
-/**
- *
- * {@inheritdoc}
- */
+
+  /**
+   *
+   * {@inheritdoc}
+   */
   // public function fieldSettingsForm(array $form, FormStateInterface
   // $form_state) {
   // $settings = $this->getSettings();

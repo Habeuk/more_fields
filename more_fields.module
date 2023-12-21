@@ -297,7 +297,9 @@ function more_fields_theme() {
       'thumbs_slider_items' => [],
       'thumbs_slider_items_attributes' => [],
       'thumbs_slider_attributes' => [],
-      'thumbs_slider_settings' => []
+      'thumbs_slider_settings' => [],
+      'items_types' => [],
+      'videos_settings' => []
     ],
     'file' => 'more_fields.theme.inc'
   ];
