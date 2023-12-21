@@ -129,8 +129,8 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
      *
      * @var \Drupal\field\Entity\FieldConfig $FieldConfig
      */
+    $FieldConfig = $field_image->getFieldDefinition();
     if ($FieldConfig instanceof \Drupal\field\Entity\FieldConfig) {
-      $FieldConfig = $field_image->getFieldDefinition();
       return $FieldConfig->getThirdPartySetting('more_fields', 'more_fields_ratio');
     }
   }
