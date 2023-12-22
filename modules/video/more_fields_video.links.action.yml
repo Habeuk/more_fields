@@ -1,0 +1,5 @@
+multiformat_video.add_form:
+  title: 'Add multiformat video'
+  route_name: entity.multiformat_video.add_form
+  appears_on:
+    - entity.multiformat_video.collection

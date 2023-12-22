@@ -1,0 +1,8 @@
+name: More field video handler
+type: module
+description: "Implement an entity to store the thumb and other format of video."
+package: Custom
+core_version_requirement: ^9 || ^10
+dependencies:
+  - more_fields:more_fields
+  - video:video

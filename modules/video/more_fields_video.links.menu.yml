@@ -1,0 +1,10 @@
+entity.multiformat_video.settings:
+  title: 'MultiFormat Video'
+  description: 'Configure a MultiFormat Video entity type.'
+  route_name:  entity.multiformat_video.settings
+  parent: system.admin_structure
+entity.multiformat_video.collection:
+  title: 'MultiFormat Videos'
+  description: 'List of multiformat videos.'
+  route_name: entity.multiformat_video.collection
+  parent: system.admin_content

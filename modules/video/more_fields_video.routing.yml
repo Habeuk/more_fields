@@ -1,0 +1,7 @@
+entity.multiformat_video.settings:
+  path: 'admin/structure/multiformat-video'
+  defaults:
+    _form: '\Drupal\more_fields_video\Form\MultiformatVideoSettingsForm'
+    _title: 'MultiFormat Video'
+  requirements:
+    _permission: 'administer multiformat video'

@@ -1,0 +1,3 @@
+services:
+  more_fields_video.video_converter:
+    class: Drupal\more_fields_video\Services\MoreFieldsVideoConverter

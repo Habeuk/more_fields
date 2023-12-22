@@ -1,0 +1,3 @@
+administer multiformat video:
+  title: 'Administer multiformat video settings'
+  restrict access: true

@@ -1,0 +1,9 @@
+entity.multiformat_video.settings:
+  title: 'Settings'
+  route_name: entity.multiformat_video.settings
+  base_route: entity.multiformat_video.settings
+entity.multiformat_video.collection:
+  title: 'MultiFormat Videos'
+  route_name: entity.multiformat_video.collection
+  base_route: system.admin_content
+  weight: 10
