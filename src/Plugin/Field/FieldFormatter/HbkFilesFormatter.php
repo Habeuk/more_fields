@@ -18,6 +18,9 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Template\Attribute;
 use Drupal\fullswiperoptions\Fullswiperoptions;
 use Drupal\Component\Serialization\Json;
+use Drupal\image\Entity\ImageStyle;
+use Drupal\more_fields_video\Entity\MultiformatVideo;
+use Drupal\Core\Url;
 
 /**
  * Plugin implementation of the 'text_long, text_with_summary' formatter.
@@ -36,6 +39,16 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
   protected $videoFormatter;
   protected $imageFormatter;
 
+
+  /**
+   * @var EntityStorageInterface $multifomatHandler
+   */
+  protected $multiformatHandler;
+
+  /**
+   * @var EntityStorageInterface $fileHandler
+   */
+  protected $fileHandler;
   /**
    * Constructs a new instance of the plugin.
    *
@@ -56,7 +69,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * @param \Drupal\video\ProviderManagerInterface $provider_manager
    *        The video embed provider manager.
    */
-  public function __construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, ProviderManagerInterface $provider_manager, AccountInterface $current_user, EntityStorageInterface $image_style_storage, FileUrlGeneratorInterface $file_url_generator = NULL) {
+  public function __construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, ProviderManagerInterface $provider_manager, AccountInterface $current_user, EntityStorageInterface $image_style_storage, EntityStorageInterface $multiformat_handler, EntityStorageInterface $file_handler,  FileUrlGeneratorInterface $file_url_generator = NULL) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
     $this->videoFormatter = new VideoPlayerListFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user);
     $this->imageFormatter = new ImageFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user, $image_style_storage, $file_url_generator);
@@ -66,6 +79,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $file_url_generator = \Drupal::service('file_url_generator');
     }
     $this->fileUrlGenerator = $file_url_generator;
+    $this->multiformatHandler = $multiformat_handler;
+    $this->fileHandler = $file_handler;
   }
 
   /**
@@ -73,7 +88,21 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('video.provider_manager'), $container->get('current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('file_url_generator'));
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['label'],
+      $configuration['view_mode'],
+      $configuration['third_party_settings'],
+      $container->get('video.provider_manager'),
+      $container->get('current_user'),
+      $container->get('entity_type.manager')->getStorage('image_style'),
+      $container->get('entity_type.manager')->getStorage('multiformat_video'),
+      $container->get('entity_type.manager')->getStorage('file'),
+      $container->get('file_url_generator'),
+    );
   }
 
   /**
@@ -198,6 +227,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
+    $thumb_elements = [];
     $entity = $items->getEntity();
     $image_settings = $this->getSetting("image_settings");
     $video_settings = $this->getSetting("video_settings");
@@ -236,15 +266,34 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         // Gestion des images
         $items_types[] = 'image';
         $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
+        $thumb_elements[$delta] = $elements[$delta];
       } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
         // Gestion des videos
         $items_types[] = 'video';
         $this->viewVideoElement([
           $file
         ], $elements, $delta);
+
+        $video_id = $file->id();
+        /**
+         * @var MultiformatVideo $multiformat_video
+         */
+        $multiformat_video = $this->multiformatHandler->load($video_id);
+        if (isset($multiformat_video)) {
+          $thumb_id = $multiformat_video->getThumbId();
+          /**
+           * @var File $thumb_file
+           */
+          $thumb_file = $this->fileHandler->load($thumb_id);
+          $this->viewThumbElement($thumb_file, $thumb_elements, $image_style_setting, $image_loading_settings, $delta);
+          // dd($thumb_elements[$delta], $file);
+        } else {
+          $thumb_elements[$delta] = $elements[$delta];
+        }
       } else {
         // Autres types de fichiers
         $this->viewParentElement($file, $elements, $delta);
+        $thumb_elements[$delta] = $elements[$delta];
       }
     }
 
@@ -294,7 +343,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "#main_slider_items_attributes" => $main_slider_items_attributes,
       "#main_slider_attributes" => $main_slider_attributes,
       "#main_slider_settings" => $swiper_main_options,
-      "#thumbs_slider_items" => $elements,
+      "#thumbs_slider_items" => $thumb_elements,
       "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
       "#thumbs_slider_attributes" => $thumbs_slider_attributes,
       "#thumbs_slider_settings" => $swiper_thumb_options,
@@ -346,8 +395,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     // Extract field item attributes for the theme function, and unset them
     // from the $item so that the field template does not re-render them.
     $item = $file->_referringItem;
-    $item_attributes = $item->_attributes;
-    unset($item->_attributes);
+    if (isset($item)) {
+      $item_attributes = $item->_attributes;
+      # code...
+      unset($item->_attributes);
+    }
 
     $item_attributes['loading'] = $image_loading_settings['attribute'];
     $item_attributes["class"] = ["swiper-image-full", "swiper-zoom-target"];
@@ -361,6 +413,35 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#cache' => [
         'tags' => $cache_tags
       ],
+    ];
+  }
+
+  /**
+   * @param File $file
+   */
+  protected function viewThumbElement($file, &$elements, $image_style_setting, $image_loading_settings, $delta) {
+    $arr_attributes = [
+      "loading" => $image_loading_settings['attribute'],
+      "class" => [
+        "swiper-image-full",
+        "swiper-zoom-target",
+      ]
+    ];
+    $item_attributes = new Attribute($arr_attributes);
+    $uri = file_create_url($file->getFileUri());
+    if ($image_style_setting) {
+      /**
+       * @var ImageStyle $imageStyle
+       */
+      $imageStyle = $this->imageStyleStorage->load($image_style_setting);
+      $uri = $imageStyle->buildUrl($uri);
+    }
+    $url = Url::fromUri($uri);
+    // dd($url);
+    $elements[$delta] = [
+      '#theme' => 'more_fields_thumb_formatter',
+      '#item_attributes' => $item_attributes,
+      '#url' => $url,
     ];
   }
 

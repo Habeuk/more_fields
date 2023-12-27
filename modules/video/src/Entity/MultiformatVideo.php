@@ -79,7 +79,7 @@ class MultiformatVideo extends ContentEntityBase implements MultiformatVideoInte
      * set the thumb id
      */
     public function setThumbId($id) {
-        $this->get("thumb")->value = $id;
+        $this->get("thumb_id")->value = $id;
     }
     /**
      * set the video id
@@ -92,6 +92,6 @@ class MultiformatVideo extends ContentEntityBase implements MultiformatVideoInte
      * @return int 
      */
     public function getThumbId() {
-        return $this->get("id")->value;
+        return $this->get("thumb_id")->value;
     }
 }
