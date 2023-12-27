@@ -16,6 +16,9 @@ use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Drupal\file\Plugin\Field\FieldWidget\FileWidget;
+use Drupal\more_fields_video\Services\MoreFieldsVideoConverter;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\more_fields_video\Entity\MultiformatVideo;
 
 /**
  * Plugin implementation of the 'file_generic' widget.
@@ -30,4 +33,113 @@ use Drupal\file\Plugin\Field\FieldWidget\FileWidget;
  * )
  */
 class HbkFileWidget extends FileWidget {
+
+    /**
+     * The element info manager.
+     * @var MoreFieldsVideoConverter $videoConverter
+     */
+    protected $videoConverter;
+    /**
+     * @var EntityTypeManagerInterface $entityManager
+     */
+    protected $entityManager;
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ElementInfoManagerInterface $element_info, MoreFieldsVideoConverter $video_converter, EntityTypeManagerInterface $entity_manager) {
+        parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $element_info);
+        $this->videoConverter = $video_converter;
+        $this->entityManager = $entity_manager;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+        return new static(
+            $plugin_id,
+            $plugin_definition,
+            $configuration['field_definition'],
+            $configuration['settings'],
+            $configuration['third_party_settings'],
+            $container->get('element_info'),
+            $container->get("more_fields_video.video_converter"),
+            $container->get('entity_type.manager')
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+        $element = parent::formElement($items, $delta, $element, $form, $form_state);
+        $element['#element_validate'][] = [$this, 'validateElement'];
+        return $element;
+    }
+
+
+    /**
+     * handling the validation of the field
+     * and create the thumbnail for videos
+     */
+    public function validateElement($element, FormStateInterface &$form_state, $form) {
+        $vid_extensions = ['mp4', 'ogv', 'webm'];
+        /**
+         * @var File $file
+         */
+        foreach ($element["#files"] as $id => $file) {
+            $fileUri = $file->getFileUri();
+            $fileExtension = pathinfo($fileUri, PATHINFO_EXTENSION);
+            if (in_array($fileExtension, $vid_extensions)) {
+                # code...
+                $multiformat = $this->entityManager->getStorage("multiformat_video")->load($id);
+                if (!$multiformat) {
+                    # code...
+                    $result = $this->videoConverter->createThumbFile($id);
+                    if ($result !== FALSE) {
+                        $this->sync_multiformat($id, $result);
+                    }
+                }
+                if ($file->isPermanent()) {
+                    /**
+                     * @var MultiformatVideo $multiformat
+                     */
+                    $multiformat = $multiformat ?? $this->entityManager->getStorage("multiformat_video")->load($id);
+                    $thumb_id = $multiformat->getThumbId();
+
+                    /**
+                     * @var File $thumb_file
+                     */
+                    $thumb_file = $this->entityManager->getStorage("file")->load($thumb_id);
+                    if (!$thumb_file->isPermanent()) {
+                        $thumb_file->setPermanent();
+                    }
+                }
+            }
+        }
+        // dd($form);
+    }
+
+
+
+    public function sync_multiformat($video_id, $thumb_uri) {
+
+        /**
+         * @var File $thumb_file
+         */
+        $thumb_file = $this->entityManager->getStorage("file")->create();
+        $thumb_file->setFileUri($thumb_uri);
+        $thumbId = $thumb_file->save();
+
+        //creating and handling the multiformat
+        /**
+         * @var MultiformatVideo $multiformat
+         */
+        $multiformat = $this->entityManager->getStorage('multiformat_video')->load($video_id) ??  $this->entityManager->getStorage("multiformat_video")->create();
+        $multiformat->setThumbId($thumbId);
+        $multiformat->setVideoId($video_id);
+        return $multiformat->save();
+    }
 }

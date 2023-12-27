@@ -9,25 +9,21 @@ use Drupal\Core\File\FileSystem;
  * implement
  * hook_preprocess_region
  */
-// function more_fields_video_preprocess_region($variables) {
-//     if ($variables["region"] == "content") {
-        // dump('testing');
-        // $file = File::load(43);
-        // $file_uri = $file->getFileUri();
-        // ['filename' => $filename, 'dirname' => $dirname] = pathinfo($file_uri);
-        // // $dirname = dirname($video_uri);
-        // // $video_name = pathinfo(basename($video_uri), PATHINFO_FILENAME);
-        // $thumb_path = $dirname . '/' . $filename . ".png";
-        // $ffmpeg = FFMpeg::create();
-        // /**
-        //  * @var FileSystem $file_system
-        //  */
-        // $file_system = \Drupal::service('file_system');
-        // dump("hello", $file_system->realpath($thumb_path));
-        // $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
-        // dump($ffm_video);
-        // $temp = $ffm_video->frame(TimeCode::fromSeconds(1))
-        //     ->save($file_system->realpath($thumb_path));
-        // dump($temp);
-//     }
-// }
+function more_fields_video_preprocess_region($variables) {
+    if ($variables["region"] == "contentfgfgfg") {
+        $file = File::load(43);
+        $file_uri = $file->getFileUri();
+        ['filename' => $filename, 'dirname' => $dirname] = pathinfo($file_uri);
+        // $dirname = dirname($video_uri);
+        // $video_name = pathinfo(basename($video_uri), PATHINFO_FILENAME);
+        $thumb_path = $dirname . '/' . $filename . ".png";
+        $ffmpeg = FFMpeg::create();
+        /**
+         * @var FileSystem $file_system
+         */
+        $file_system = \Drupal::service('file_system');
+        $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
+        $temp = $ffm_video->frame(TimeCode::fromSeconds(1))
+            ->save($file_system->realpath($thumb_path));
+    }
+}

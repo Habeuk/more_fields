@@ -58,9 +58,16 @@ class MultiformatVideo extends ContentEntityBase implements MultiformatVideoInte
      */
     public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
         $fields = parent::baseFieldDefinitions($entity_type);
-        $fields['thumb'] = BaseFieldDefinition::create('integer')
+        $fields['thumb_id'] = BaseFieldDefinition::create('integer')
             ->setLabel(t('file thumbnail id'))
             ->setDescription(t('The id of the generated file for thumb'))
+            ->setSettings([
+                'unsigned' => false,
+                'min' => 1
+            ]);
+        $fields['video_id'] = BaseFieldDefinition::create('integer')
+            ->setLabel(t('file video id'))
+            ->setDescription(t('The id of the main video'))
             ->setSettings([
                 'unsigned' => false,
                 'min' => 1
@@ -69,10 +76,22 @@ class MultiformatVideo extends ContentEntityBase implements MultiformatVideoInte
     }
 
     /**
-     * set thumbnail
-     * @param int $video_id
+     * set the thumb id
      */
-    public function createThumb($video_id) {
-        // $file = File::load($video_id)
+    public function setThumbId($id) {
+        $this->get("thumb")->value = $id;
+    }
+    /**
+     * set the video id
+     */
+    public function setVideoId($id) {
+        $this->get("id")->value = $id;
+    }
+    /**
+     * get thumb id
+     * @return int 
+     */
+    public function getThumbId() {
+        return $this->get("id")->value;
     }
 }

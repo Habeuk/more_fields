@@ -172,7 +172,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $swiper_main_options = $this->getSetting('swiper_main');
 
     $form['swiper_main'] = [
-      '#title' => t('Main slider'),
+      '#title' => $this->t('Main slider'),
       '#type' => 'fieldset',
       '#open' => false
     ];
@@ -181,7 +181,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $swiper_thumb_options = $this->getSetting('swiper_thumb');
 
     $form['swiper_thumb'] = [
-      '#title' => t('Thumbs slider'),
+      '#title' => $this->t('Thumbs slider'),
       '#type' => 'fieldset',
       '#open' => false
     ];
