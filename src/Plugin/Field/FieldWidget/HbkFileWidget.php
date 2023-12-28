@@ -103,6 +103,7 @@ class HbkFileWidget extends FileWidget {
         foreach ($element["#files"] as $id => $file) {
             $fileUri = $file->getFileUri();
             $fileExtension = pathinfo($fileUri, PATHINFO_EXTENSION);
+            // dump($fileExtension);
             if (in_array($fileExtension, $vid_extensions)) {
                 # code...
                 $multiformat = $this->multiformatHandler->load($id);
@@ -113,44 +114,40 @@ class HbkFileWidget extends FileWidget {
                         $this->sync_multiformat($id, $result);
                     }
                 }
-                if ($file->isPermanent()) {
-                    /**
-                     * @var MultiformatVideo $multiformat
-                     */
-                    $multiformat = $multiformat ?? $this->multiformatHandler->load($id);
-                    $thumb_id = $multiformat->getThumbId();
+                // if ($file->isPermanent()) {
+                //     /**
+                //      * @var MultiformatVideo $multiformat
+                //      */
+                //     $multiformat = $multiformat ?? $this->multiformatHandler->load($id);
+                //     $thumb_id = $multiformat->getThumbId();
 
-                    /**
-                     * @var File $thumb_file
-                     */
-                    $thumb_file = $this->fileHandler->load($thumb_id);
-                    if (!$thumb_file->isPermanent()) {
-                        $thumb_file->setPermanent();
-                    }
-                }
+                //     /**
+                //      * @var File $thumb_file
+                //      */
+                //     $thumb_file = $this->fileHandler->load($thumb_id);
+                //     if (!$thumb_file->isPermanent()) {
+                //         $thumb_file->setPermanent();
+                //     }
+                // }
             }
         }
     }
 
 
-
-    public function sync_multiformat($video_id, $thumb_uri) {
-
-        /**
-         * @var File $thumb_file
-         */
-        $thumb_file = $this->fileHandler->create();
-        $thumb_file->setFileUri($thumb_uri);
-        $thumb_file->setFilename(pathinfo($thumb_uri, PATHINFO_FILENAME));
-        $thumbId = $thumb_file->save();
-
+    /**
+     * @var File $thumb_file
+     */
+    public function sync_multiformat($video_id, File $thumb_file) {
         //creating and handling the multiformat
         /**
          * @var MultiformatVideo $multiformat
          */
         $multiformat = $this->multiformatHandler->load($video_id) ??  $this->multiformatHandler->create();
+        $thumb_file->setPermanent();
+        $thumb_file->save();
         $multiformat->setThumbId($thumb_file->id());
         $multiformat->setVideoId($video_id);
-        return $multiformat->save();
+        $multiformat->save();
+        return $multiformat;
     }
 }
