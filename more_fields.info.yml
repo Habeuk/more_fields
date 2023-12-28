@@ -7,3 +7,4 @@ dependencies:
   - fullswiperoptions:fullswiperoptions
   - video:video
   - layoutgenentitystyles:layoutgenentitystyles
+  - more_fields:more_fields_video
