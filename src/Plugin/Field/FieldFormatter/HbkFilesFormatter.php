@@ -302,7 +302,12 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
            * @var File $thumb_file
            */
           $thumb_file = $this->fileHandler->load($thumb_id);
-          $this->viewThumbElement($thumb_file, $thumb_elements, $thumbs_settings, $delta);
+          if (isset($thumb_file)) {
+            # code...
+            $this->viewThumbElement($thumb_file, $thumb_elements, $thumbs_settings, $delta);
+          } else {
+            $thumb_elements[$delta] = $elements[$delta];
+          }
           // dd($thumb_elements[$delta], $file);
         }
         else {

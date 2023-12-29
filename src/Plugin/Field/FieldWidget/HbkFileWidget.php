@@ -2,23 +2,14 @@
 
 namespace Drupal\more_fields\Plugin\Field\FieldWidget;
 
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element;
 use Drupal\Core\Render\ElementInfoManagerInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\file\Element\ManagedFile;
 use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Drupal\file\Plugin\Field\FieldWidget\FileWidget;
 use Drupal\more_fields_video\Services\MoreFieldsVideoConverter;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\FunctionalJavascriptTests\Ajax\MultiFormTest;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
 use Drupal\Core\Entity\EntityStorageInterface;
 

@@ -65,13 +65,6 @@ class MultiformatVideo extends ContentEntityBase implements MultiformatVideoInte
                 'unsigned' => false,
                 'min' => 1
             ]);
-        $fields['video_id'] = BaseFieldDefinition::create('integer')
-            ->setLabel(t('file video id'))
-            ->setDescription(t('The id of the main video'))
-            ->setSettings([
-                'unsigned' => false,
-                'min' => 1
-            ]);
         return $fields;
     }
 

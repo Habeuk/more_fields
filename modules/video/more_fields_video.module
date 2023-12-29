@@ -4,26 +4,22 @@ use Drupal\file\Entity\File;
 use FFMpeg\FFMpeg;
 use FFMpeg\Coordinate\TimeCode;
 use Drupal\Core\File\FileSystem;
+use Drupal\more_fields_video\Entity\MultiformatVideo;
 
 /**
- * implement
- * hook_preprocess_region
+ * Implements hook_file_delete().
  */
-function more_fields_video_preprocess_region($variables) {
-    if ($variables["region"] == "contentfgfgfg") {
-        $file = File::load(43);
-        $file_uri = $file->getFileUri();
-        ['filename' => $filename, 'dirname' => $dirname] = pathinfo($file_uri);
-        // $dirname = dirname($video_uri);
-        // $video_name = pathinfo(basename($video_uri), PATHINFO_FILENAME);
-        $thumb_path = $dirname . '/' . $filename . ".png";
-        $ffmpeg = FFMpeg::create();
-        /**
-         * @var FileSystem $file_system
-         */
-        $file_system = \Drupal::service('file_system');
-        $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
-        $temp = $ffm_video->frame(TimeCode::fromSeconds(1))
-            ->save($file_system->realpath($thumb_path));
+function more_fields_video_file_delete($file) {
+    dump($file->id());
+    $multiformat = MultiformatVideo::load($file->id);
+    if (isset($multiformat)) {
+        $thumb_id = $multiformat->getThumbId();
+        if (isset($thumb_id)) {
+            $thumb_file = File::load($thumb_id);
+            if (isset($thumb_file)) {
+                $thumb_file->delete();
+            }
+        }
+        $multiformat->delete();
     }
 }
