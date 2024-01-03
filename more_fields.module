@@ -1,5 +1,4 @@
 <?php
-
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -53,7 +52,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-
+  
   // Load new definition field in code.
   /**
    *
@@ -119,20 +118,22 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
      * @var \Drupal\Core\Entity\ContentEntityInterface $content
      */
     $content = $ContentForm->getEntity();
-    /**
-     *
-     * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
-     */
-    $field_image = $content->get($element['#field_name']);
-
-    /**
-     * (
-     *
-     * @var \Drupal\field\Entity\FieldConfig $FieldConfig
-     */
-    $FieldConfig = $field_image->getFieldDefinition();
-    if ($FieldConfig instanceof \Drupal\field\Entity\FieldConfig) {
-      return $FieldConfig->getThirdPartySetting('more_fields', 'more_fields_ratio');
+    if ($content->hasField($element['#field_name'])) {
+      /**
+       *
+       * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
+       */
+      $field_image = $content->get($element['#field_name']);
+      
+      /**
+       * (
+       *
+       * @var \Drupal\field\Entity\FieldConfig $FieldConfig
+       */
+      $FieldConfig = $field_image->getFieldDefinition();
+      if ($FieldConfig instanceof \Drupal\field\Entity\FieldConfig) {
+        return $FieldConfig->getThirdPartySetting('more_fields', 'more_fields_ratio');
+      }
     }
   }
   return null;
@@ -322,7 +323,7 @@ function more_fields_theme() {
     'variables' => [
       'items' => null,
       'item_attributes' => null,
-      'url' => null,
+      'url' => null
     ]
   ];
   $hooks['restrained_text_formatter'] = [
@@ -332,6 +333,6 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
+  
   return $hooks;
 }
