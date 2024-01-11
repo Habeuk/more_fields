@@ -265,14 +265,19 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     }
 
     $image_style_setting = $this->getSetting("image_settings")['image_style'];
+    $thumb_image_style_setting = $thumbs_settings["image_style"];
     $image_loading_settings = $image_settings['image_loading'];
     // Collect cache tags to be added for each item in the field.
     $base_cache_tags = [];
+    $thumb_base_cache_tags = [];
     if (!empty($image_style_setting)) {
       $image_style = $this->imageStyleStorage->load($image_style_setting);
       $base_cache_tags = $image_style->getCacheTags();
     }
-
+    if (!empty($image_style_setting)) {
+      $thumb_image_style = $this->imageStyleStorage->load($image_style_setting);
+      $thumb_base_cache_tags = $thumb_image_style->getCacheTags();
+    }
     /**
      *
      * @var File $file
@@ -283,8 +288,26 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       if (strpos($image_settings["field_extension"], $file_extension) !== false) {
         // Gestion des images
         $items_types[] = 'image';
-        $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
-        $thumb_elements[$delta] = $elements[$delta];
+        $this->viewImageElement(
+          $file,
+          $elements,
+          $url,
+          $image_style_setting,
+          $base_cache_tags,
+          $image_loading_settings,
+          $delta,
+          isset($link_file) ? $link_file : NULL
+        );
+        $this->viewImageElement(
+          $file,
+          $thumb_elements,
+          $url,
+          $thumb_image_style_setting,
+          $thumb_base_cache_tags,
+          $thumbs_settings["image_loading"],
+          $delta,
+          isset($link_file) ? $link_file : NULL
+        );
       } elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
         // Gestion des videos
         $items_types[] = 'video';
