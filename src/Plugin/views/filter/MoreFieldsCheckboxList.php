@@ -8,6 +8,7 @@ use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Entity\Query\QueryAggregateInterface;
+use Drupal\views\Plugin\views\query\Sql;
 
 /**
  * Filter by term id.
@@ -110,7 +111,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         $tree = $this->termStorage->loadTree($vocabulary->id(), 0, NULL, TRUE);
         $options = [];
-
         if ($tree) {
           foreach ($tree as $term) {
             if (!$term->isPublished() && !$this->currentUser->hasPermission('administer taxonomy')) {
@@ -224,6 +224,9 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
 
   /**
    * Filtre, compte les entites regrouper par termes.
+   * Il faut ternir aussi compte du filtre encours dans la vue. (assez complique
+   * de trouver cela).
+   * On va construire QUery avec les informations donc on dispose.
    *
    * @see https://drupal.stackexchange.com/questions/184411/entityquery-group-by-clause
    * @return \Drupal\Core\Entity\Query\QueryAggregateInterface
@@ -236,20 +239,135 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     $queryEntity = \Drupal::entityQueryAggregate($this->configuration['entity_type'])->accessCheck(true);
     // On filtre les entites ayant un terme.
     $queryEntity->condition($this->configuration['field_name'], null, 'IS NOT NULL');
-    // On filtre les entitées ayant une valeur dans le array.
-    if ($this->options["filter_by_current_term"]) {
-      $this->filterByCurrentTerm($queryEntity);
-    }
     // On regroupe en fonction du terme tid.
     $queryEntity->groupBy($this->configuration['field_name']);
     // On compte les resultats.
     $queryEntity->aggregate($this->configuration['field_name'], 'COUNT', NULL, $this->alias_count);
+    // return $queryEntity;
+    if (is_object($this->query)) {
+      // dd($this->configuration, $this->view->storage->get('base_field'));
+      /**
+       * On clone afin d'eviter d'impacter la requette reelle.
+       *
+       * @var \Drupal\views\Plugin\views\query\Sql $queryClone
+       */
+      $queryClone = clone $this->query;
+      /**
+       * Le nom de la table du terme taxonomie.
+       *
+       * @var string $table_term
+       */
+      $table_term = $this->configuration['table'];
+      $base_table = $this->view->storage->get('base_table');
+      /**
+       * Le nom de la colonne utile.
+       *
+       * @var string $colomn_name
+       */
+      $colomn_name = $this->configuration['field'];
+      /**
+       *
+       * @var \Drupal\views\Entity\View $storage
+       */
+      // $storage = $this->view->storage;
+
+      // $this->view->query->build($this->view);
+      // dd($this->view->query->query()->__toString());
+      // dd($this->view->getQuery());
+      $table_alias = $this->configuration['id'];
+      /**
+       * Le champs de reference de l'entité selectionné.
+       * ( par example entite :node, $field_id=nid ).
+       *
+       * @var string $field_id
+       */
+      $field_id = $this->view->storage->get('base_field');
+      /**
+       * Cette vue n'est pas optimisé car elle ne prend pas en compte les
+       * filtres de la vues.
+       *
+       * @var \Drupal\Core\Database\Query\Select $query
+       */
+      $query = \Drupal::database()->select($this->configuration['table'], $table_alias);
+      $query->fields($table_alias, [
+        $colomn_name
+      ]);
+      // $query->addJoin('INNER', $base_table, 'bt', $table_alias .
+      // '.entity_id=bt.' . $field_id);
+      $query->addExpression("count($table_alias.$colomn_name)", 'count_termes');
+      $query->groupBy($table_alias . '.' . $colomn_name);
+
+      if ($this->field == 'more_fields_field_donnees_liees_target_id') {
+        // dd($query->__toString());
+        // dump('result : ', $query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+        // dd($this->configuration);
+        // $queryClone->addField($table_term, $colomn_name);
+        /**
+         * Cette foix on esaaie d'utiliser l'approche en dessous tout en lui
+         * passant les valeurs present dans le filtre exposed.
+         */
+        /**
+         *
+         * @var \Drupal\views\ViewExecutable $view
+         */
+        $view = $queryClone->view;
+        /**
+         * Tableau contennant les valeurs deja selectionner par l'utilisateur.
+         *
+         * @var array $exposed_inputs
+         */
+        $exposed_inputs = $view->getExposedInput();
+        /**
+         * Contient les informations sur chaque filtre.
+         *
+         * @var array $filters
+         */
+        $filters = $view->filter;
+        foreach ($exposed_inputs as $filter_name => $value) {
+          if (!empty($filters[$filter_name])) {
+            /**
+             *
+             * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $filter
+             */
+            $filter = $filters[$filter_name];
+            $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=' . $table_alias . '.entity_id');
+          }
+        }
+        dd($filters);
+        dump('result : ', $query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+      }
+    }
+    else {
+      $this->messenger()->addError("Error query not defined : " . $this->configuration['table'], true);
+    }
+
+    // /**
+    // *
+    // * @var \Drupal\Core\Entity\Query\QueryAggregateInterface $queryEntity
+    // */
+    // $queryEntity =
+    // \Drupal::entityQueryAggregate($this->configuration['entity_type'])->accessCheck(true);
+    // // On filtre les entites ayant un terme.
+    // $queryEntity->condition($this->configuration['field_name'], null, 'IS NOT
+    // NULL');
+    // // On filtre les entitées ayant une valeur dans le array.
+    // if ($this->options["filter_by_current_term"]) {
+    // $this->filterByCurrentTerm($queryEntity);
+    // }
+    // // On regroupe en fonction du terme tid.
+    // $queryEntity->groupBy($this->configuration['field_name']);
+    // // On compte les resultats.
+    // $queryEntity->aggregate($this->configuration['field_name'], 'COUNT',
+    // NULL, $this->alias_count);
+
     return $queryEntity;
   }
 
   /**
    * Le but est de determiner le nom du champs dans l'entite.
    *
+   *
+   * @deprecated Cette approche est deprecie.
    * @param \Drupal\Core\Entity\Query\QueryAggregateInterface $queryEntity
    */
   public function filterByCurrentTerm(\Drupal\Core\Entity\Query\QueryAggregateInterface &$queryEntity) {
@@ -315,6 +433,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    */
   protected function FilterTermHasContent(QueryInterface &$query, QueryAggregateInterface $queryEntity) {
     $entities = $queryEntity->execute();
+    // dump($entities);
     if ($entities) {
       $tids = [];
       foreach ($entities as $value) {
