@@ -1,5 +1,6 @@
 <?php
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 
 /**
  * Proceduire:
@@ -52,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-  
+
   // Load new definition field in code.
   /**
    *
@@ -124,7 +125,7 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
        * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
        */
       $field_image = $content->get($element['#field_name']);
-      
+
       /**
        * (
        *
@@ -333,6 +334,31 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-  
+
+  $hooks['more_fields_links'] = [
+    'render element' => 'element'
+  ];
+
   return $hooks;
+}
+
+/**
+ * Prepares variables for bef-links template.
+ *
+ * Default template: bef-links.html.twig.
+ *
+ * @param array $variables
+ *        An associative array containing:
+ *        - element: An associative array containing the exposed form element.
+ */
+function template_preprocess_more_fields_links(array &$variables) {
+  \Drupal::moduleHandler()->loadInclude('better_exposed_filters', 'module');
+  template_preprocess_bef_links($variables);
+  //
+  foreach ($variables['links'] as $k => $value) {
+    if (!empty($variables['element'][$k]['#title']))
+      $variables['element'][$k]['#title'] = Markup::create($value['#title']);
+    $variables['links'][$k]['#title'] = Markup::create($value['#title']);
+  }
+  // dump($variables);
 }

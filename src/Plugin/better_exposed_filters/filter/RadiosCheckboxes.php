@@ -17,18 +17,18 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
  * )
  */
 class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInterface {
-  
+
   /**
    *
    * @var \Drupal\layoutgenentitystyles\Services\LayoutgenentitystylesServices
    */
   protected $LayoutgenentitystylesServices;
-  
+
   function __construct($configuration, $plugin_id, $plugin_definition, LayoutgenentitystylesServices $LayoutgenentitystylesServices) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->LayoutgenentitystylesServices = $LayoutgenentitystylesServices;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -36,7 +36,7 @@ class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInt
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('layoutgenentitystyles.add.style.theme'));
   }
-  
+
   public function defaultConfiguration() {
     return parent::defaultConfiguration() + [
       'layoutgenentitystyles_view_options' => [
@@ -46,19 +46,19 @@ class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInt
       'theme_color' => 'mf_bef_background'
     ];
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function exposedFormAlter(array &$form, FormStateInterface $form_state) {
     parent::exposedFormAlter($form, $form_state);
-    
+
     $filter = $this->handler;
     // Form element is designated by the element ID which is user-
     // configurable.
     $field_id = $filter->options['is_grouped'] ? $filter->options['group_info']['identifier'] : $filter->options['expose']['identifier'];
-    
+
     if (!empty($form[$field_id]['#multiple'])) {
       // Render as checkboxes if filter allows multiple selections.
       $form[$field_id]['#theme'] = 'more_fields_bef_checkboxes';
@@ -67,7 +67,7 @@ class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInt
       $form[$field_id]['#theme'] = 'more_fields_bef_radios';
     }
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -91,7 +91,7 @@ class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInt
     ];
     return $form;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -102,5 +102,5 @@ class RadiosCheckboxes extends RadioButtons implements ContainerFactoryPluginInt
       $this->LayoutgenentitystylesServices->addStyleFromModule($this->configuration['layoutgenentitystyles_view'], "mf_radios_checkboxes", "default", "better_exposed_filters/filter");
     }
   }
-  
+
 }

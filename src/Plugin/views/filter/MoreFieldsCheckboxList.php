@@ -23,26 +23,38 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @var string
    */
   protected $alias_count = 'count_termes';
-  
+
   /**
    * Contient nombre d'entites par terms.
    *
    * @var array
    */
   protected $countsTerms = [];
-  
+
   protected function defineOptions() {
     $options = parent::defineOptions();
-    
+
     $options['type'] = [
       'default' => 'select'
     ];
     $options['show_entities_numbers'] = [
       'default' => true
     ];
+    $options['filter_by_current_term'] = [
+      'default' => false
+    ];
     return $options;
   }
-  
+
+  /**
+   * Sanitizes the HTML select element's options.
+   *
+   * The function is recursive to support optgroups.
+   */
+  protected function prepareFilterSelectOptions(&$options) {
+    // On retourne les données sans les filtrées risque de securitée.
+  }
+
   public function buildExposeForm(&$form, FormStateInterface $form_state) {
     parent::buildExposeForm($form, $form_state);
     // on ajoute la possibilite d'afficher ou pas le nombre d'entité
@@ -51,8 +63,14 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       '#title' => "Affiche le nombre d'entité par termes",
       '#default_value' => $this->options['show_entities_numbers']
     ];
+    $form['filter_by_current_term'] = [
+      '#type' => 'checkbox',
+      '#title' => "Filtre en fonction du terme taxonomie",
+      '#default_value' => $this->options['filter_by_current_term'],
+      '#description' => "Permet de filtrer en fonction de la page en court si cette derniere est un terme taxonomie"
+    ];
   }
-  
+
   /**
    * Copier de la ersion : Drupal core 9.5.9
    *
@@ -67,7 +85,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       ];
       return;
     }
-    
+
     if ($this->options['type'] == 'textfield') {
       $terms = $this->value ? Term::loadMultiple(($this->value)) : [];
       $form['value'] = [
@@ -77,7 +95,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         '#type' => 'textfield',
         '#default_value' => EntityAutocomplete::getEntityLabels($terms)
       ];
-      
+
       if ($this->options['limit']) {
         $form['value']['#type'] = 'entity_autocomplete';
         $form['value']['#target_type'] = 'taxonomy_term';
@@ -92,7 +110,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         $tree = $this->termStorage->loadTree($vocabulary->id(), 0, NULL, TRUE);
         $options = [];
-        
+
         if ($tree) {
           foreach ($tree as $term) {
             if (!$term->isPublished() && !$this->currentUser->hasPermission('administer taxonomy')) {
@@ -129,7 +147,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
             $tid = $term->id();
             $label = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
             if (!empty($this->countsTerms[$tid])) {
-              $label .= ' (' . $this->countsTerms[$tid] . ') ';
+              // on doit configurer cela, afin de pouvoir l'ajouter ou pas.
+              // on peut faire cela avec before et after.
+              // $label .= ' <span> (' . $this->countsTerms[$tid] . ')</span> ';
+              $label .= ' <span> ' . $this->countsTerms[$tid] . '</span> ';
             }
             $options[$tid] = $label;
           }
@@ -137,20 +158,20 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
             $options[$term->id()] = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
         }
       }
-      
+
       $default_value = (array) $this->value;
-      
+
       if ($exposed = $form_state->get('exposed')) {
         $identifier = $this->options['expose']['identifier'];
-        
+
         if (!empty($this->options['expose']['reduce'])) {
           $options = $this->reduceValueOptions($options);
-          
+
           if (!empty($this->options['expose']['multiple']) && empty($this->options['expose']['required'])) {
             $default_value = [];
           }
         }
-        
+
         if (empty($this->options['expose']['multiple'])) {
           if (empty($this->options['expose']['required']) && (empty($default_value) || !empty($this->options['expose']['reduce']))) {
             $default_value = 'All';
@@ -173,6 +194,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           }
         }
       }
+
       $form['value'] = [
         '#type' => 'select',
         '#title' => $this->options['limit'] ? $this->t('Select terms from vocabulary @voc', [
@@ -183,23 +205,23 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         '#size' => min(9, count($options)),
         '#default_value' => $default_value
       ];
-      
+
       $user_input = $form_state->getUserInput();
       if ($exposed && isset($identifier) && !isset($user_input[$identifier])) {
         $user_input[$identifier] = $default_value;
         $form_state->setUserInput($user_input);
       }
     }
-    
+
     if (!$form_state->get('exposed')) {
       // Retain the helper option
       $this->helper->buildOptionsForm($form, $form_state);
-      
+
       // Show help text if not exposed to end users.
       $form['value']['#description'] = $this->t('Leave blank for all. Otherwise, the first selected term will be the default instead of "Any".');
     }
   }
-  
+
   /**
    * Filtre, compte les entites regrouper par termes.
    *
@@ -214,13 +236,76 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     $queryEntity = \Drupal::entityQueryAggregate($this->configuration['entity_type'])->accessCheck(true);
     // On filtre les entites ayant un terme.
     $queryEntity->condition($this->configuration['field_name'], null, 'IS NOT NULL');
+    // On filtre les entitées ayant une valeur dans le array.
+    if ($this->options["filter_by_current_term"]) {
+      $this->filterByCurrentTerm($queryEntity);
+    }
     // On regroupe en fonction du terme tid.
     $queryEntity->groupBy($this->configuration['field_name']);
     // On compte les resultats.
     $queryEntity->aggregate($this->configuration['field_name'], 'COUNT', NULL, $this->alias_count);
     return $queryEntity;
   }
-  
+
+  /**
+   * Le but est de determiner le nom du champs dans l'entite.
+   *
+   * @param \Drupal\Core\Entity\Query\QueryAggregateInterface $queryEntity
+   */
+  public function filterByCurrentTerm(\Drupal\Core\Entity\Query\QueryAggregateInterface &$queryEntity) {
+    $routeName = \Drupal::routeMatch()->getRouteName();
+    if ($routeName == 'entity.taxonomy_term.canonical') {
+      /**
+       *
+       * @var \Drupal\taxonomy\Entity\Term $taxonomy_term
+       */
+      $taxonomy_term = \Drupal::routeMatch()->getParameter('taxonomy_term');
+      /**
+       *
+       * Cette approche n'est pas ideale car elle ne tient pas vraiment compte
+       * de toutes les options dans la requetes.
+       * (fonctionne dans le cas d'une seule entité).
+       * On determine le bundle.
+       *
+       * @var string $request
+       */
+      $request = "SELECT bundle FROM " . $this->configuration['table'] . " limit 1";
+      $query = \Drupal::database()->query($request);
+      $result = $query->fetch(\PDO::FETCH_ASSOC);
+      if ($result) {
+        // entity.node.field_ui_fields
+        /**
+         *
+         * @var \Drupal\node\Entity\NodeType $currentEntityType
+         */
+        // $currentEntityType =
+        // on recupere les champs de type de type reference.
+        $fields = \Drupal::entityTypeManager()->getStorage("field_config")->loadByProperties([
+          'entity_type' => 'node',
+          'field_type' => 'entity_reference',
+          'bundle' => $result["bundle"]
+        ]);
+        // On recupere celui qui a pour taxonimie la valeur encours dans l'url.
+        $vocabulaire = $taxonomy_term->get('vid')->target_id;
+        $fieldValid = NULL;
+        foreach ($fields as $field) {
+          /**
+           *
+           * @var \Drupal\field\Entity\FieldConfig $field
+           */
+          $handlerSettings = $field->getSettings();
+          if (!empty($handlerSettings['handler_settings']['target_bundles']) && in_array($vocabulaire, $handlerSettings['handler_settings']['target_bundles'])) {
+            $fieldValid = $field;
+            break;
+          }
+        }
+        if ($fieldValid) {
+          $queryEntity->condition($fieldValid->get('field_name'), $taxonomy_term->id());
+        }
+      }
+    }
+  }
+
   /**
    * On va selectionner les entités qui possedent un terme dans le champs en
    * question, les groupes par tid, ensuite recuperer la liste des tids.
@@ -244,11 +329,11 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $query->condition('tid', null, "IS NULL");
     }
   }
-  
+
   public function buildExposedForm(&$form, FormStateInterface $form_state) {
     parent::buildExposedForm($form, $form_state);
   }
-  
+
   protected function exposedTranslate(&$form, $type) {
     parent::exposedTranslate($form, $type);
     // les types radios et checkboxes ne fonctionnent pas correctement use
@@ -258,5 +343,5 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     // }
     // dump($form);
   }
-  
+
 }
