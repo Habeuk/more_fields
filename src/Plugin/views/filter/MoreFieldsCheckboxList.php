@@ -138,7 +138,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         }
         // Add custom code.
         $queryEntity = $this->FilterCountEntitiesHasterm();
-        $this->FilterTermHasContent($query, $queryEntity);
+        if ($queryEntity) {
+          $this->FilterTermHasContent($query, $queryEntity);
+        }
+
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
         foreach ($terms as $term) {
@@ -232,18 +235,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @return \Drupal\Core\Entity\Query\QueryAggregateInterface
    */
   public function FilterCountEntitiesHasterm() {
-    /**
-     *
-     * @var \Drupal\Core\Entity\Query\QueryAggregateInterface $queryEntity
-     */
-    $queryEntity = \Drupal::entityQueryAggregate($this->configuration['entity_type'])->accessCheck(true);
-    // On filtre les entites ayant un terme.
-    $queryEntity->condition($this->configuration['field_name'], null, 'IS NOT NULL');
-    // On regroupe en fonction du terme tid.
-    $queryEntity->groupBy($this->configuration['field_name']);
-    // On compte les resultats.
-    $queryEntity->aggregate($this->configuration['field_name'], 'COUNT', NULL, $this->alias_count);
-    // return $queryEntity;
     if (is_object($this->query)) {
       /**
        * On clone afin d'eviter d'impacter la requette reelle.
@@ -273,7 +264,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       // $this->view->query->build($this->view);
       // dd($this->view->query->query()->__toString());
       // dd($this->view->getQuery());
-      $table_alias = $this->configuration['id'];
+      // $table_alias = $this->configuration['field'];
       /**
        * Le champs de reference de l'entité selectionné.
        * ( par example entite :node, $field_id=nid ).
@@ -281,6 +272,26 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
        * @var string $field_id
        */
       $field_id = $this->view->storage->get('base_field');
+
+      /**
+       *
+       * @var \Drupal\views\ViewExecutable $view
+       */
+      $view = $queryClone->view;
+
+      /**
+       * Contient les informations sur chaque filtre.
+       * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+       * en paramettre via les filtres exposés.
+       *
+       * @var array $filters
+       */
+      $filters = $view->filter;
+      /**
+       *
+       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+       */
+      $currentFilter = $filters['more_fields_' . $colomn_name];
       /**
        * On va construire la base de notre filtre.
        * ( NB: on a pas reussi à avoir un query avec les informations de base
@@ -295,106 +306,39 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       // Afin de determiner si la table est deja presente.
       $query->addTag($base_table);
       // on ajoute le fitre encours.
-      $query->addJoin('INNER', $table_term, $table_alias, $table_alias . '.entity_id=base_table.' . $field_id);
-      $query->addField($table_alias, $colomn_name);
-      $query->addExpression("count($table_alias.$colomn_name)", 'count_termes');
-      $query->groupBy($table_alias . '.' . $colomn_name);
+      $query->addJoin('INNER', $currentFilter->table, $currentFilter->field, $currentFilter->field . '.entity_id=base_table.' . $field_id);
+      $query->addField($currentFilter->field, $colomn_name);
+      $query->addExpression("count($currentFilter->field.$colomn_name)", 'count_termes');
+      $query->groupBy($currentFilter->field . '.' . $colomn_name);
       // Afin de determiner si la table est deja presente.
       $query->addTag($table_term);
+      // dump($this->configuration, $currentFilter);
       //
-      if ($this->field == 'more_fields_field_donnees_liees_target_id') {
-        // dd($query->__toString());
-        // dump('result : ', $query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-        // dd($this->configuration);
-        // $queryClone->addField($table_term, $colomn_name);
-        /**
-         * Cette foix on esaaie d'utiliser l'approche en dessous tout en lui
-         * passant les valeurs present dans le filtre exposed.
-         */
-        /**
-         *
-         * @var \Drupal\views\ViewExecutable $view
-         */
-        $view = $queryClone->view;
-        /**
-         * Tableau contennant les valeurs deja selectionner par l'utilisateur.
-         *
-         * @var array $exposed_inputs
-         */
-        $exposed_inputs = $view->getExposedInput();
-        /**
-         * Contient les informations sur chaque filtre.
-         * On va ajouter les filtres statiques et aussi ajouter les filtre passé
-         * en paramettre via les filtres exposés.
-         *
-         * @var array $filters
-         */
-        $filters = $view->filter;
-        $stop = false;
-        foreach ($filters as $filter_id => $filter) {
-          /**
-           *
-           * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $filter
-           */
-          if (!$filter->options['exposed']) {
-            if ($query->hasTag($filter->options['table'])) {
-              if ($filter->table == $base_table) {
-                $query->condition($filter->realField, $filter->value, $filter->operator);
-              }
-              else
-                $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
-            }
-            else {
-              $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=base_table.' . $field_id);
-              $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
-              $query->addTag($filter->table);
-            }
-          }
-          elseif (isset($exposed_inputs[$filter_id]) && $stop) {
-            if ($query->hasTag($filter->options['table'])) {
-              if ($filter->table == $base_table) {
-                $query->condition($filter->realField, $exposed_inputs[$filter_id], $filter->operator);
-              }
-              else {
-                $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
-              }
-            }
-            else {
-              $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=base_table.' . $field_id);
-              $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
-              $query->addTag($filter->table);
-            }
-          }
-        }
-        // dump($query->__toString());
-        // dump($query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-        // dd($filters['more_fields_field_type_target_id']);
-      }
+      // if ($this->field == 'more_fields_field_donnees_liees_target_id') {
+      // dd($query->__toString());
+      // dump('result : ', $query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+      // dd($this->configuration);
+      // $queryClone->addField($table_term, $colomn_name);
+      /**
+       * Cette foix on esaaie d'utiliser l'approche en dessous tout en lui
+       * passant les valeurs present dans le filtre exposed.
+       */
+
+      /**
+       * Tableau contennant les valeurs deja selectionner par l'utilisateur.
+       *
+       * @var array $exposed_inputs
+       */
+      $exposed_inputs = $view->getExposedInput();
+
+      $this->buildFilterQuery($query, $filters, $base_table, $field_id, $exposed_inputs);
+      return $query;
     }
     else {
-      $this->messenger()->addError("Error query not defined : " . $this->configuration['table'], true);
+      // il faudra comprendre pourquoi cest null avant de les supprimers.
+      // $this->messenger()->addError("Error query not defined : " .
+      // $this->configuration['table'], true);
     }
-
-    // /**
-    // *
-    // * @var \Drupal\Core\Entity\Query\QueryAggregateInterface $queryEntity
-    // */
-    // $queryEntity =
-    // \Drupal::entityQueryAggregate($this->configuration['entity_type'])->accessCheck(true);
-    // // On filtre les entites ayant un terme.
-    // $queryEntity->condition($this->configuration['field_name'], null, 'IS NOT
-    // NULL');
-    // // On filtre les entitées ayant une valeur dans le array.
-    // if ($this->options["filter_by_current_term"]) {
-    // $this->filterByCurrentTerm($queryEntity);
-    // }
-    // // On regroupe en fonction du terme tid.
-    // $queryEntity->groupBy($this->configuration['field_name']);
-    // // On compte les resultats.
-    // $queryEntity->aggregate($this->configuration['field_name'], 'COUNT',
-    // NULL, $this->alias_count);
-
-    return $queryEntity;
   }
 
   /**
@@ -420,6 +364,52 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     dump($query->__toString());
     dump($query);
     dd('END');
+  }
+
+  protected function buildFilterQuery(\Drupal\Core\Database\Query\Select &$query, $filters, $base_table, $field_id, array $exposed_inputs) {
+    foreach ($filters as $filter_id => $filter) {
+      /**
+       *
+       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $filter
+       */
+      if (!$filter->options['exposed']) {
+        if ($query->hasTag($filter->options['table'])) {
+          if ($filter->table == $base_table) {
+            $query->condition($filter->realField, $filter->value, $filter->operator);
+          }
+          else
+            $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
+        }
+        else {
+          $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=base_table.' . $field_id);
+          $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
+          $query->addTag($filter->table);
+        }
+      }
+      elseif (isset($exposed_inputs[$filter_id])) {
+        if ($query->hasTag($filter->options['table'])) {
+          if ($filter->table == $base_table) {
+            $query->condition($filter->realField, $exposed_inputs[$filter_id], $filter->operator);
+          }
+          else {
+            $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
+          }
+        }
+        else {
+
+          $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=base_table.' . $field_id);
+          if ($filter->operator == 'or') {
+            $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], 'IN');
+          }
+          else
+            $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
+          $query->addTag($filter->table);
+        }
+      }
+    }
+    // dump($query->__toString());
+    // dump($query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    // dd($filters['more_fields_field_type_target_id']);
   }
 
   /**
@@ -490,9 +480,9 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @param \Drupal\Core\Entity\Query\Sql\Query $query
    * @see https://drupal.stackexchange.com/questions/184411/entityquery-group-by-clause
    */
-  protected function FilterTermHasContent(QueryInterface &$query, QueryAggregateInterface $queryEntity) {
-    $entities = $queryEntity->execute();
-    // dump($entities);
+  protected function FilterTermHasContent(QueryInterface &$query, \Drupal\mysql\Driver\Database\mysql\Select $queryEntity) {
+    $entities = $queryEntity->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    // dd($entities);
     if ($entities) {
       $tids = [];
       foreach ($entities as $value) {
