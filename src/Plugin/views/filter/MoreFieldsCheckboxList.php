@@ -141,7 +141,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         if ($queryEntity) {
           $this->FilterTermHasContent($query, $queryEntity);
         }
-
+        // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
         foreach ($terms as $term) {
@@ -235,63 +235,59 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @return \Drupal\Core\Entity\Query\QueryAggregateInterface
    */
   public function FilterCountEntitiesHasterm() {
-    if (is_object($this->query)) {
-      /**
-       * On clone afin d'eviter d'impacter la requette reelle.
-       *
-       * @var \Drupal\views\Plugin\views\query\Sql $queryClone
-       */
-      $queryClone = clone $this->query;
-      /**
-       * Le nom de la table du terme taxonomie.
-       *
-       * @var string $table_term
-       */
-      $table_term = $this->configuration['table'];
-      $base_table = $this->view->storage->get('base_table');
-      /**
-       * Le nom de la colonne utile.
-       *
-       * @var string $colomn_name
-       */
-      $colomn_name = $this->configuration['field'];
-      /**
-       *
-       * @var \Drupal\views\Entity\View $storage
-       */
-      // $storage = $this->view->storage;
 
-      // $this->view->query->build($this->view);
-      // dd($this->view->query->query()->__toString());
-      // dd($this->view->getQuery());
-      // $table_alias = $this->configuration['field'];
-      /**
-       * Le champs de reference de l'entité selectionné.
-       * ( par example entite :node, $field_id=nid ).
-       *
-       * @var string $field_id
-       */
-      $field_id = $this->view->storage->get('base_field');
+    /**
+     * Le nom de la table du terme taxonomie.
+     *
+     * @var string $table_term
+     */
+    $table_term = $this->configuration['table'];
+    $base_table = $this->view->storage->get('base_table');
+    /**
+     * Le nom de la colonne utile.
+     *
+     * @var string $colomn_name
+     */
+    $colomn_name = $this->configuration['field'];
+    /**
+     *
+     * @var \Drupal\views\Entity\View $storage
+     */
+    // $storage = $this->view->storage;
 
-      /**
-       *
-       * @var \Drupal\views\ViewExecutable $view
-       */
-      $view = $queryClone->view;
+    // $this->view->query->build($this->view);
+    // dd($this->view->query->query()->__toString());
+    // dd($this->view->getQuery());
+    // $table_alias = $this->configuration['field'];
+    /**
+     * Le champs de reference de l'entité selectionné.
+     * ( par example entite :node, $field_id=nid ).
+     *
+     * @var string $field_id
+     */
+    $field_id = $this->view->storage->get('base_field');
 
-      /**
-       * Contient les informations sur chaque filtre.
-       * On va ajouter les filtres statiques et aussi ajouter les filtre passé
-       * en paramettre via les filtres exposés.
-       *
-       * @var array $filters
-       */
-      $filters = $view->filter;
-      /**
-       *
-       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
-       */
-      $currentFilter = $filters['more_fields_' . $colomn_name];
+    /**
+     *
+     * @var \Drupal\views\ViewExecutable $view
+     */
+    $view = $this->view;
+
+    /**
+     * Contient les informations sur chaque filtre.
+     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+     * en paramettre via les filtres exposés.
+     *
+     * @var array $filters
+     */
+    $filters = $view->filter;
+    /**
+     *
+     * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+     */
+    $currentFilter = $filters['more_fields_' . $colomn_name];
+    if ($currentFilter) {
+      // dump($currentFilter, $filters);
       /**
        * On va construire la base de notre filtre.
        * ( NB: on a pas reussi à avoir un query avec les informations de base
@@ -334,11 +330,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $this->buildFilterQuery($query, $filters, $base_table, $field_id, $exposed_inputs);
       return $query;
     }
-    else {
-      // il faudra comprendre pourquoi cest null avant de les supprimers.
-      // $this->messenger()->addError("Error query not defined : " .
-      // $this->configuration['table'], true);
-    }
   }
 
   /**
@@ -367,15 +358,25 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   }
 
   protected function buildFilterQuery(\Drupal\Core\Database\Query\Select &$query, $filters, $base_table, $field_id, array $exposed_inputs) {
+    /**
+     *
+     * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $filter
+     */
+    $ignoreField = [
+      'status'
+    ];
     foreach ($filters as $filter_id => $filter) {
-      /**
-       *
-       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $filter
-       */
+      if (in_array($filter_id, $ignoreField)) {
+        continue;
+      }
+      // dump($filter->operator);
+      if ($filter->operator == 'contains')
+        $filter->operator = '%LIKE%';
+
       if (!$filter->options['exposed']) {
         if ($query->hasTag($filter->options['table'])) {
           if ($filter->table == $base_table) {
-            $query->condition($filter->realField, $filter->value, $filter->operator);
+            $query->condition("base_table." . $filter->realField, $filter->value, $filter->operator);
           }
           else
             $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
@@ -389,7 +390,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       elseif (isset($exposed_inputs[$filter_id])) {
         if ($query->hasTag($filter->options['table'])) {
           if ($filter->table == $base_table) {
-            $query->condition($filter->realField, $exposed_inputs[$filter_id], $filter->operator);
+            $query->condition("base_table." . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
           }
           else {
             $query->condition($filter->field . '.' . $filter->realField, $exposed_inputs[$filter_id], $filter->operator);
@@ -408,6 +409,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       }
     }
     // dump($query->__toString());
+    // $this->messenger()->addStatus($query->__toString(), true);
     // dump($query->execute()->fetchAll(\PDO::FETCH_ASSOC));
     // dd($filters['more_fields_field_type_target_id']);
   }
@@ -482,7 +484,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    */
   protected function FilterTermHasContent(QueryInterface &$query, \Drupal\mysql\Driver\Database\mysql\Select $queryEntity) {
     $entities = $queryEntity->execute()->fetchAll(\PDO::FETCH_ASSOC);
-    // dd($entities);
+    // dump($entities);
     if ($entities) {
       $tids = [];
       foreach ($entities as $value) {
