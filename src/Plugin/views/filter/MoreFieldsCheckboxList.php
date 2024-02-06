@@ -243,7 +243,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     $queryEntity->groupBy($this->configuration['field_name']);
     // On compte les resultats.
     $queryEntity->aggregate($this->configuration['field_name'], 'COUNT', NULL, $this->alias_count);
-    return $queryEntity;
+    // return $queryEntity;
     if (is_object($this->query)) {
       /**
        * On clone afin d'eviter d'impacter la requette reelle.
@@ -345,7 +345,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
                 $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
             }
             else {
-              dump($filter->operator, $filter->value);
               $query->addJoin('INNER', $filter->table, $filter->field, $filter->field . '.entity_id=base_table.' . $field_id);
               $query->condition($filter->field . '.' . $filter->realField, $filter->value, $filter->operator);
               $query->addTag($filter->table);
@@ -367,9 +366,9 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
             }
           }
         }
-        dump($query->__toString());
-        dump($query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-        dd($filters['more_fields_field_type_target_id']);
+        // dump($query->__toString());
+        // dump($query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+        // dd($filters['more_fields_field_type_target_id']);
       }
     }
     else {
