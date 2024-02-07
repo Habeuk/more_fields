@@ -137,10 +137,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $query->condition('vid', $vocabulary->id());
         }
         // Add custom code.
-        // $queryEntity = $this->FilterCountEntitiesHasterm();
-        // if ($queryEntity) {
-        // $this->FilterTermHasContent($query, $queryEntity);
-        // }
+        $queryEntity = $this->FilterCountEntitiesHasterm();
+        if ($queryEntity) {
+          $this->FilterTermHasContent($query, $queryEntity);
+        }
         // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
@@ -234,7 +234,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @see https://drupal.stackexchange.com/questions/184411/entityquery-group-by-clause
    * @return \Drupal\Core\Entity\Query\QueryAggregateInterface
    */
-  public function FilterCountEntitiesHasterm() {
+  public function FilterCountEntitiesHasterm1() {
 
     /**
      * Le nom de la table du terme taxonomie.
@@ -335,33 +335,66 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   /**
    * On essayer de contruire les requetes en s'appuyant sur les APIs de vues.
    */
-  public function FilterCountEntitiesHasterm2() {
+  public function FilterCountEntitiesHasterm() {
+    /**
+     * Le nom de la colonne utile.
+     *
+     * @var string $colomn_name
+     */
+    $colomn_name = $this->configuration['field'];
+    /**
+     * Contient les informations sur chaque filtre.
+     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+     * en paramettre via les filtres exposés.
+     *
+     * @var array $filters
+     */
+    $filters = $this->view->filter;
+    /**
+     *
+     * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+     */
+    $currentFilter = $filters['more_fields_' . $colomn_name];
+    if ($currentFilter) {
+      /**
+       *
+       * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
+       */
+      $ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
+      $configuration = [
+        'type' => 'INNER',
+        'table' => $currentFilter->table,
+        'field' => 'entity_id',
+        'left_table' => $this->view->storage->get('base_table'),
+        'left_field' => $this->view->storage->get('base_field'),
+        'extra_operator' => 'AND',
+        'adjusted' => true
+      ];
+      // dd($this->configuration, $this->view->getHandlers('filter'),
+      // $this->view->filter['more_fields_field_donnees_liees_target_id']);
 
-    /**
-     *
-     * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
-     */
-    $ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
-    $configuration = [
-      'type' => 'INNER',
-      'left_table' => $this->view->storage->get('base_table'),
-      'left_field' => $this->view->storage->get('base_field'),
-      'extra_operator' => 'AND'
-    ];
-    // dd($this->configuration, $this->view->getHandlers('filter'),
-    // $this->view->filter['more_fields_field_donnees_liees_target_id']);
-    $tables = $this->view->getHandlers('filter');
-    dump($tables);
-    /**
-     *
-     * @var \Drupal\views\Plugin\views\join\Standard $instance
-     */
-    $instance = $ViewsHandlerManager->createInstance("standard", $configuration);
-    $select_query = \Drupal::database()->select($this->view->storage->get('base_table'), $this->view->storage->get('base_table'))->addTag('views')->addTag('views_' . $this->view->storage->id());
-    $instance->buildJoin($select_query, $tables['more_fields_field_donnees_liees_target_id'], $this->query);
-    dump($select_query->__toString());
-    dump($select_query);
-    dd('END');
+      $table = [
+        'table' => $currentFilter->table,
+        'num' => 1,
+        'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
+        // 'join'=>
+        'relationship' => $this->view->storage->get('base_table')
+      ];
+      /**
+       *
+       * @var \Drupal\views\Plugin\views\join\Standard $instance
+       */
+      $instance = $ViewsHandlerManager->createInstance("standard", $configuration);
+      $select_query = \Drupal::database()->select($this->view->storage->get('base_table'), $this->view->storage->get('base_table'))->addTag('views')->addTag('views_' . $this->view->storage->id());
+      $select_query->fields($this->view->storage->get('base_table'), [
+        $this->view->storage->get('base_field')
+      ]);
+      $instance->buildJoin($select_query, $table, $this->query);
+      dump($select_query->__toString());
+      dump('result : ', $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+      // dump($this->view);
+      dd('END');
+    }
   }
 
   protected function buildFilterQuery(\Drupal\Core\Database\Query\Select &$query, $filters, $base_table, $field_id, array $exposed_inputs) {
