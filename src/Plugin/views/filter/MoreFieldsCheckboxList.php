@@ -137,10 +137,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $query->condition('vid', $vocabulary->id());
         }
         // Add custom code.
-        $queryEntity = $this->FilterCountEntitiesHasterm();
-        if ($queryEntity) {
-          $this->FilterTermHasContent($query, $queryEntity);
-        }
+        // $queryEntity = $this->FilterCountEntitiesHasterm();
+        // if ($queryEntity) {
+        // $this->FilterTermHasContent($query, $queryEntity);
+        // }
         // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
@@ -335,25 +335,32 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   /**
    * On essayer de contruire les requetes en s'appuyant sur les APIs de vues.
    */
-  public function FilterCountEntitiesHastermFutur() {
+  public function FilterCountEntitiesHasterm2() {
+
     /**
      *
      * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
      */
     $ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
     $configuration = [
-      'type' => 'INNER'
+      'type' => 'INNER',
+      'left_table' => $this->view->storage->get('base_table'),
+      'left_field' => $this->view->storage->get('base_field'),
+      'extra_operator' => 'AND'
     ];
-    dd($this->configuration, $this->view->getHandlers('filter'), $this->view->filter['more_fields_field_donnees_liees_target_id']);
+    // dd($this->configuration, $this->view->getHandlers('filter'),
+    // $this->view->filter['more_fields_field_donnees_liees_target_id']);
+    $tables = $this->view->getHandlers('filter');
+    dump($tables);
     /**
      *
      * @var \Drupal\views\Plugin\views\join\Standard $instance
      */
     $instance = $ViewsHandlerManager->createInstance("standard", $configuration);
     $select_query = \Drupal::database()->select($this->view->storage->get('base_table'), $this->view->storage->get('base_table'))->addTag('views')->addTag('views_' . $this->view->storage->id());
-    $instance->buildJoin($select_query, $table, $this->query);
-    dump($query->__toString());
-    dump($query);
+    $instance->buildJoin($select_query, $tables['more_fields_field_donnees_liees_target_id'], $this->query);
+    dump($select_query->__toString());
+    dump($select_query);
     dd('END');
   }
 
