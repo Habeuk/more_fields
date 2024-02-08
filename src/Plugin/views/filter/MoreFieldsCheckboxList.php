@@ -384,24 +384,27 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         // 'join'=>
         'relationship' => $this->view->storage->get('base_table')
       ];
+      // constructions à partir de l'object
+      $select_query = \Drupal::database()->select($base_table, $base_table);
+      $select_query->fields($base_table, [
+        $field_id
+      ]);
+      // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
+      // d'eviter que d'autre module sy connecte.
+      $select_query->addTag('more_fields_checkbox_list__' . $base_table);
+      if (!$this->view->query)
+        $this->view->getQuery();
       /**
        *
        * @var \Drupal\views\Plugin\views\join\Standard $instance
        */
       $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
-      $select_query = \Drupal::database()->select($base_table, $base_table)->addTag('views')->addTag('views_' . $this->view->storage->id());
-      $select_query->fields($base_table, [
-        $field_id
-      ]);
-      $select_query->addTag($base_table);
-      if (!$this->view->query)
-        $this->view->getQuery();
       $instance->buildJoin($select_query, $table, $this->view->query);
       //
       $select_query->addField($table['alias'], $colomn_name);
       $select_query->addExpression("count($table[alias].$colomn_name)", 'count_termes');
       $select_query->groupBy($table['alias'] . '.' . $colomn_name);
-      $select_query->addTag($currentFilter->table);
+      $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
       /**
        * Tableau contennant les valeurs deja selectionner par l'utilisateur.
        *
@@ -457,14 +460,13 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
          *
          * @var \Drupal\views\Plugin\views\join\Standard $instance
          */
-        if (!$select_query->hasTag($currentFilter->table)) {
+        if (!$select_query->hasTag('more_fields_checkbox_list__' . $currentFilter->table)) {
           $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
           $instance->buildJoin($select_query, $table, $this->view->query);
-          $select_query->addTag($currentFilter->table);
+          $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
         }
 
-        // $this->buildCondition($select_query, $table['alias'],
-        // $currentFilter->realField, $value, $currentFilter->operator);
+        $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
   }
@@ -476,7 +478,8 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         $value
       ];
     }
-    $select_query->condition($alias . '.' . $field, $value, $operator);
+    // dd($field, $value, $operator);
+    $select_query->condition($alias . '.' . $field, $value);
   }
 
   /**
