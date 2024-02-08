@@ -393,7 +393,15 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $select_query->fields($base_table, [
         $field_id
       ]);
-      $instance->buildJoin($select_query, $table, $this->query);
+      $select_query->addTag($base_table);
+      if (!$this->view->query)
+        $this->view->getQuery();
+      $instance->buildJoin($select_query, $table, $this->view->query);
+      //
+      $select_query->addField($table['alias'], $colomn_name);
+      $select_query->addExpression("count($table[alias].$colomn_name)", 'count_termes');
+      $select_query->groupBy($table['alias'] . '.' . $colomn_name);
+      $select_query->addTag($currentFilter->table);
       /**
        * Tableau contennant les valeurs deja selectionner par l'utilisateur.
        *
@@ -402,10 +410,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $exposed_inputs = $this->view->getExposedInput();
       if ($exposed_inputs)
         $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
-      dump($currentFilter->realField . ' ::  ' . "\n" . $select_query->__toString());
-      dump(' result : ', $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-      // dump($this->view);
-      dd('END');
+      // dump($currentFilter->realField . ' :: ' . "\n" .
+      // $select_query->__toString());
+      // dump(' result : ',
+      // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+
+      // dd('END');
       return $select_query;
     }
   }
@@ -447,9 +457,14 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
          *
          * @var \Drupal\views\Plugin\views\join\Standard $instance
          */
-        $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
-        $instance->buildJoin($select_query, $table, $this->query);
-        $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
+        if (!$select_query->hasTag($currentFilter->table)) {
+          $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
+          $instance->buildJoin($select_query, $table, $this->view->query);
+          $select_query->addTag($currentFilter->table);
+        }
+
+        // $this->buildCondition($select_query, $table['alias'],
+        // $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
   }
