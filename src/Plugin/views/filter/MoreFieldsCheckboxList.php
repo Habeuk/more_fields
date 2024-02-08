@@ -38,6 +38,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    */
   protected $ViewsHandlerManager;
 
+  /**
+   *
+   * @var array
+   */
+  protected $ViewsQuerySubstitutions = [];
+
   protected function defineOptions() {
     $options = parent::defineOptions();
 
@@ -359,6 +365,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
 
     $base_table = $this->view->storage->get('base_table');
     $field_id = $this->view->storage->get('base_field');
+    // dd($this->view);
     /**
      *
      * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
@@ -385,6 +392,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         'relationship' => $this->view->storage->get('base_table')
       ];
       // constructions à partir de l'object
+      /**
+       *
+       * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
+       */
       $select_query = \Drupal::database()->select($base_table, $base_table);
       $select_query->fields($base_table, [
         $field_id
@@ -405,6 +416,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $select_query->addExpression("count($table[alias].$colomn_name)", 'count_termes');
       $select_query->groupBy($table['alias'] . '.' . $colomn_name);
       $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
+      // Add all query substitutions as metadata.
+      $select_query->addMetaData('views_substitutions', $this->buiildViewsQuerySubstitutions());
+      // build orther query.
+      $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table, $field_id);
       /**
        * Tableau contennant les valeurs deja selectionner par l'utilisateur.
        *
@@ -413,13 +428,46 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $exposed_inputs = $this->view->getExposedInput();
       if ($exposed_inputs)
         $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
+      // apply views_substitutions
+      \Drupal::moduleHandler()->loadInclude('views', "module");
+      views_query_views_alter($select_query);
       // dump($currentFilter->realField . ' :: ' . "\n" .
       // $select_query->__toString());
       // dump(' result : ',
       // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-
+      // dump($select_query);
       // dd('END');
       return $select_query;
+    }
+  }
+
+  protected function buildStaticQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id) {
+    foreach ($filters as $currentFilter) {
+      /**
+       *
+       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+       */
+      if ($currentFilter->options['exposed'] === FALSE) {
+        $configuration = [
+          'type' => 'INNER',
+          'table' => $currentFilter->table,
+          'field' => 'entity_id',
+          'left_table' => $base_table,
+          'left_field' => $field_id,
+          'extra_operator' => 'AND',
+          'adjusted' => true
+        ];
+        $table = [
+          'table' => $currentFilter->table,
+          'num' => 1,
+          'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
+          // 'join'=>
+          'relationship' => $base_table
+        ];
+        if ($select_query->hasTag('more_fields_checkbox_list__' . $currentFilter->table)) {
+          $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $currentFilter->options['value'], $currentFilter->operator);
+        }
+      }
     }
   }
 
@@ -472,14 +520,36 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   }
 
   protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
+    // dump($field, $value, $operator);
     if ($operator == 'or') {
-      $operator = 'IN';
-      $value = [
-        $value
-      ];
+      $operator = 'in';
+      // Specifique à or car les données sont censer etre dans un array.
+      if (!is_array($value))
+        $value = [
+          $value
+        ];
     }
+    elseif ($operator == 'contains') {
+      $operator = 'LIKE';
+      $value = '%' . $select_query->escapeLike($value) . '%';
+    }
+
+    // $select_query->getMetaData($key)
     // dd($field, $value, $operator);
-    $select_query->condition($alias . '.' . $field, $value);
+    $select_query->condition($alias . '.' . $field, $value, $operator);
+  }
+
+  /**
+   *
+   * @return array
+   */
+  protected function buiildViewsQuerySubstitutions() {
+    if (!$this->ViewsQuerySubstitutions) {
+      $this->ViewsQuerySubstitutions = \Drupal::moduleHandler()->invokeAll('views_query_substitutions', [
+        $this->view
+      ]);
+    }
+    return $this->ViewsQuerySubstitutions;
   }
 
   /**
