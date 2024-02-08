@@ -32,6 +32,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    */
   protected $countsTerms = [];
 
+  /**
+   *
+   * @var \Drupal\views\Plugin\ViewsHandlerManager
+   */
+  protected $ViewsHandlerManager;
+
   protected function defineOptions() {
     $options = parent::defineOptions();
 
@@ -350,23 +356,21 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
      * @var array $filters
      */
     $filters = $this->view->filter;
+
+    $base_table = $this->view->storage->get('base_table');
+    $field_id = $this->view->storage->get('base_field');
     /**
      *
      * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
      */
     $currentFilter = $filters['more_fields_' . $colomn_name];
     if ($currentFilter) {
-      /**
-       *
-       * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
-       */
-      $ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
       $configuration = [
         'type' => 'INNER',
         'table' => $currentFilter->table,
         'field' => 'entity_id',
-        'left_table' => $this->view->storage->get('base_table'),
-        'left_field' => $this->view->storage->get('base_field'),
+        'left_table' => $base_table,
+        'left_field' => $field_id,
         'extra_operator' => 'AND',
         'adjusted' => true
       ];
@@ -384,17 +388,95 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
        *
        * @var \Drupal\views\Plugin\views\join\Standard $instance
        */
-      $instance = $ViewsHandlerManager->createInstance("standard", $configuration);
-      $select_query = \Drupal::database()->select($this->view->storage->get('base_table'), $this->view->storage->get('base_table'))->addTag('views')->addTag('views_' . $this->view->storage->id());
-      $select_query->fields($this->view->storage->get('base_table'), [
-        $this->view->storage->get('base_field')
+      $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
+      $select_query = \Drupal::database()->select($base_table, $base_table)->addTag('views')->addTag('views_' . $this->view->storage->id());
+      $select_query->fields($base_table, [
+        $field_id
       ]);
       $instance->buildJoin($select_query, $table, $this->query);
-      dump($select_query->__toString());
-      dump('result : ', $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+      /**
+       * Tableau contennant les valeurs deja selectionner par l'utilisateur.
+       *
+       * @var array $exposed_inputs
+       */
+      $exposed_inputs = $this->view->getExposedInput();
+      if ($exposed_inputs)
+        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
+      dump($currentFilter->realField . ' ::  ' . "\n" . $select_query->__toString());
+      dump(' result : ', $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
       // dump($this->view);
       dd('END');
+      return $select_query;
     }
+  }
+
+  /**
+   * On ajoute les valeurs exposed ayant des valeurs.
+   *
+   * @param \Drupal\Core\Database\Query\Select $query
+   * @param array $filters
+   * @param string $base_table
+   * @param string $field_id
+   * @param array $exposed_inputs
+   */
+  protected function buildFilterExposedQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
+    foreach ($exposed_inputs as $filterId => $value) {
+      if (!empty($filters[$filterId])) {
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+         */
+        $currentFilter = $filters[$filterId];
+        $configuration = [
+          'type' => 'INNER',
+          'table' => $currentFilter->table,
+          'field' => 'entity_id',
+          'left_table' => $base_table,
+          'left_field' => $field_id,
+          'extra_operator' => 'AND',
+          'adjusted' => true
+        ];
+        $table = [
+          'table' => $currentFilter->table,
+          'num' => 1,
+          'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
+          // 'join'=>
+          'relationship' => $base_table
+        ];
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\join\Standard $instance
+         */
+        $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
+        $instance->buildJoin($select_query, $table, $this->query);
+        $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
+      }
+    }
+  }
+
+  protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
+    if ($operator == 'or') {
+      $operator = 'IN';
+      $value = [
+        $value
+      ];
+    }
+    $select_query->condition($alias . '.' . $field, $value, $operator);
+  }
+
+  /**
+   *
+   * @return \Drupal\views\Plugin\ViewsHandlerManager
+   */
+  protected function initViewsJoin() {
+    if (!$this->ViewsHandlerManager) {
+      /**
+       *
+       * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
+       */
+      $this->ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
+    }
+    return $this->ViewsHandlerManager;
   }
 
   protected function buildFilterQuery(\Drupal\Core\Database\Query\Select &$query, $filters, $base_table, $field_id, array $exposed_inputs) {
