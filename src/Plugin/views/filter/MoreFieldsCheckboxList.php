@@ -258,7 +258,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
 
     $base_table = $this->view->storage->get('base_table');
     $field_id = $this->view->storage->get('base_field');
-    // dd($this->view);
     /**
      *
      * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
@@ -274,9 +273,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         'extra_operator' => 'AND',
         'adjusted' => true
       ];
-      // dd($this->configuration, $this->view->getHandlers('filter'),
-      // $this->view->filter['more_fields_field_donnees_liees_target_id']);
-
       $table = [
         'table' => $currentFilter->table,
         'num' => 1,
@@ -327,14 +323,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       // apply views_substitutions
       \Drupal::moduleHandler()->loadInclude('views', "module");
       views_query_views_alter($select_query);
-      //
-      // dump($currentFilter->realField . ' :: ' . "\n" .
-      // $select_query->__toString());
-      // dump(' result : ',
-      // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-      // dump($select_query);
-      // dd('END');
-      //
       return $select_query;
     }
   }
@@ -418,7 +406,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   }
 
   protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
-    // dump($field, $value, $operator);
     if ($operator == 'or') {
       $operator = 'in';
       // Specifique à or car les données sont censer etre dans un array.
@@ -431,9 +418,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $operator = 'LIKE';
       $value = '%' . $select_query->escapeLike($value) . '%';
     }
-
-    // $select_query->getMetaData($key)
-    // dd($field, $value, $operator);
     $select_query->condition($alias . '.' . $field, $value, $operator);
   }
 
@@ -532,7 +516,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    */
   protected function FilterTermHasContent(QueryInterface &$query, \Drupal\mysql\Driver\Database\mysql\Select $queryEntity) {
     $entities = $queryEntity->execute()->fetchAll(\PDO::FETCH_ASSOC);
-    // dump($entities);
     if ($entities) {
       $tids = [];
       foreach ($entities as $value) {
