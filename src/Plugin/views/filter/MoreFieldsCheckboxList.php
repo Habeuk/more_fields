@@ -149,10 +149,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $query->condition('vid', $vocabulary->id());
         }
         // Add custom code.
-        $queryEntity = $this->FilterCountEntitiesHasterm();
-        if ($queryEntity) {
-          $this->FilterTermHasContent($query, $queryEntity);
-        }
+        // $queryEntity = $this->FilterCountEntitiesHasterm();
+        // if ($queryEntity) {
+        // $this->FilterTermHasContent($query, $queryEntity);
+        // }
         // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
@@ -417,7 +417,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $select_query->groupBy($table['alias'] . '.' . $colomn_name);
       $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
       // Add all query substitutions as metadata.
-      $select_query->addMetaData('views_substitutions', $this->buiildViewsQuerySubstitutions());
+      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
       // build orther query.
       $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table, $field_id);
       /**
@@ -431,6 +431,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       // apply views_substitutions
       \Drupal::moduleHandler()->loadInclude('views', "module");
       views_query_views_alter($select_query);
+      dd($this->view->display_handler->handlers['filter'], $this->view);
       // dump($currentFilter->realField . ' :: ' . "\n" .
       // $select_query->__toString());
       // dump(' result : ',
@@ -543,7 +544,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    *
    * @return array
    */
-  protected function buiildViewsQuerySubstitutions() {
+  protected function buildViewsQuerySubstitutions() {
     if (!$this->ViewsQuerySubstitutions) {
       $this->ViewsQuerySubstitutions = \Drupal::moduleHandler()->invokeAll('views_query_substitutions', [
         $this->view
