@@ -149,10 +149,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $query->condition('vid', $vocabulary->id());
         }
         // Add custom code.
-        // $queryEntity = $this->FilterCountEntitiesHasterm();
-        // if ($queryEntity) {
-        // $this->FilterTermHasContent($query, $queryEntity);
-        // }
+        $queryEntity = $this->FilterCountEntitiesHasterm();
+        if ($queryEntity) {
+          $this->FilterTermHasContent($query, $queryEntity);
+        }
         // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
         $terms = Term::loadMultiple($query->execute());
@@ -428,16 +428,20 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $exposed_inputs = $this->view->getExposedInput();
       if ($exposed_inputs)
         $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
+      if (!empty($this->view->argument))
+        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, $field_id);
+
       // apply views_substitutions
       \Drupal::moduleHandler()->loadInclude('views', "module");
       views_query_views_alter($select_query);
-      dd($this->view->display_handler->handlers['filter'], $this->view);
+      //
       // dump($currentFilter->realField . ' :: ' . "\n" .
       // $select_query->__toString());
       // dump(' result : ',
       // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
       // dump($select_query);
       // dd('END');
+      //
       return $select_query;
     }
   }
@@ -473,7 +477,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   }
 
   /**
-   * On ajoute les valeurs exposed ayant des valeurs.
+   * On ajoute les filtres exposed ayant des valeurs.
    *
    * @param \Drupal\Core\Database\Query\Select $query
    * @param array $filters
@@ -538,6 +542,64 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     // $select_query->getMetaData($key)
     // dd($field, $value, $operator);
     $select_query->condition($alias . '.' . $field, $value, $operator);
+  }
+
+  /**
+   * Cette fonction n'est pas automatique, elle fonctionnera au cas par cas en
+   * attandant de la rendre dynamique.
+   *
+   * @param \Drupal\Core\Database\Query\Select $select_query
+   * @param array $arguments
+   * @param string $base_table
+   * @param string $field_id
+   */
+  protected function buildFilterArguments(\Drupal\Core\Database\Query\Select &$select_query, array $arguments, array $args, string $base_table, string $field_id) {
+    $position = 0;
+    // cas : $base_table == node_field_data et argument => taxonomy_index
+    if ($base_table == 'node_field_data') {
+      foreach ($arguments as $argument) {
+        if (isset($args[$position])) {
+          $arg = $args[$position];
+          $position++;
+        }
+        // s'il nya pas d'argument on continue.
+        if (!isset($arg))
+          continue;
+
+        $configuration = [
+          'type' => 'INNER',
+          'table' => $argument->table,
+          'field' => 'nid',
+          'left_table' => $base_table,
+          'left_field' => $field_id,
+          'extra_operator' => 'AND',
+          'adjusted' => true
+        ];
+        $table = [
+          'table' => $argument->table,
+          'num' => 1,
+          'alias' => $argument->tableAlias ? $argument->tableAlias : $argument->table,
+          // 'join'=>
+          'relationship' => $base_table
+        ];
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\argument\ArgumentPluginBase $argument
+         */
+        if ($argument->table == 'taxonomy_index') {
+          /**
+           *
+           * @var \Drupal\views\Plugin\views\join\Standard $instance
+           */
+          if (!$select_query->hasTag('more_fields_checkbox_list__' . $argument->table)) {
+            $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
+            $instance->buildJoin($select_query, $table, $this->view->query);
+            $select_query->addTag('more_fields_checkbox_list__' . $argument->table);
+          }
+          $this->buildCondition($select_query, $table['alias'], $argument->realField, $arg, $argument->operator);
+        }
+      }
+    }
   }
 
   /**
