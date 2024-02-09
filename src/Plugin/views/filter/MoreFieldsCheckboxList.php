@@ -7,8 +7,6 @@ use Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Query\QueryInterface;
-use Drupal\Core\Entity\Query\QueryAggregateInterface;
-use Drupal\views\Plugin\views\query\Sql;
 
 /**
  * Filter by term id.
