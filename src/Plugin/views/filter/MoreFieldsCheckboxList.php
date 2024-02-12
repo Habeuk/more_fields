@@ -22,29 +22,29 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * @var string
    */
   protected $alias_count = 'count_termes';
-
+  
   /**
    * Contient nombre d'entites par terms.
    *
    * @var array
    */
   protected $countsTerms = [];
-
+  
   /**
    *
    * @var \Drupal\views\Plugin\ViewsHandlerManager
    */
   protected $ViewsHandlerManager;
-
+  
   /**
    *
    * @var array
    */
   protected $ViewsQuerySubstitutions = [];
-
+  
   protected function defineOptions() {
     $options = parent::defineOptions();
-
+    
     $options['type'] = [
       'default' => 'select'
     ];
@@ -56,7 +56,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     ];
     return $options;
   }
-
+  
   /**
    * Sanitizes the HTML select element's options.
    *
@@ -65,7 +65,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   protected function prepareFilterSelectOptions(&$options) {
     // On retourne les données sans les filtrées risque de securitée.
   }
-
+  
   public function buildExposeForm(&$form, FormStateInterface $form_state) {
     parent::buildExposeForm($form, $form_state);
     // on ajoute la possibilite d'afficher ou pas le nombre d'entité
@@ -81,7 +81,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       '#description' => "Permet de filtrer en fonction de la page en court si cette derniere est un terme taxonomie"
     ];
   }
-
+  
   /**
    * Copier de la ersion : Drupal core 9.5.9
    *
@@ -96,7 +96,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       ];
       return;
     }
-
+    
     if ($this->options['type'] == 'textfield') {
       $terms = $this->value ? Term::loadMultiple(($this->value)) : [];
       $form['value'] = [
@@ -106,7 +106,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         '#type' => 'textfield',
         '#default_value' => EntityAutocomplete::getEntityLabels($terms)
       ];
-
+      
       if ($this->options['limit']) {
         $form['value']['#type'] = 'entity_autocomplete';
         $form['value']['#target_type'] = 'taxonomy_term';
@@ -171,20 +171,20 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
             $options[$term->id()] = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
         }
       }
-
+      
       $default_value = (array) $this->value;
-
+      
       if ($exposed = $form_state->get('exposed')) {
         $identifier = $this->options['expose']['identifier'];
-
+        
         if (!empty($this->options['expose']['reduce'])) {
           $options = $this->reduceValueOptions($options);
-
+          
           if (!empty($this->options['expose']['multiple']) && empty($this->options['expose']['required'])) {
             $default_value = [];
           }
         }
-
+        
         if (empty($this->options['expose']['multiple'])) {
           if (empty($this->options['expose']['required']) && (empty($default_value) || !empty($this->options['expose']['reduce']))) {
             $default_value = 'All';
@@ -207,7 +207,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           }
         }
       }
-
+      
       $form['value'] = [
         '#type' => 'select',
         '#title' => $this->options['limit'] ? $this->t('Select terms from vocabulary @voc', [
@@ -218,23 +218,23 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         '#size' => min(9, count($options)),
         '#default_value' => $default_value
       ];
-
+      
       $user_input = $form_state->getUserInput();
       if ($exposed && isset($identifier) && !isset($user_input[$identifier])) {
         $user_input[$identifier] = $default_value;
         $form_state->setUserInput($user_input);
       }
     }
-
+    
     if (!$form_state->get('exposed')) {
       // Retain the helper option
       $this->helper->buildOptionsForm($form, $form_state);
-
+      
       // Show help text if not exposed to end users.
       $form['value']['#description'] = $this->t('Leave blank for all. Otherwise, the first selected term will be the default instead of "Any".');
     }
   }
-
+  
   /**
    * Contruit les requtes de la vue à partir du filtre.
    */
@@ -253,14 +253,14 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
      * @var array $filters
      */
     $filters = $this->view->filter;
-
+    
     $base_table = $this->view->storage->get('base_table');
     $field_id = $this->view->storage->get('base_field');
     /**
      *
      * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
      */
-    $currentFilter = $filters['more_fields_' . $colomn_name];
+    $currentFilter = isset($filters['more_fields_' . $colomn_name]) ? $filters['more_fields_' . $colomn_name] : NULL;
     if ($currentFilter) {
       $configuration = [
         'type' => 'INNER',
@@ -317,14 +317,14 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
       if (!empty($this->view->argument))
         $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, $field_id);
-
+      
       // apply views_substitutions
       \Drupal::moduleHandler()->loadInclude('views', "module");
       views_query_views_alter($select_query);
       return $select_query;
     }
   }
-
+  
   protected function buildStaticQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id) {
     foreach ($filters as $currentFilter) {
       /**
@@ -354,7 +354,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       }
     }
   }
-
+  
   /**
    * On ajoute les filtres exposed ayant des valeurs.
    *
@@ -397,12 +397,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $instance->buildJoin($select_query, $table, $this->view->query);
           $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
         }
-
+        
         $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
   }
-
+  
   protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
     if ($operator == 'or') {
       $operator = 'in';
@@ -418,7 +418,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     }
     $select_query->condition($alias . '.' . $field, $value, $operator);
   }
-
+  
   /**
    * Cette fonction n'est pas automatique, elle fonctionnera au cas par cas en
    * attandant de la rendre dynamique.
@@ -440,7 +440,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         // s'il nya pas d'argument on continue.
         if (!isset($arg))
           continue;
-
+        
         $configuration = [
           'type' => 'INNER',
           'table' => $argument->table,
@@ -476,7 +476,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       }
     }
   }
-
+  
   /**
    *
    * @return array
@@ -489,7 +489,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     }
     return $this->ViewsQuerySubstitutions;
   }
-
+  
   /**
    *
    * @return \Drupal\views\Plugin\ViewsHandlerManager
@@ -504,7 +504,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     }
     return $this->ViewsHandlerManager;
   }
-
+  
   /**
    * On va selectionner les entités qui possedent un terme dans le champs en
    * question, les groupes par tid, ensuite recuperer la liste des tids.
@@ -528,11 +528,11 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       $query->condition('tid', null, "IS NULL");
     }
   }
-
+  
   protected function exposedTranslate(&$form, $type) {
     parent::exposedTranslate($form, $type);
     // les types radios et checkboxes ne fonctionnent pas correctement use
     // better_exposed_filters.
   }
-
+  
 }
