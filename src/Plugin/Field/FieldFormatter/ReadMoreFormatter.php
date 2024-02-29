@@ -20,14 +20,14 @@ use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
  * )
  */
 class ReadMoreFormatter extends HtlBtn {
-  
+
   public static function defaultSettings() {
     return [
       'text_display' => 'Read more',
       'text_display' => true
     ] + parent::defaultSettings();
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -43,13 +43,28 @@ class ReadMoreFormatter extends HtlBtn {
       ]
     ] + parent::settingsForm($form, $form_state);
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = parent::viewElements($items, $langcode);
+    // dd($items);
+
+    /**
+     * @var  Drupal\Core\Language\Language  $currentLanguage
+     */
+    $currentLanguage = \Drupal::languageManager()->getLanguage($langcode);
+    // dd($currentLanguage);
+    foreach ($elements as &$element) {
+
+      /**
+       * @var \Drupal\Core\Url $url
+       */
+      $url = $elements[0]["#url"];
+      $url->setOption("language", $currentLanguage);
+    }
     if ($this->getSetting('link_to_entity'))
       foreach ($elements as &$element) {
         $element['#options']['attributes']['class'][] = $this->getSetting('disable_button') ? '' : 'htl-btn';
@@ -63,5 +78,4 @@ class ReadMoreFormatter extends HtlBtn {
       }
     return $elements;
   }
-  
 }
