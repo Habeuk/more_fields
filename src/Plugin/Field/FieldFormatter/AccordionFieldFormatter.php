@@ -21,7 +21,7 @@ use Drupal\Core\Template\Attribute;
  * )
  */
 class AccordionFieldFormatter extends FormatterBase {
-  
+
   /**
    *
    * {@inheritdoc}
@@ -35,7 +35,7 @@ class AccordionFieldFormatter extends FormatterBase {
       'attribute_header' => ''
     ] + parent::defaultSettings();
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -74,7 +74,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ] + parent::settingsForm($form, $form_state);
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -82,10 +82,10 @@ class AccordionFieldFormatter extends FormatterBase {
   public function settingsSummary() {
     $summary = [];
     // Implement settings summary.
-    
+
     return $summary;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -103,7 +103,7 @@ class AccordionFieldFormatter extends FormatterBase {
     $attribute_box = new Attribute([
       'class' => [
         'field-box',
-        'mb-3'
+        'mb-3',
       ]
     ]);
     $elements = [
@@ -119,8 +119,8 @@ class AccordionFieldFormatter extends FormatterBase {
           'field-meta',
           'btn btn-block p-0 border-0'
         ],
-        'data-toggle' => "collapse",
-        'data-target' => "#" . $id . '-' . $delta,
+        'data-bs-toggle' => "collapse",
+        'data-bs-target' => "#" . $id . '-' . $delta,
         'aria-expanded' => "true",
         'aria-controls' => $id
       ]);
@@ -130,7 +130,7 @@ class AccordionFieldFormatter extends FormatterBase {
           'collapse',
           ($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all') ? 'show' : ''
         ],
-        'data-parent' => "#" . $id,
+        'data-bs-parent' => "#" . $id,
         'id' => $id . '-' . $delta
       ]);
       $attr_desc->addClass($this->getSetting('attribute_content'));
@@ -144,7 +144,7 @@ class AccordionFieldFormatter extends FormatterBase {
     }
     return $elements;
   }
-  
+
   /**
    * Generate the output appropriate for one field item.
    *
@@ -164,7 +164,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ];
   }
-  
+
   /**
    *
    * @param
@@ -181,5 +181,4 @@ class AccordionFieldFormatter extends FormatterBase {
     }
     return $randomString;
   }
-  
 }
