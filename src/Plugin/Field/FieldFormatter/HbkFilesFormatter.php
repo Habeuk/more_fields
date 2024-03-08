@@ -223,7 +223,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#type' => 'fieldset',
       '#open' => false
     ];
-    // Fullswiperoptions::buildSwiperjsOptions($form['swiper_main'], []);
+    Fullswiperoptions::buildGeneralOptionsForm($form['swiper_main'], $swiper_main_options);
     Fullswiperoptions::buildSwiperjsOptions($form['swiper_main'], $swiper_main_options);
     $swiper_thumb_options = $this->getSetting('swiper_thumb');
     
@@ -232,8 +232,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#type' => 'fieldset',
       '#open' => false
     ];
+    Fullswiperoptions::buildGeneralOptionsForm($form['swiper_thumb'], $swiper_thumb_options);
     Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], $swiper_thumb_options);
-    // Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], []);
     
     $form = array_merge($form, $temp_form);
     return $form;
@@ -346,8 +346,10 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         'swiper'
       ]
     ]);
+    // ////////
     // constructing attributes of the main slide
-    $swiper_main_options = Fullswiperoptions::formatOptions($this->getSetting('swiper_main'));
+    $swiper_main = $this->getSetting('swiper_main');
+    $swiper_main_options = Fullswiperoptions::formatOptions($swiper_main);
     $main_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_main_options));
     $main_slider_items_attributes = new Attribute([
       "class" => [
@@ -355,8 +357,19 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         "main-slide-item"
       ]
     ]);
-    // constructing attributes of the thumbs slide
-    $swiper_thumb_options = Fullswiperoptions::formatOptions($this->getSetting('swiper_thumb'));
+    //
+    $swipper_attributes_paginations = new Attribute();
+    $swipper_attributes_paginations->addClass('swiper-pagination', $swiper_main['pagination_color'], $swiper_main['pagination_postion']);
+    //
+    $swipper_attributes_buttons_prev = new Attribute();
+    $swipper_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev', $swiper_main['buttons_color'], $swiper_main['buttons_position']);
+    //
+    $swipper_attributes_buttons_next = new Attribute();
+    $swipper_attributes_buttons_next->addClass('swiper-button', 'swiper-button-next', $swiper_main['buttons_color'], $swiper_main['buttons_position']);
+    // ////////
+    // Constructing attributes of the thumbs slide
+    $swiper_thumb = $this->getSetting('swiper_thumb');
+    $swiper_thumb_options = Fullswiperoptions::formatOptions($swiper_thumb);
     $thumbs_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_thumb_options));
     $thumbs_slider_items_attributes = new Attribute([
       "class" => [
@@ -365,17 +378,33 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       ]
     ]);
     //
-    
+    $thumbs_attributes_paginations = new Attribute();
+    $thumbs_attributes_paginations->addClass('swiper-pagination', $swiper_thumb['pagination_color'], $swiper_thumb['pagination_postion']);
+    //
+    $thumbs_attributes_buttons_prev = new Attribute();
+    $thumbs_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev', $swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
+    //
+    $thumbs_attributes_buttons_next = new Attribute();
+    $thumbs_attributes_buttons_next->addClass('swiper-button', 'swiper-button-next', $swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
+    //
     return [
       "#theme" => "more_field_file_image_video",
       "#main_slider_items" => $elements,
       "#main_slider_items_attributes" => $main_slider_items_attributes,
       "#main_slider_attributes" => $main_slider_attributes,
-      "#main_slider_settings" => $swiper_main_options,
+      "#swiperjs_options" => $swiper_main_options,
+      "#swipper_attributes_paginations" => $swipper_attributes_paginations,
+      "#swipper_attributes_buttons_prev" => $swipper_attributes_buttons_prev,
+      "#swipper_attributes_buttons_next" => $swipper_attributes_buttons_next,
+      //
       "#thumbs_slider_items" => $thumb_elements,
       "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
       "#thumbs_slider_attributes" => $thumbs_slider_attributes,
       "#thumbs_slider_settings" => $swiper_thumb_options,
+      //
+      "#thumbs_attributes_paginations" => $thumbs_attributes_paginations,
+      '#thumbs_attributes_buttons_prev' => $thumbs_attributes_buttons_prev,
+      "#thumbs_attributes_buttons_next" => $thumbs_attributes_buttons_next,
       "#items_types" => $items_types,
       "#videos_settings" => $video_settings
     ];

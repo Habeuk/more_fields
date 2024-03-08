@@ -53,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-
+  
   // Load new definition field in code.
   /**
    *
@@ -125,7 +125,7 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
        * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
        */
       $field_image = $content->get($element['#field_name']);
-
+      
       /**
        * (
        *
@@ -298,11 +298,20 @@ function more_fields_theme() {
       'main_slider_items' => [],
       'main_slider_items_attributes' => [],
       'main_slider_attributes' => [],
-      'main_slider_settings' => [],
+      'swiperjs_options' => [],
+      'swipper_attributes_buttons_next' => NULL,
+      'swipper_attributes_buttons_prev' => NULL,
+      'swipper_attributes_paginations' => NULL,
+      //
       'thumbs_slider_items' => [],
       'thumbs_slider_items_attributes' => [],
       'thumbs_slider_attributes' => [],
       'thumbs_slider_settings' => [],
+      //
+      'thumbs_attributes_paginations' => NULL,
+      'thumbs_attributes_buttons_prev' => NULL,
+      'thumbs_attributes_buttons_next' => NULL,
+      //
       'items_types' => [],
       'videos_settings' => []
     ],
@@ -334,11 +343,11 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
+  
   $hooks['more_fields_links'] = [
     'render element' => 'element'
   ];
-
+  
   return $hooks;
 }
 

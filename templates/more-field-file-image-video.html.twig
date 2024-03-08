@@ -18,7 +18,7 @@
 							</span>
 						</span>
 					{% endif %}
-					{% if main_slider_settings.zoom %}
+					{% if swiperjs_options.zoom %}
 						<div class="swiper-zoom-container">
 							{{item}}
 						</div>
@@ -28,21 +28,9 @@
 				</div>
 			{% endfor %}
 		</div>
-		<!-- If we need pagination -->
-		{% if main_slider_settings.pagination.enabled %}
-			<div class="swiper-pagination"></div>
-		{% endif %}
-
-		<!-- If we need navigation buttons -->
-		{% if main_slider_settings.navigation.enabled %}
-			<div class="swiper-button-prev"></div>
-			<div class="swiper-button-next"></div>
-		{% endif %}
-
-		<!-- If we need scrollbar -->
-		{% if main_slider_settings.scrollbar.enabled %}
-			<div class="swiper-scrollbar"></div>
-		{% endif %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': swiperjs_options,'swipper_attributes_buttons_prev': swipper_attributes_buttons_prev, swipper_attributes_buttons_next: swipper_attributes_buttons_next} only %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--pagination.html.twig' with {'swiperjs_options': swiperjs_options, 'swipper_attributes_paginations': swipper_attributes_paginations} only  %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--scrollbar.html.twig' with {'swiperjs_options': swiperjs_options} only  %}	
 	</div>
 	<div {{ thumbs_slider_attributes.addClass(['galleries-thumb']).setAttribute('data-is-children','true') }}>
 		<div class="swiper-wrapper">
@@ -58,19 +46,8 @@
 				</div>
 			{% endfor %}
 		</div>
-		<!-- If we need pagination -->
-		{% if thumbs_slider_settings.pagination.enabled %}
-			<div class="swiper-pagination"></div>
-		{% endif %}
-
-		<!-- If we need navigation buttons -->
-		{% if thumbs_slider_settings.navigation.enabled %}
-			<div class="swiper-button-prev"></div>
-			<div class="swiper-button-next"></div>
-		{% endif %}
-		<!-- If we need scrollbar -->
-		{% if thumbs_slider_settings.scrollbar.enabled %}
-			<div class="swiper-scrollbar"></div>
-		{% endif %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': thumbs_slider_settings} only %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--pagination.html.twig' with {'swiperjs_options': thumbs_slider_settings} only  %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--scrollbar.html.twig' with {'swiperjs_options': thumbs_slider_settings} only  %}			
 	</div>
 </div>
