@@ -103,7 +103,7 @@ class AccordionFieldFormatter extends FormatterBase {
     $attribute_box = new Attribute([
       'class' => [
         'field-box',
-        'mb-3',
+        'mb-3'
       ]
     ]);
     $elements = [
@@ -119,8 +119,8 @@ class AccordionFieldFormatter extends FormatterBase {
           'field-meta',
           'btn btn-block p-0 border-0'
         ],
-        'data-bs-toggle' => "collapse",
-        'data-bs-target' => "#" . $id . '-' . $delta,
+        'data-toggle' => "collapse",
+        'data-target' => "#" . $id . '-' . $delta,
         'aria-expanded' => "true",
         'aria-controls' => $id
       ]);
@@ -130,7 +130,7 @@ class AccordionFieldFormatter extends FormatterBase {
           'collapse',
           ($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all') ? 'show' : ''
         ],
-        'data-bs-parent' => "#" . $id,
+        'data-parent' => "#" . $id,
         'id' => $id . '-' . $delta
       ]);
       $attr_desc->addClass($this->getSetting('attribute_content'));
