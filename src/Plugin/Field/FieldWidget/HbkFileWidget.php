@@ -18,7 +18,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *
  * @FieldWidget(
  *   id = "hbk_file_generic",
- *   label = @Translation("File"),
+ *   label = @Translation("Galleries File"),
  *   field_types = {
  *     "file",
  *     "more_fields_hbk_file"
