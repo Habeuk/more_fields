@@ -39,7 +39,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
   
   /**
    *
-   * @var Drupal/Core/File/FileUrlGenerator $fileUrlGenerator
+   * @var \Drupal\Core\File\FileUrlGenerator $fileUrlGenerator
    */
   protected $fileUrlGenerator;
   
@@ -109,7 +109,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       'swiper_main' => Fullswiperoptions::options(),
       'swiper_thumb' => Fullswiperoptions::options(),
       "layoutgenentitystyles_view" => "more_fields/field-files",
-      "my_element" => "myddd element"
+      "thumbs_galleries_position" => '',
+      "enable_zoom_on_hover" => false
     ];
     $default["video_settings"]["field_extension"] = "mp4, ogv, webm";
     $default["image_settings"]["field_extension"] = "png, gif, jpg, jpeg, webp";
@@ -197,6 +198,20 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       '#type' => 'hidden',
       // "#value" => "more_fields/field-files",
       "#value" => $this->getSetting("layoutgenentitystyles_view")
+    ];
+    $form['thumbs_galleries_position'] = [
+      "#type" => 'select',
+      "#title" => "Position des thumbails",
+      "#options" => [
+        'order-md-0' => "Gauche",
+        "order-md-2" => "Droite"
+      ],
+      '#default_value' => $this->getSetting('thumbs_galleries_position')
+    ];
+    $form['enable_zoom_on_hover'] = [
+      "#type" => 'checkbox',
+      "#title" => "Enable zoom on hover",
+      '#default_value' => $this->getSetting('enable_zoom_on_hover')
     ];
     
     // dump($video_settings);
@@ -359,10 +374,10 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     ]);
     //
     $swipper_attributes_paginations = new Attribute();
-    $swipper_attributes_paginations->addClass('swiper-pagination', $swiper_main['pagination_color'], $swiper_main['pagination_postion']);
+    $swipper_attributes_paginations->addClass('swiper-pagination', $swiper_main['pagination_color'], $swiper_main['pagination_postion'], $swiper_main['pagination_model']);
     //
     $swipper_attributes_buttons_prev = new Attribute();
-    $swipper_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev', $swiper_main['buttons_color'], $swiper_main['buttons_position']);
+    $swipper_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev', $swiper_main['buttons_color'], $swiper_main['buttons_position'], $swiper_main['pagination_model']);
     //
     $swipper_attributes_buttons_next = new Attribute();
     $swipper_attributes_buttons_next->addClass('swiper-button', 'swiper-button-next', $swiper_main['buttons_color'], $swiper_main['buttons_position']);
@@ -374,12 +389,13 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $thumbs_slider_items_attributes = new Attribute([
       "class" => [
         "slide-item",
-        "thumb-slide-item"
+        "thumb-slide-item",
+        $this->getSetting('thumbs_galleries_position')
       ]
     ]);
     //
     $thumbs_attributes_paginations = new Attribute();
-    $thumbs_attributes_paginations->addClass('swiper-pagination', $swiper_thumb['pagination_color'], $swiper_thumb['pagination_postion']);
+    $thumbs_attributes_paginations->addClass('swiper-pagination', $swiper_thumb['pagination_color'], $swiper_thumb['pagination_postion'], $swiper_thumb['pagination_model']);
     //
     $thumbs_attributes_buttons_prev = new Attribute();
     $thumbs_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev', $swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
@@ -489,6 +505,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         'tags' => $cache_tags
       ]
     ];
+    if ($this->getSetting('enable_zoom_on_hover')) {
+      $image_uri = $file->getFileUri();
+      $url = $this->fileUrlGenerator->generateString($image_uri);
+      $elements[$delta]["#item_attributes"]['data-zoom'] = $url;
+    }
   }
   
   /**

@@ -28,7 +28,7 @@
 				</div>
 			{% endfor %}
 		</div>
-		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': swiperjs_options,'swipper_attributes_buttons_prev': swipper_attributes_buttons_prev, swipper_attributes_buttons_next: swipper_attributes_buttons_next} only %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': swiperjs_options,'swipper_attributes_buttons_prev': swipper_attributes_buttons_prev, 'swipper_attributes_buttons_next': swipper_attributes_buttons_next} only %}
 		{% include '@fullswiperoptions/includes/fullswiperoptions--pagination.html.twig' with {'swiperjs_options': swiperjs_options, 'swipper_attributes_paginations': swipper_attributes_paginations} only  %}
 		{% include '@fullswiperoptions/includes/fullswiperoptions--scrollbar.html.twig' with {'swiperjs_options': swiperjs_options} only  %}	
 	</div>
@@ -46,8 +46,8 @@
 				</div>
 			{% endfor %}
 		</div>
-		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': thumbs_slider_settings} only %}
-		{% include '@fullswiperoptions/includes/fullswiperoptions--pagination.html.twig' with {'swiperjs_options': thumbs_slider_settings} only  %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--navigation.html.twig' with {'swiperjs_options': thumbs_slider_settings,'swipper_attributes_buttons_prev': thumbs_attributes_buttons_prev, 'swipper_attributes_buttons_next': thumbs_attributes_buttons_next} only %}
+		{% include '@fullswiperoptions/includes/fullswiperoptions--pagination.html.twig' with {'swiperjs_options': thumbs_slider_settings, 'swipper_attributes_paginations': thumbs_attributes_paginations} only  %}
 		{% include '@fullswiperoptions/includes/fullswiperoptions--scrollbar.html.twig' with {'swiperjs_options': thumbs_slider_settings} only  %}			
 	</div>
 </div>
