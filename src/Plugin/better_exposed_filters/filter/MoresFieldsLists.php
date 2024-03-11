@@ -24,12 +24,12 @@ class MoresFieldsLists extends Links implements ContainerFactoryPluginInterface 
    * @var string
    */
   protected $classByModel = 'more_fields_list_simple';
-
+  
   function __construct($configuration, $plugin_id, $plugin_definition, LayoutgenentitystylesServices $LayoutgenentitystylesServices) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->LayoutgenentitystylesServices = $LayoutgenentitystylesServices;
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -37,7 +37,7 @@ class MoresFieldsLists extends Links implements ContainerFactoryPluginInterface 
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('layoutgenentitystyles.add.style.theme'));
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -51,5 +51,5 @@ class MoresFieldsLists extends Links implements ContainerFactoryPluginInterface 
       $form[$field_id]['#attributes']['class'][] = $this->classByModel;
     }
   }
-
+  
 }

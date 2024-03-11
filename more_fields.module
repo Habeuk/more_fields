@@ -369,5 +369,11 @@ function template_preprocess_more_fields_links(array &$variables) {
       $variables['element'][$k]['#title'] = Markup::create($value['#title']);
     $variables['links'][$k]['#title'] = Markup::create($value['#title']);
   }
-  // dump($variables);
+  // remove 'form-select'
+  if (\Drupal::currentUser()->id() == 1) {
+    if (!empty($variables['attributes']['class'])) {
+      if ($key = array_search("form-select", $variables['attributes']['class']))
+        unset($variables['attributes']['class'][$key]);
+    }
+  }
 }
