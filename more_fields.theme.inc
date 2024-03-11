@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Template\Attribute;
 
 function template_preprocess_more_fields_experience_formatter(&$vars) {
@@ -78,6 +79,19 @@ function template_preprocess_more_field_file_image_video(&$vars) {
 function template_preprocess_gallery_overlay(&$vars) {
   $image_attributes = [];
   $stop = 0;
+
+
+  $jsSettings = [
+    "section" => [
+      "selector" => "#",
+      "value" => $vars['image_attributes']['field_attribute']["id"]
+    ],
+    "galleryContainer" => [
+      "selector" => "#",
+      "value" => $vars['image_attributes']['gallery_attribute']["id"]
+    ],
+    "fade_time" => $vars["settings"]["fade_time"],
+  ];
   foreach ($vars['image_attributes'] as $key => $value) {
     if (gettype($value) == 'array') {
       $image_attributes[$key] = new Attribute($value);
@@ -86,5 +100,11 @@ function template_preprocess_gallery_overlay(&$vars) {
     }
   }
   $vars['image_attributes'] = $image_attributes;
+  $vars['field_attribute'] = $vars['image_attributes']['field_attribute'];
+  $vars['gallery_attribute'] = $vars['image_attributes']['gallery_attribute'];
+  $vars['field_attribute']->setAttribute('data-gallery-overlay', Json::encode($jsSettings));
+
+  unset($vars['image_attributes']['gallery_attribute']);
+  unset($vars['image_attributes']['field_class']);
   $vars['#attached']['library'][] = 'more_fields/more_field_gallery_overlay';
 }

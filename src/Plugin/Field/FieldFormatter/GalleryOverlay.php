@@ -39,7 +39,9 @@ class GalleryOverlay extends ImageFormatter {
       'field_classes' => [
         'image_wrappers_class' => 'col-lg-3 col-md-6 col-sm-6 col-xs-12 image',
         'each_image_class' => 'img-responsive',
-        'icon_class' => 'fa fa-plus-circle'
+        'icon_class' => 'fa fa-plus-circle',
+        'field_class' => '',
+        'gallery_class' => '',
       ],
     ] + parent::defaultSettings();
   }
@@ -68,12 +70,17 @@ class GalleryOverlay extends ImageFormatter {
 
     $elements['image_link'] = [
       '#type' => 'hidden',
-      '#default_value' => $this->getSetting('image_link')
+      '#default_value' => 'file'
     ];
     // // dump($conf);
 
     $elements += $parentForm;
 
+    $elements["overlay_transition_time"] = [
+      '#title' => t('Transition speed \'in milliseconds\''),
+      '#type' => 'number',
+      '#default_value' => $conf["overlay_transition_time"]
+    ];
 
     $elements['field_classes'] = [
       '#type' => 'details',
@@ -81,6 +88,18 @@ class GalleryOverlay extends ImageFormatter {
       '#open' => false,
       '#weight' => 11
     ];
+    $elements['field_classes']['field_class'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Field container class'),
+      '#default_value' => $conf['field_classes']['field_class'],
+    ];
+
+    $elements['field_classes']['gallery_class'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Gallery class'),
+      '#default_value' => $conf['field_classes']['gallery_class'],
+    ];
+
     $elements['field_classes']['image_wrappers_class'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Field container class'),
@@ -97,7 +116,6 @@ class GalleryOverlay extends ImageFormatter {
       '#default_value' => $conf['field_classes']['icon_class'],
       '#description' => $this->t("font awesome classes of the icon that should be rendered")
     ];
-
     return $elements;
   }
 
@@ -119,7 +137,6 @@ class GalleryOverlay extends ImageFormatter {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = parent::viewElements($items, $langcode);
     $settings = $this->getSettings();
-    // dd($settings);
     foreach ($elements as  &$element) {
       if (!isset($element["#item_attributes"]["class"])) {
         $element["#item_attributes"]["class"] = [];
@@ -146,13 +163,36 @@ class GalleryOverlay extends ImageFormatter {
         "url" => $overlayUrl
       ];
     }
+
+    $longueurChaine = 8;
+    $rand = bin2hex(random_bytes($longueurChaine));
+
+    $settings["field_classes"]["field_attribute"] = [
+      "class" => $settings["field_classes"]["field_class"],
+      "id" => "gallery-" . $rand
+    ];
+
+    unset($settings["field_classes"]["field_class"]);
+
+    $settings["field_classes"]["gallery_attribute"] = [
+      "class" => $settings["field_classes"]["gallery_class"],
+      "id" => "image-gallery-" . $rand
+    ];
+
+    unset($settings["field_classes"]["gallery_class"]);
+
     return [
       "#theme" => "more_field_gallery_overlay",
       "#elements" => $elements,
-      "#image_attributes" => $settings["field_classes"] + ["overlay_attributes" => [
-        "data-transition-time" => $settings["overlay_transition_time"],
-        "data-overlay-container" => $settings["overlay_container"]
-      ]]
+      "#image_attributes" => $settings["field_classes"] + [
+        "overlay_attributes" => [
+          "data-transition-time" => $settings["overlay_transition_time"],
+          "data-overlay-container" => $settings["overlay_container"]
+        ],
+      ],
+      "#settings" => [
+        "fade_time" => (int) $settings["overlay_transition_time"]
+      ]
     ];
   }
 }

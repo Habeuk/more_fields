@@ -298,7 +298,8 @@ function more_fields_theme() {
     ],
     'variables' => [
       'elements' => [],
-      'image_attributes' => []
+      'image_attributes' => [],
+      'settings' => [],
     ],
     'file' => 'more_fields.theme.inc'
   ];
