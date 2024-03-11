@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\Core\Template\Attribute;
+
 function template_preprocess_more_fields_experience_formatter(&$vars) {
   $vars['item'] = [];
   if (!empty($vars['element']['#item'])) {
@@ -66,9 +68,23 @@ function template_preprocess_restrained_text_formatter(&$vars) {
     $vars["item"] = $vars["element"]["#item"];
   }
 }
-function template_preprocess_more_field_file_image_video($vars) {
+function template_preprocess_more_field_file_image_video(&$vars) {
   $vars['#attached']['library'][] = 'more_fields/more_field_file_image_video';
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
   }
+}
+
+function template_preprocess_gallery_overlay(&$vars) {
+  $image_attributes = [];
+  $stop = 0;
+  foreach ($vars['image_attributes'] as $key => $value) {
+    if (gettype($value) == 'array') {
+      $image_attributes[$key] = new Attribute($value);
+    } else {
+      $image_attributes[$key] = new Attribute(['class' => explode(' ', $value)]);
+    }
+  }
+  $vars['image_attributes'] = $image_attributes;
+  $vars['#attached']['library'][] = 'more_fields/more_field_gallery_overlay';
 }

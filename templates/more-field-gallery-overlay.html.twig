@@ -1,0 +1,23 @@
+<section id="gallery" class="drupal-gallery-overlay gallery-overlay-section">
+	<div class="container">
+		<div id="image-gallery" class="gallery-overlay-section-gallery">
+			<div class="row">
+
+				{% for element in elements %}
+					<div {{image_attributes.image_wrappers_class}}>
+						<div class="go-img-wrapper img-wrapper">
+							<a href="{{element.url}}">{{element.image}}</a>
+							<div class="go-img-overlay img-overlay">
+								<i {{image_attributes.icon_class}} aria-hidden="true"></i>
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+			<!-- End row -->
+		</div>
+		<!-- End image gallery -->
+		<!-- End image gallery -->
+	</div>
+	<!-- End container -->
+</section>
