@@ -53,7 +53,11 @@ class GalleryOverlay extends ImageFormatter {
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $parentForm =    parent::settingsForm($form, $form_state);
     $conf = $this->getSettings();
-    // dd($conf); 
+    $elements = [];
+    $elements['layoutgenentitystyles_view'] = [
+      '#type' => 'hidden',
+      "#value" => $this->getSetting("layoutgenentitystyles_view")
+    ];
     $elements['gabarit'] = [
       '#type' => 'select',
       '#title' => $this->t('Parent of overlay image'),
@@ -70,14 +74,14 @@ class GalleryOverlay extends ImageFormatter {
 
     $elements['image_link'] = [
       '#type' => 'hidden',
-      '#default_value' => 'file'
+      "#value" => $conf["image_link"]
     ];
     // // dump($conf);
 
     $elements += $parentForm;
 
     $elements["overlay_transition_time"] = [
-      '#title' => t('Transition speed \'in milliseconds\''),
+      '#title' => $this->t('Transition speed \'in milliseconds\''),
       '#type' => 'number',
       '#default_value' => $conf["overlay_transition_time"]
     ];
