@@ -74,7 +74,7 @@ class GalleryOverlay extends ImageFormatter {
 
     $elements['image_link'] = [
       '#type' => 'hidden',
-      "#value" => $conf["image_link"]
+      "#value" => "file"
     ];
     // // dump($conf);
 
