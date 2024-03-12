@@ -2,7 +2,7 @@
 	<div {{gallery_attribute.addClass("gallery-overlay-section-gallery")}}>
 		<div class="row">
 			{% for element in elements %}
-				<div {{image_attributes.image_wrappers_class}}>
+				<div {{image_attributes.image_wrappers_class.addClass("base-image-container")}}>
 					<div class="go-img-wrapper img-wrapper">
 						<a href="{{element.url}}">{{element.image}}</a>
 						<div class="go-img-overlay img-overlay">

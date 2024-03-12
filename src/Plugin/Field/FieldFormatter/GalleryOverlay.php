@@ -37,7 +37,7 @@ class GalleryOverlay extends ImageFormatter {
       'image_overlay_style' => 'wide',
       'image_link' => 'file',
       'field_classes' => [
-        'image_wrappers_class' => 'col-lg-3 col-md-6 col-sm-6 col-xs-12 image',
+        'image_wrappers_class' => 'col-lg-3 col-md-6 col-sm-6 col-xs-12',
         'each_image_class' => 'img-responsive',
         'icon_class' => 'fa fa-plus-circle',
         'field_class' => '',
