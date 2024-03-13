@@ -8,7 +8,7 @@ use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Component\Utility\Timer;
-use Drupal\search_api\Plugin\views\query\SearchApiQuery;
+use Drupal\mysql\Driver\Database\mysql\Select;
 
 /**
  * Filter by term id.
@@ -34,15 +34,10 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
   
   /**
    *
-   * @var \Drupal\views\Plugin\ViewsHandlerManager
-   */
-  protected $ViewsHandlerManager;
-  
-  /**
-   *
    * @var array
    */
   protected $ViewsQuerySubstitutions = [];
+  use MoreFieldsBaseFilter;
   
   protected function defineOptions() {
     $options = parent::defineOptions();
@@ -249,14 +244,86 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
    * comptant les items.
    */
   protected function getRequetWithfilter4() {
+    Timer::start('getRequetWithfilter4');
+    /**
+     * Contient les informations sur chaque filtre.
+     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+     * en paramettre via les filtres exposés.
+     *
+     * @var array $filters
+     */
+    $filters = $this->view->filter;
+    $currentFilter = isset($filters[$this->realField]) ? $filters[$this->realField] : NULL;
+    
     $base_table = $this->getTableNameFromIndex($this->table);
-    $table_field = $base_table . $this->realField;
+    $table_field = $base_table . '_' . $this->realField;
+    /**
+     *
+     * @var Select $select_query
+     */
     $select_query = \Drupal::database()->select($table_field, $table_field);
-    $select_query->fields($table_field, [
-      'item_id',
-      $this->realField
-    ]);
+    $select_query->addField($table_field, 'value', $this->realField);
+    
+    // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
+    // d'eviter que d'autre module sy connecte.
+    $select_query->addTag('more_fields_checkbox_list__' . $table_field);
+    // On filtre les termes ayant au moins un parent.
+    $configuration = [
+      'type' => 'INNER',
+      'table' => $table_field,
+      'field' => 'item_id',
+      'left_table' => $base_table,
+      'left_field' => 'item_id',
+      'extra_operator' => 'AND',
+      'adjusted' => true
+    ];
+    $this->buildQueryJoin($select_query, $configuration);
+    $select_query->addExpression("count($table_field.value)", $this->alias_count);
+    $select_query->groupBy($table_field . '.value');
+    // Add all query substitutions as metadata.
+    $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
+    $this->buildStaticQueryByViewsJoin($select_query, $filters, $table_field);
+    /**
+     * Tableau contennant les valeurs deja selectionner par l'utilisateur.
+     *
+     * @var array $exposed_inputs
+     */
+    $exposed_inputs = $this->view->getExposedInput();
+    if ($exposed_inputs)
+      $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
+    
+    if (!empty($this->view->argument))
+      $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, $field_id);
+    
+    // apply views_substitutions
+    \Drupal::moduleHandler()->loadInclude('views', "module");
+    views_query_views_alter($select_query);
+    //
     dump($select_query->__toString());
+    dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    dump(Timer::stop('getRequetWithfilter4'));
+  }
+  
+  /**
+   * // on surcharge afin de tenir compte de specificité de searchApi.
+   * Construit les requetes statiques.
+   * ( permet d'ajouter ce prendre en compte les filtres definie au niveau de la
+   * vue ).
+   */
+  protected function buildStaticQueryByViewsJoin(&$select_query, array $filters, string $base_table) {
+    foreach ($filters as $currentFilter) {
+      /**
+       *
+       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+       */
+      if ($currentFilter->options['exposed'] === FALSE) {
+        $table = $this->getTableNameFromIndex($currentFilter->table);
+        // Le cas ou le champs est inclus dans la table principal.
+        if ($select_query->hasTag('more_fields_checkbox_list__' . $table)) {
+          $this->buildCondition($select_query, $table, $currentFilter->realField, $currentFilter->options['value'], $currentFilter->operator);
+        }
+      }
+    }
   }
   
   /**
@@ -459,36 +526,6 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
     }
   }
   
-  protected function buildStaticQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id) {
-    foreach ($filters as $currentFilter) {
-      /**
-       *
-       * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
-       */
-      if ($currentFilter->options['exposed'] === FALSE) {
-        $configuration = [
-          'type' => 'INNER',
-          'table' => $currentFilter->table,
-          'field' => 'entity_id',
-          'left_table' => $base_table,
-          'left_field' => $field_id,
-          'extra_operator' => 'AND',
-          'adjusted' => true
-        ];
-        $table = [
-          'table' => $currentFilter->table,
-          'num' => 1,
-          'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
-          // 'join'=>
-          'relationship' => $base_table
-        ];
-        if ($select_query->hasTag('more_fields_checkbox_list__' . $currentFilter->table)) {
-          $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $currentFilter->options['value'], $currentFilter->operator);
-        }
-      }
-    }
-  }
-  
   /**
    * On ajoute les filtres exposed ayant des valeurs.
    *
@@ -535,22 +572,6 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
         $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
-  }
-  
-  protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
-    if ($operator == 'or') {
-      $operator = 'in';
-      // Specifique à or car les données sont censer etre dans un array.
-      if (!is_array($value))
-        $value = [
-          $value
-        ];
-    }
-    elseif ($operator == 'contains') {
-      $operator = 'LIKE';
-      $value = '%' . $select_query->escapeLike($value) . '%';
-    }
-    $select_query->condition($alias . '.' . $field, $value, $operator);
   }
   
   /**
@@ -622,21 +643,6 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       ]);
     }
     return $this->ViewsQuerySubstitutions;
-  }
-  
-  /**
-   *
-   * @return \Drupal\views\Plugin\ViewsHandlerManager
-   */
-  protected function initViewsJoin() {
-    if (!$this->ViewsHandlerManager) {
-      /**
-       *
-       * @var \Drupal\views\Plugin\ViewsHandlerManager $ViewsHandlerManager
-       */
-      $this->ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
-    }
-    return $this->ViewsHandlerManager;
   }
   
   /**
