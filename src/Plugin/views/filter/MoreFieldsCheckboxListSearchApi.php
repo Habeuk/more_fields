@@ -115,6 +115,13 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       }
     }
     else {
+      // Add custom code.
+      $terms = [];
+      $tids = $this->FilterCountEntitiesHasterm();
+      if ($tids) {
+        $terms = Term::loadMultiple($tids);
+      }
+      // End custom code
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         $tree = $this->termStorage->loadTree($vocabulary->id(), 0, NULL, TRUE);
         $options = [];
@@ -123,9 +130,22 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
             if (!$term->isPublished() && !$this->currentUser->hasPermission('administer taxonomy')) {
               continue;
             }
+            $tid = $term->id();
+            // verification de l'affichage du terme.
+            if (empty($tids[$tid])) {
+              continue;
+            }
+            
             $choice = new \stdClass();
+            $label = str_repeat('-', $term->depth) . \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
+            if (!empty($this->countsTerms[$tid])) {
+              // on doit configurer cela, afin de pouvoir l'ajouter ou pas.
+              // on peut faire cela avec before et after.
+              // $label .= ' <span> (' . $this->countsTerms[$tid] . ')</span> ';
+              $label .= ' <span> ' . $this->countsTerms[$tid] . '</span> ';
+            }
             $choice->option = [
-              $term->id() => str_repeat('-', $term->depth) . \Drupal::service('entity.repository')->getTranslationFromContext($term)->label()
+              $tid => $label
             ];
             $options[] = $choice;
           }
@@ -143,19 +163,7 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
         if ($this->options['limit']) {
           $query->condition('vid', $vocabulary->id());
         }
-        // Add custom code.
-        if (\Drupal::currentUser()->id() == 1) {
-          $queryEntity = $this->FilterCountEntitiesHasterm();
-          if ($queryEntity) {
-            $this->FilterTermHasContent($query, $queryEntity);
-          }
-          $this->getRequetWithfilter4();
-          
-          // dump($query->__toString());
-        }
-        // $this->messenger()->addStatus($query->__toString(), true);
-        // End custom code.
-        $terms = Term::loadMultiple($query->execute());
+        
         foreach ($terms as $term) {
           // On ajoute le nombre de valeur
           if ($this->options['show_entities_numbers'] && $this->countsTerms) {
@@ -238,13 +246,11 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
   }
   
   /**
-   * Il est assez difficile de partir de requetes de views afin d'obenir notre
-   * filtre.
-   * On doit chager la table en cours , left join de la table principal tout en
-   * comptant les items.
+   * Contruit les requetes de la vue à partir du filtre.
    */
-  protected function getRequetWithfilter4() {
-    Timer::start('getRequetWithfilter4');
+  public function FilterCountEntitiesHasterm() {
+    // Timer::start('FilterCountEntitiesHasterm');
+    $tids = [];
     /**
      * Contient les informations sur chaque filtre.
      * On va ajouter les filtres statiques et aussi ajouter les filtre passé
@@ -253,55 +259,101 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
      * @var array $filters
      */
     $filters = $this->view->filter;
-    $currentFilter = isset($filters[$this->realField]) ? $filters[$this->realField] : NULL;
-    
-    $base_table = $this->getTableNameFromIndex($this->table);
-    $table_field = $base_table . '_' . $this->realField;
-    /**
-     *
-     * @var Select $select_query
-     */
-    $select_query = \Drupal::database()->select($table_field, $table_field);
-    $select_query->addField($table_field, 'value', $this->realField);
-    
-    // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
-    // d'eviter que d'autre module sy connecte.
-    $select_query->addTag('more_fields_checkbox_list__' . $table_field);
-    // On filtre les termes ayant au moins un parent.
-    $configuration = [
-      'type' => 'INNER',
-      'table' => $table_field,
-      'field' => 'item_id',
-      'left_table' => $base_table,
-      'left_field' => 'item_id',
-      'extra_operator' => 'AND',
-      'adjusted' => true
-    ];
-    $this->buildQueryJoin($select_query, $configuration);
-    $select_query->addExpression("count($table_field.value)", $this->alias_count);
-    $select_query->groupBy($table_field . '.value');
-    // Add all query substitutions as metadata.
-    $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
-    $this->buildStaticQueryByViewsJoin($select_query, $filters, $table_field);
-    /**
-     * Tableau contennant les valeurs deja selectionner par l'utilisateur.
-     *
-     * @var array $exposed_inputs
-     */
-    $exposed_inputs = $this->view->getExposedInput();
-    if ($exposed_inputs)
-      $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
-    
-    if (!empty($this->view->argument))
-      $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, $field_id);
-    
-    // apply views_substitutions
-    \Drupal::moduleHandler()->loadInclude('views', "module");
-    views_query_views_alter($select_query);
-    //
-    dump($select_query->__toString());
-    dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
-    dump(Timer::stop('getRequetWithfilter4'));
+    if ($filters) {
+      
+      $base_table = $this->getTableNameFromIndex($this->table);
+      $table_field = $base_table . '_' . $this->realField;
+      /**
+       *
+       * @var Select $select_query
+       */
+      $select_query = \Drupal::database()->select($table_field, $table_field);
+      $select_query->addField($table_field, 'value', $this->realField);
+      
+      // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
+      // d'eviter que d'autre module sy connecte.
+      $select_query->addTag('more_fields_checkbox_list__' . $table_field);
+      // On filtre les termes ayant au moins un parent.
+      $configuration = [
+        'type' => 'INNER',
+        'table' => $table_field,
+        'field' => 'item_id',
+        'left_table' => $base_table,
+        'left_field' => 'item_id',
+        'extra_operator' => 'AND',
+        'adjusted' => true
+      ];
+      $this->buildQueryJoin($select_query, $configuration);
+      $select_query->addExpression("count($table_field.value)", $this->alias_count);
+      $select_query->groupBy($table_field . '.value');
+      // Add all query substitutions as metadata.
+      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
+      $this->buildStaticQueryByViewsJoin($select_query, $filters, $table_field);
+      /**
+       * Tableau contennant les valeurs deja selectionner par l'utilisateur.
+       *
+       * @var array $exposed_inputs
+       */
+      $exposed_inputs = $this->view->getExposedInput();
+      if ($exposed_inputs)
+        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $table_field, 'item_id', $exposed_inputs);
+      
+      if (!empty($this->view->argument))
+        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $table_field, 'item_id');
+      
+      // apply views_substitutions
+      \Drupal::moduleHandler()->loadInclude('views', "module");
+      views_query_views_alter($select_query);
+      //
+      
+      $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+      foreach ($entities as $value) {
+        $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
+        $tids[$value[$this->realField]] = $value[$this->realField];
+      }
+      // dump(Timer::stop('FilterCountEntitiesHasterm'));
+    }
+    return $tids;
+  }
+  
+  /**
+   * On ajoute les filtres exposed ayant des valeurs.
+   *
+   * @param \Drupal\Core\Database\Query\Select $query
+   * @param array $filters
+   * @param string $base_table
+   * @param string $field_id
+   * @param array $exposed_inputs
+   */
+  protected function buildFilterExposedQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
+    foreach ($exposed_inputs as $filterId => $value) {
+      if (!empty($filters[$filterId])) {
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+         */
+        $currentFilter = $filters[$filterId];
+        $table = $this->getTableNameFromIndex($currentFilter->table);
+        $configuration = [
+          'type' => 'INNER',
+          'table' => $base_table,
+          'field' => 'item_id',
+          'left_table' => $table,
+          'left_field' => $field_id,
+          'extra_operator' => 'AND',
+          'adjusted' => true
+        ];
+        $table = $this->getTableNameFromIndex($currentFilter->table);
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\join\Standard $instance
+         */
+        if (!$select_query->hasTag('more_fields_checkbox_list__' . $table)) {
+          $this->buildQueryJoin($select_query, $configuration);
+        }
+        $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
+      }
+    }
   }
   
   /**
@@ -322,254 +374,6 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
         if ($select_query->hasTag('more_fields_checkbox_list__' . $table)) {
           $this->buildCondition($select_query, $table, $currentFilter->realField, $currentFilter->options['value'], $currentFilter->operator);
         }
-      }
-    }
-  }
-  
-  /**
-   * On remarque qu'il faut construire les filtres.
-   *
-   * @deprecated
-   */
-  protected function getRequetWithfilter3() {
-    
-    /**
-     *
-     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
-     */
-    $SearchApiQuery = &$this->view->query;
-    if (!$SearchApiQuery)
-      $this->view->initQuery();
-    //
-    // dump($SearchApiQuery->getWhere());
-    $this->view->_build('relationship');
-    $this->view->_build('filter');
-    // $SearchApiQuery->execute($this->view);
-    dd($SearchApiQuery);
-  }
-  
-  /**
-   * Pour avoir condition dans la requete, il faut faire le build.
-   * On essaie de build à partir de la requette cela ne fonctionne pas il manque
-   * le where.
-   *
-   * @deprecated
-   */
-  protected function getRequetWithfilter2() {
-    /**
-     *
-     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
-     */
-    $SearchApiQuery = &$this->view->query;
-    if (!$SearchApiQuery)
-      $this->view->initQuery();
-    //
-    // dump('field custom build');
-    $SearchApiQuery->build($this->view);
-    $query = $SearchApiQuery->query();
-  }
-  
-  /**
-   * On essaie de determiner la requete qui contient deja le filtre.
-   *
-   * @deprecated
-   */
-  protected function getRequetWithfilter() {
-    /**
-     *
-     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
-     */
-    $SearchApiQuery = $this->query;
-    /**
-     * NB : $SearchApiQuery, cest pas toujours definit.
-     *
-     * @var \Drupal\search_api\Query\Query $query
-     */
-    if ($SearchApiQuery) {
-      // cet appelle ne contient pas condition.
-      $query = $SearchApiQuery->query();
-    }
-  }
-  
-  /**
-   * Contruit les requtes de la vue à partir du filtre.
-   */
-  public function FilterCountEntitiesHasterm() {
-    return NULL;
-    Timer::start('FilterCountEntitiesHasterm');
-    // Use the advanced drupal_static() pattern, since this is called very
-    // often.
-    static $drupal_static_fast;
-    if (!isset($drupal_static_fast)) {
-      $drupal_static_fast['entities_ids'] = &drupal_static(__FUNCTION__);
-    }
-    $EntitiesIds = &$drupal_static_fast['entities_ids'];
-    if (empty($EntitiesIds)) {
-      $this->view->initQuery();
-      // dump($this->configuration, $this->query);
-      /**
-       * Ce ci c'est la requete de base.
-       * Elle permet de recuperer tous données sans les fictres de la vue.
-       *
-       * @var \Drupal\search_api\Query\Query $query
-       */
-      $query = $this->query->query();
-      // dump($query->__toString(), $this->view);
-      // try add field.
-      // $query->addCondition('field_marque', 152);
-      /**
-       *
-       * @var \Drupal\search_api\Query\ResultSet $ResultSet
-       */
-      $ResultSet = $query->execute();
-      // dump($ResultSet->getExtraData('search_api_facets'));
-      $items = $ResultSet->getResultItems();
-      $EntitiesIds = [];
-      foreach ($items as $item) {
-        /**
-         *
-         * @var \Drupal\search_api\Item\Item $item
-         */
-        // The pattern is "entity:[entity_type]:[entity_id]:[language_code]".
-        // For example "entity:node/1:en".
-        $data = explode(':', $item->getId());
-        $data = explode('/', $data[1]);
-        $EntitiesIds[] = $data[1];
-      }
-    }
-    dd(Timer::stop('FilterCountEntitiesHasterm'), $EntitiesIds);
-    return $EntitiesIds;
-    /**
-     * Le nom de la colonne utile.
-     *
-     * @var string $colomn_name
-     */
-    $colomn_name = $this->configuration['field'];
-    
-    /**
-     * Contient les informations sur chaque filtre.
-     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
-     * en paramettre via les filtres exposés.
-     *
-     * @var array $filters
-     */
-    $filters = $this->view->filter;
-    
-    $base_table = $this->view->storage->get('base_table');
-    $field_id = $this->view->storage->get('base_field');
-    /**
-     *
-     * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
-     */
-    $currentFilter = isset($filters['more_fields_' . $colomn_name]) ? $filters['more_fields_' . $colomn_name] : NULL;
-    if ($currentFilter) {
-      $configuration = [
-        'type' => 'INNER',
-        'table' => $currentFilter->table,
-        'field' => 'entity_id',
-        'left_table' => $base_table,
-        'left_field' => $field_id,
-        'extra_operator' => 'AND',
-        'adjusted' => true
-      ];
-      $table = [
-        'table' => $currentFilter->table,
-        'num' => 1,
-        'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
-        // 'join'=>
-        'relationship' => $this->view->storage->get('base_table')
-      ];
-      // constructions à partir de l'object
-      /**
-       *
-       * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
-       */
-      $select_query = \Drupal::database()->select($base_table, $base_table);
-      $select_query->fields($base_table, [
-        $field_id
-      ]);
-      // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
-      // d'eviter que d'autre module sy connecte.
-      $select_query->addTag('more_fields_checkbox_list__' . $base_table);
-      if (!$this->view->query)
-        $this->view->getQuery();
-      /**
-       *
-       * @var \Drupal\views\Plugin\views\join\Standard $instance
-       */
-      $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
-      $instance->buildJoin($select_query, $table, $this->view->query);
-      //
-      $select_query->addField($table['alias'], $colomn_name);
-      $select_query->addExpression("count($table[alias].$colomn_name)", 'count_termes');
-      $select_query->groupBy($table['alias'] . '.' . $colomn_name);
-      $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
-      // Add all query substitutions as metadata.
-      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
-      // build orther query.
-      $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table, $field_id);
-      /**
-       * Tableau contennant les valeurs deja selectionner par l'utilisateur.
-       *
-       * @var array $exposed_inputs
-       */
-      $exposed_inputs = $this->view->getExposedInput();
-      if ($exposed_inputs)
-        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, $field_id, $exposed_inputs);
-      if (!empty($this->view->argument))
-        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, $field_id);
-      
-      // apply views_substitutions
-      \Drupal::moduleHandler()->loadInclude('views', "module");
-      views_query_views_alter($select_query);
-      return $select_query;
-    }
-  }
-  
-  /**
-   * On ajoute les filtres exposed ayant des valeurs.
-   *
-   * @param \Drupal\Core\Database\Query\Select $query
-   * @param array $filters
-   * @param string $base_table
-   * @param string $field_id
-   * @param array $exposed_inputs
-   */
-  protected function buildFilterExposedQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
-    foreach ($exposed_inputs as $filterId => $value) {
-      if (!empty($filters[$filterId])) {
-        /**
-         *
-         * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
-         */
-        $currentFilter = $filters[$filterId];
-        $configuration = [
-          'type' => 'INNER',
-          'table' => $currentFilter->table,
-          'field' => 'entity_id',
-          'left_table' => $base_table,
-          'left_field' => $field_id,
-          'extra_operator' => 'AND',
-          'adjusted' => true
-        ];
-        $table = [
-          'table' => $currentFilter->table,
-          'num' => 1,
-          'alias' => $currentFilter->tableAlias ? $currentFilter->tableAlias : $currentFilter->table,
-          // 'join'=>
-          'relationship' => $base_table
-        ];
-        /**
-         *
-         * @var \Drupal\views\Plugin\views\join\Standard $instance
-         */
-        if (!$select_query->hasTag('more_fields_checkbox_list__' . $currentFilter->table)) {
-          $instance = $this->initViewsJoin()->createInstance("standard", $configuration);
-          $instance->buildJoin($select_query, $table, $this->view->query);
-          $select_query->addTag('more_fields_checkbox_list__' . $currentFilter->table);
-        }
-        
-        $this->buildCondition($select_query, $table['alias'], $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
   }
@@ -629,43 +433,6 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
           $this->buildCondition($select_query, $table['alias'], $argument->realField, $arg, $argument->operator);
         }
       }
-    }
-  }
-  
-  /**
-   *
-   * @return array
-   */
-  protected function buildViewsQuerySubstitutions() {
-    if (!$this->ViewsQuerySubstitutions) {
-      $this->ViewsQuerySubstitutions = \Drupal::moduleHandler()->invokeAll('views_query_substitutions', [
-        $this->view
-      ]);
-    }
-    return $this->ViewsQuerySubstitutions;
-  }
-  
-  /**
-   * On va selectionner les entités qui possedent un terme dans le champs en
-   * question, les groupes par tid, ensuite recuperer la liste des tids.
-   *
-   * @param \Drupal\Core\Entity\Query\Sql\Query $query
-   * @see https://drupal.stackexchange.com/questions/184411/entityquery-group-by-clause
-   */
-  protected function FilterTermHasContent(QueryInterface &$query, \Drupal\mysql\Driver\Database\mysql\Select $queryEntity) {
-    $entities = $queryEntity->execute()->fetchAll(\PDO::FETCH_ASSOC);
-    if ($entities) {
-      $tids = [];
-      foreach ($entities as $value) {
-        $tids[] = $value[$this->configuration['field']];
-        $this->countsTerms[$value[$this->configuration['field']]] = $value[$this->alias_count];
-      }
-      $query->condition('tid', $tids, 'IN');
-    }
-    else {
-      // S'il nya pas de correspondance, on vide la requete.
-      // ( on verra si on peut faire cela autrement ).
-      $query->condition('tid', null, "IS NULL");
     }
   }
   

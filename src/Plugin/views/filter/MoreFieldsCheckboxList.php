@@ -337,8 +337,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         $tids[] = $value[$this->configuration['field']];
         $this->countsTerms[$value[$this->configuration['field']]] = $value[$this->alias_count];
       }
-      if (\Drupal::currentUser()->id() == 1)
-        dd($tids, $this->countsTerms, $entities);
+      
       $query->condition('tid', $tids, 'IN');
     }
     else {
