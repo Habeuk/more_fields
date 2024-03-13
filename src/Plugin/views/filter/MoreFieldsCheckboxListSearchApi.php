@@ -7,6 +7,8 @@ use Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Component\Utility\Timer;
+use Drupal\search_api\Plugin\views\query\SearchApiQuery;
 
 /**
  * Filter by term id.
@@ -15,7 +17,7 @@ use Drupal\Core\Entity\Query\QueryInterface;
  *
  * @ViewsFilter("more_fields_checkbox_list")
  */
-class MoreFieldsCheckboxList extends TaxonomyIndexTid {
+class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
   /**
    * Le clé alias qui va stoker le nombre de valeur.
    *
@@ -147,9 +149,14 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           $query->condition('vid', $vocabulary->id());
         }
         // Add custom code.
-        $queryEntity = $this->FilterCountEntitiesHasterm();
-        if ($queryEntity) {
-          $this->FilterTermHasContent($query, $queryEntity);
+        if (\Drupal::currentUser()->id() == 1) {
+          $queryEntity = $this->FilterCountEntitiesHasterm();
+          if ($queryEntity) {
+            $this->FilterTermHasContent($query, $queryEntity);
+          }
+          $this->getRequetWithfilter4();
+          
+          // dump($query->__toString());
         }
         // $this->messenger()->addStatus($query->__toString(), true);
         // End custom code.
@@ -236,15 +243,142 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
   }
   
   /**
+   * Il est assez difficile de partir de requetes de views afin d'obenir notre
+   * filtre.
+   * On doit chager la table en cours , left join de la table principal tout en
+   * comptant les items.
+   */
+  protected function getRequetWithfilter4() {
+    $base_table = $this->getTableNameFromIndex($this->table);
+    $table_field = $base_table . $this->realField;
+    $select_query = \Drupal::database()->select($table_field, $table_field);
+    $select_query->fields($table_field, [
+      'item_id',
+      $this->realField
+    ]);
+    dump($select_query->__toString());
+  }
+  
+  /**
+   * On remarque qu'il faut construire les filtres.
+   *
+   * @deprecated
+   */
+  protected function getRequetWithfilter3() {
+    
+    /**
+     *
+     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
+     */
+    $SearchApiQuery = &$this->view->query;
+    if (!$SearchApiQuery)
+      $this->view->initQuery();
+    //
+    // dump($SearchApiQuery->getWhere());
+    $this->view->_build('relationship');
+    $this->view->_build('filter');
+    // $SearchApiQuery->execute($this->view);
+    dd($SearchApiQuery);
+  }
+  
+  /**
+   * Pour avoir condition dans la requete, il faut faire le build.
+   * On essaie de build à partir de la requette cela ne fonctionne pas il manque
+   * le where.
+   *
+   * @deprecated
+   */
+  protected function getRequetWithfilter2() {
+    /**
+     *
+     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
+     */
+    $SearchApiQuery = &$this->view->query;
+    if (!$SearchApiQuery)
+      $this->view->initQuery();
+    //
+    // dump('field custom build');
+    $SearchApiQuery->build($this->view);
+    $query = $SearchApiQuery->query();
+  }
+  
+  /**
+   * On essaie de determiner la requete qui contient deja le filtre.
+   *
+   * @deprecated
+   */
+  protected function getRequetWithfilter() {
+    /**
+     *
+     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $SearchApiQuery
+     */
+    $SearchApiQuery = $this->query;
+    /**
+     * NB : $SearchApiQuery, cest pas toujours definit.
+     *
+     * @var \Drupal\search_api\Query\Query $query
+     */
+    if ($SearchApiQuery) {
+      // cet appelle ne contient pas condition.
+      $query = $SearchApiQuery->query();
+    }
+  }
+  
+  /**
    * Contruit les requtes de la vue à partir du filtre.
    */
   public function FilterCountEntitiesHasterm() {
+    return NULL;
+    Timer::start('FilterCountEntitiesHasterm');
+    // Use the advanced drupal_static() pattern, since this is called very
+    // often.
+    static $drupal_static_fast;
+    if (!isset($drupal_static_fast)) {
+      $drupal_static_fast['entities_ids'] = &drupal_static(__FUNCTION__);
+    }
+    $EntitiesIds = &$drupal_static_fast['entities_ids'];
+    if (empty($EntitiesIds)) {
+      $this->view->initQuery();
+      // dump($this->configuration, $this->query);
+      /**
+       * Ce ci c'est la requete de base.
+       * Elle permet de recuperer tous données sans les fictres de la vue.
+       *
+       * @var \Drupal\search_api\Query\Query $query
+       */
+      $query = $this->query->query();
+      // dump($query->__toString(), $this->view);
+      // try add field.
+      // $query->addCondition('field_marque', 152);
+      /**
+       *
+       * @var \Drupal\search_api\Query\ResultSet $ResultSet
+       */
+      $ResultSet = $query->execute();
+      // dump($ResultSet->getExtraData('search_api_facets'));
+      $items = $ResultSet->getResultItems();
+      $EntitiesIds = [];
+      foreach ($items as $item) {
+        /**
+         *
+         * @var \Drupal\search_api\Item\Item $item
+         */
+        // The pattern is "entity:[entity_type]:[entity_id]:[language_code]".
+        // For example "entity:node/1:en".
+        $data = explode(':', $item->getId());
+        $data = explode('/', $data[1]);
+        $EntitiesIds[] = $data[1];
+      }
+    }
+    dd(Timer::stop('FilterCountEntitiesHasterm'), $EntitiesIds);
+    return $EntitiesIds;
     /**
      * Le nom de la colonne utile.
      *
      * @var string $colomn_name
      */
     $colomn_name = $this->configuration['field'];
+    
     /**
      * Contient les informations sur chaque filtre.
      * On va ajouter les filtres statiques et aussi ajouter les filtre passé
@@ -256,7 +390,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     
     $base_table = $this->view->storage->get('base_table');
     $field_id = $this->view->storage->get('base_field');
-    $this->view->initDisplay();
     /**
      *
      * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
@@ -521,8 +654,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
         $tids[] = $value[$this->configuration['field']];
         $this->countsTerms[$value[$this->configuration['field']]] = $value[$this->alias_count];
       }
-      if (\Drupal::currentUser()->id() == 1)
-        dd($tids, $this->countsTerms);
       $query->condition('tid', $tids, 'IN');
     }
     else {
@@ -536,6 +667,21 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     parent::exposedTranslate($form, $type);
     // les types radios et checkboxes ne fonctionnent pas correctement use
     // better_exposed_filters.
+  }
+  
+  /**
+   * vue renvoit les tables suivant le scheme : search_api_index_{id_index} or
+   * la table reelle est search_api_db_{id_index};
+   *
+   * @param string $table
+   */
+  protected function getTableNameFromIndex($table) {
+    // explode("search_api_index_", $table);
+    if (str_starts_with($table, 'search_api_index_')) {
+      $index_id = substr($table, 17);
+      return "search_api_db_" . $index_id;
+    }
+    throw new \Exception("Impossible de determiner la table");
   }
   
 }

@@ -17,6 +17,7 @@ use Drupal\Core\Render\Markup;
  * @see https://www.drupal.org/docs/7/api/schema-api/updating-tables-hook_update_n-functions
  */
 function more_fields_update_8001() {
+  $mapping = &drupal_static(__FUNCTION__);
   // On recupere tous les champs.
   $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
   $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
@@ -369,7 +370,7 @@ function template_preprocess_more_fields_links(array &$variables) {
       $variables['element'][$k]['#title'] = Markup::create($value['#title']);
     $variables['links'][$k]['#title'] = Markup::create($value['#title']);
   }
-  // remove 'form-select'
+  // Remove "form-select"
   if (!empty($variables['attributes']['class'])) {
     if ($key = array_search("form-select", $variables['attributes']['class']))
       unset($variables['attributes']['class'][$key]);
