@@ -59,22 +59,23 @@ class GalleryPaginationForm extends FormBase {
     $form["datas"] = $datas;
 
     $wrapper_id = $datas["#image_attributes"]["field_attribute"]["id"];
-
-    $form["pagination"] = [
-      "#type" => "radios",
-      "#default_value" => $currentPage,
-      "#options" => $page_options,
-      "#attributes" => [
-        "class" => [
-          "d-none"
+    if ($nb_pages > 1) {
+      $form["pagination"] = [
+        "#type" => "radios",
+        "#default_value" => $currentPage,
+        "#options" => $page_options,
+        "#attributes" => [
+          "class" => [
+            "d-none"
+          ]
+        ],
+        '#ajax' => [
+          'callback' => self::class . '::filterElements',
+          'wrapper' => $formId,
+          'effect' => 'fade'
         ]
-      ],
-      '#ajax' => [
-        'callback' => self::class . '::filterElements',
-        'wrapper' => $formId,
-        'effect' => 'fade'
-      ]
-    ];
+      ];
+    }
     $form['actions'] = [
       '#type' => 'actions',
       "#access" => FALSE,

@@ -87,7 +87,9 @@ class GalleryOverlay extends ImageFormatter {
     );
   }
 
-
+  public function configAjaxCallback($form,  FormStateInterface $form_state) {
+    return $form;
+  }
 
   /**
    *
@@ -108,6 +110,7 @@ class GalleryOverlay extends ImageFormatter {
         'gallery_class' => '',
       ],
       'nb_element_per_pages' => 10,
+      'allow_pagination' => False
     ] + parent::defaultSettings();
   }
 
@@ -116,9 +119,20 @@ class GalleryOverlay extends ImageFormatter {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
-    $parentForm =    parent::settingsForm($form, $form_state);
+
+    $formId = "layout-builder-update-block";
+
+
+    $parentForm = parent::settingsForm($form, $form_state);
+
     $conf = $this->getSettings();
-    $elements = [];
+
+    $elements = [
+      "#attributes" => [
+        "id" => $formId
+      ]
+    ];
+
     $elements['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
       "#value" => $this->getSetting("layoutgenentitystyles_view")
@@ -144,13 +158,22 @@ class GalleryOverlay extends ImageFormatter {
     // // dump($conf);
 
     $elements += $parentForm;
-
+    $elements["allow_pagination"] = [
+      "#type" => "checkbox",
+      "#title" => $this->t("Allow Pagination"),
+      "#default_value" => $conf["allow_pagination"] ?? False,
+      "#ajax" => [
+        'callback' => [$this,  'configAjaxCallback'],
+        'wrapper' => $formId,
+        'effect' => 'fade'
+      ]
+    ];
+    // dd(isset($conf["allow_pagination"]) && $conf["allow_pagination"] == True);
     $elements["nb_element_per_pages"] = [
       '#title' => $this->t('Number of elements per page'),
-      '#type' => 'number',
+      '#type' => isset($conf["allow_pagination"]) && $conf["allow_pagination"] == True ? 'number' : "hidden",
       '#default_value' => $conf["nb_element_per_pages"] ?? $this::defaultSettings()["nb_element_per_pages"]
     ];
-
     $elements["overlay_transition_time"] = [
       '#title' => $this->t('Transition speed \'in milliseconds\''),
       '#type' => 'number',
@@ -191,6 +214,7 @@ class GalleryOverlay extends ImageFormatter {
       '#default_value' => $conf['field_classes']['icon_class'],
       '#description' => $this->t("font awesome classes of the icon that should be rendered")
     ];
+    // dd($elements["#attributes"]);
     return $elements;
   }
 
@@ -275,8 +299,9 @@ class GalleryOverlay extends ImageFormatter {
       ],
     ];
 
-
-    $form = $this->formBuilder->getForm('Drupal\more_fields\Form\GalleryPaginationForm', $datas, $settings["nb_element_per_pages"] ?? $this::defaultSettings()["nb_element_per_pages"]);
-    return $form;
+    if ($settings["allow_pagination"]) {
+      $datas = $this->formBuilder->getForm('Drupal\more_fields\Form\GalleryPaginationForm', $datas, $settings["nb_element_per_pages"] ?? $this::defaultSettings()["nb_element_per_pages"]);
+    }
+    return $datas;
   }
 }
