@@ -86,6 +86,8 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
    * @see \Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid::valueForm()
    */
   protected function valueForm(&$form, FormStateInterface $form_state) {
+    // if ($this->realField == "field_angle_de_vision")
+    // dump($this->realField, $this->options);
     $vocabulary = $this->vocabularyStorage->load($this->options['vid']);
     if (empty($vocabulary) && $this->options['limit']) {
       $form['markup'] = [
@@ -118,12 +120,15 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       // Add custom code.
       $terms = [];
       $tids = $this->FilterCountEntitiesHasterm();
+      
       if ($tids) {
         $terms = Term::loadMultiple($tids);
       }
       // End custom code
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
+        
         $tree = $this->termStorage->loadTree($vocabulary->id(), 0, NULL, TRUE);
+        
         $options = [];
         if ($tree) {
           foreach ($tree as $term) {
@@ -307,6 +312,7 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       //
       
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+      // dump($this->realField, $entities);
       foreach ($entities as $value) {
         $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
         $tids[$value[$this->realField]] = $value[$this->realField];
