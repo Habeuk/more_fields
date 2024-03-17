@@ -6,12 +6,15 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\search_api\Entity\Index;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Component\Utility\Timer;
 use Drupal\mysql\Driver\Database\mysql\Select;
 
 /**
  * Filter by term id.
+ * Permet de retouner les items de taxonomie possedant au moins une entité.
+ * plugin : search_api_term
  *
  * @ingroup views_filter_handlers
  *
@@ -48,7 +51,8 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
     $options['show_entities_numbers'] = [
       'default' => true
     ];
-    $options['filter_by_current_term'] = [
+    // igonre la valeur selectionnée.
+    $options['ignore_default_value'] = [
       'default' => false
     ];
     return $options;
@@ -71,11 +75,11 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       '#title' => "Affiche le nombre d'entité par termes",
       '#default_value' => $this->options['show_entities_numbers']
     ];
-    $form['filter_by_current_term'] = [
+    $form['ignore_default_value'] = [
       '#type' => 'checkbox',
-      '#title' => "Filtre en fonction du terme taxonomie",
-      '#default_value' => $this->options['filter_by_current_term'],
-      '#description' => "Permet de filtrer en fonction de la page en court si cette derniere est un terme taxonomie"
+      '#title' => "Ignore la valeur selectionnée",
+      '#default_value' => $this->options['ignore_default_value'],
+      '#description' => "Cela permet aux termes de fonctionner un peu comme un menu"
     ];
   }
   
@@ -86,6 +90,7 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
    * @see \Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid::valueForm()
    */
   protected function valueForm(&$form, FormStateInterface $form_state) {
+    Timer::start("valueForm");
     // if ($this->realField == "field_angle_de_vision")
     // dump($this->realField, $this->options);
     $vocabulary = $this->vocabularyStorage->load($this->options['vid']);
@@ -244,16 +249,19 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
     if (!$form_state->get('exposed')) {
       // Retain the helper option
       $this->helper->buildOptionsForm($form, $form_state);
-      
       // Show help text if not exposed to end users.
       $form['value']['#description'] = $this->t('Leave blank for all. Otherwise, the first selected term will be the default instead of "Any".');
     }
+    $routeName = \Drupal::routeMatch()->getRouteName();
+    $time = Timer::stop("valueForm");
+    $this->messenger()->addStatus("Run filter : " . $this->realField . " : $routeName" . '; count:' . $time['count'] . '; time=' . $time['time'] . 'ms ', true);
   }
   
   /**
    * Contruit les requetes de la vue à partir du filtre.
    */
   public function FilterCountEntitiesHasterm() {
+    
     // Timer::start('FilterCountEntitiesHasterm');
     $tids = [];
     /**
@@ -263,37 +271,54 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
      *
      * @var array $filters
      */
-    $filters = $this->view->filter;
-    if ($filters) {
-      
+    $defaultFilters = $this->view->filter;
+    // dump($defaultFilters);
+    $filters = [];
+    if ($defaultFilters) {
+      foreach ($defaultFilters as $currentFilter) {
+        //
+        if ($currentFilter->getPluginId() == 'search_api_term' || empty($currentFilter->options['exposed'])) {
+          $filters[$currentFilter->realField] = $currentFilter;
+        }
+      }
+      // dump($filters);
       $base_table = $this->getTableNameFromIndex($this->table);
       $table_field = $base_table . '_' . $this->realField;
+      
       /**
        *
        * @var Select $select_query
        */
-      $select_query = \Drupal::database()->select($table_field, $table_field);
-      $select_query->addField($table_field, 'value', $this->realField);
+      $select_query = \Drupal::database()->select($base_table, $base_table);
+      // $select_query->addField($base_table, 'item_id');
       
       // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
-      // d'eviter que d'autre module sy connecte.
-      $select_query->addTag('more_fields_checkbox_list__' . $table_field);
+      // d'eviter que d'autre module s'y connecte.
+      $select_query->addTag('more_fields_checkbox_list__' . $base_table);
       // On filtre les termes ayant au moins un parent.
       $configuration = [
         'type' => 'INNER',
-        'table' => $table_field,
+        'table' => $base_table,
         'field' => 'item_id',
-        'left_table' => $base_table,
+        'left_table' => $table_field,
         'left_field' => 'item_id',
         'extra_operator' => 'AND',
         'adjusted' => true
       ];
+      
       $this->buildQueryJoin($select_query, $configuration);
+      $select_query->addField($table_field, "value", $this->realField);
       $select_query->addExpression("count($table_field.value)", $this->alias_count);
       $select_query->groupBy($table_field . '.value');
       // Add all query substitutions as metadata.
       $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
-      $this->buildStaticQueryByViewsJoin($select_query, $filters, $table_field);
+      $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table);
+      /**
+       * On essaie d'appliquer la requete à partir du plugin
+       */
+      // $CloneSearch_api_fulltext = clone
+      // $defaultFilters["search_api_fulltext"];
+      // $this->applyQueryByPlugin($select_query, $CloneSearch_api_fulltext);
       /**
        * Tableau contennant les valeurs deja selectionner par l'utilisateur.
        *
@@ -301,16 +326,16 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
        */
       $exposed_inputs = $this->view->getExposedInput();
       if ($exposed_inputs)
-        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $table_field, 'item_id', $exposed_inputs);
+        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, 'item_id', $exposed_inputs);
       
       if (!empty($this->view->argument))
-        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $table_field, 'item_id');
+        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, 'item_id');
       
       // apply views_substitutions
       \Drupal::moduleHandler()->loadInclude('views', "module");
       views_query_views_alter($select_query);
       //
-      
+      // dump($select_query->__toString(), $select_query);
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
       // dump($this->realField, $entities);
       foreach ($entities as $value) {
@@ -322,6 +347,45 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
     return $tids;
   }
   
+  protected function applyQueryByPlugin(Select $select_query, \Drupal\search_api\Plugin\views\filter\SearchApiFulltext $search_api_fulltext) {
+    $index = Index::load("telephones");
+    $options = [];
+    /**
+     *
+     * @var \Drupal\search_api\Query\Query $queryIndex
+     */
+    $queryIndex = \Drupal::service('search_api.query_helper')->createQuery($index, $options);
+    // Change the parse mode for the search.
+    $parse_mode = \Drupal::service('plugin.manager.search_api.parse_mode')->createInstance('direct');
+    $parse_mode->setConjunction('OR');
+    $queryIndex->setParseMode($parse_mode);
+    // dump($queryIndex);
+    $search_api_fulltext->value = "itel";
+    // $search_api_fulltext->query = $this->loadCustomSearchApiQuery();
+    // $search_api_fulltext->query
+    dump('custom query run', $search_api_fulltext);
+    $search_api_fulltext->query();
+    // dd($search_api_fulltext->query);
+  }
+  
+  /**
+   *
+   * @return \Drupal\search_api\Plugin\views\query\SearchApiQuery
+   */
+  protected function loadCustomSearchApiQuery() {
+    /**
+     *
+     * @var \Drupal\views\Plugin\ViewsPluginManager $PluginManager
+     */
+    $PluginManager = \Drupal::service('plugin.manager.views.query');
+    /**
+     *
+     * @var \Drupal\search_api\Plugin\views\query\SearchApiQuery $search_api_query
+     */
+    $search_api_query = $PluginManager->createInstance("custom_search_api_query");
+    return $search_api_query;
+  }
+  
   /**
    * On ajoute les filtres exposed ayant des valeurs.
    *
@@ -331,7 +395,7 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
    * @param string $field_id
    * @param array $exposed_inputs
    */
-  protected function buildFilterExposedQueryByViewsJoin(\Drupal\Core\Database\Query\Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
+  protected function buildFilterExposedQueryByViewsJoin(Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
     foreach ($exposed_inputs as $filterId => $value) {
       if (!empty($filters[$filterId])) {
         /**
@@ -357,7 +421,8 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
         if (!$select_query->hasTag('more_fields_checkbox_list__' . $table)) {
           $this->buildQueryJoin($select_query, $configuration);
         }
-        $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
+        if (!$this->options['ignore_default_value'])
+          $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
   }
@@ -461,6 +526,26 @@ class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
       return "search_api_db_" . $index_id;
     }
     throw new \Exception("Impossible de determiner la table");
+  }
+  
+  /**
+   * Retrieves a list of all available fulltext fields.
+   *
+   * @return string[] An options list of fulltext field identifiers mapped to
+   *         their prefixed
+   *         labels.
+   */
+  protected function getFulltextFields() {
+    $fields = [];
+    /** @var \Drupal\search_api\IndexInterface $index */
+    $index = Index::load(substr($this->table, 17));
+    
+    $fields_info = $index->getFields();
+    foreach ($index->getFulltextFields() as $field_id) {
+      $fields[$field_id] = $fields_info[$field_id]->getPrefixedLabel();
+    }
+    
+    return $fields;
   }
   
 }

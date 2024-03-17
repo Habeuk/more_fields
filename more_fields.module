@@ -17,7 +17,6 @@ use Drupal\Core\Render\Markup;
  * @see https://www.drupal.org/docs/7/api/schema-api/updating-tables-hook_update_n-functions
  */
 function more_fields_update_8001() {
-  $mapping = &drupal_static(__FUNCTION__);
   // On recupere tous les champs.
   $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
   $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
