@@ -20,7 +20,7 @@ use Drupal\mysql\Driver\Database\mysql\Select;
  *
  * @ViewsFilter("more_fields_checkbox_list")
  */
-class MoreFieldsCheckboxListSearchApi extends TaxonomyIndexTid {
+class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
   /**
    * Le clé alias qui va stoker le nombre de valeur.
    *
