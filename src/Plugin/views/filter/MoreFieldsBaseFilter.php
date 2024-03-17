@@ -3,7 +3,14 @@
 namespace Drupal\more_fields\Plugin\views\filter;
 
 use Drupal\mysql\Driver\Database\mysql\Select;
+use Drupal\search_api\Plugin\views\query\SearchApiQuery;
 
+/**
+ * Ficher de base poour les filtres vues.
+ *
+ * @author stephane
+ *        
+ */
 trait MoreFieldsBaseFilter {
   
   /**
@@ -11,6 +18,26 @@ trait MoreFieldsBaseFilter {
    * @var \Drupal\views\Plugin\ViewsHandlerManager
    */
   protected $ViewsHandlerManager;
+  
+  /**
+   * Le clé alias qui va stoker le nombre de valeur.
+   *
+   * @var string
+   */
+  protected $alias_count = 'count_termes';
+  
+  /**
+   * Contient nombre d'entites par terms.
+   *
+   * @var array
+   */
+  protected $countsTerms = [];
+  
+  /**
+   *
+   * @var array
+   */
+  protected $ViewsQuerySubstitutions = [];
   
   /**
    * Permet de construire les de type joins.
@@ -80,6 +107,7 @@ trait MoreFieldsBaseFilter {
       $operator = 'LIKE';
       $value = '%' . $select_query->escapeLike($value) . '%';
     }
+    // dump($alias . '.' . $field, $value, $operator);
     $select_query->condition($alias . '.' . $field, $value, $operator);
   }
   
@@ -189,6 +217,47 @@ trait MoreFieldsBaseFilter {
     }
   }
   
+  protected function buildAnothersQuery(select $select_query) {
+    $filters = $this->buildValidFilters();
+    $base_table = $this->getTableNameFromIndex($this->table);
+    $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table);
+    $exposed_inputs = $this->view->getExposedInput();
+    if ($exposed_inputs)
+      $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, 'item_id', $exposed_inputs);
+    
+    if (!empty($this->view->argument))
+      $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, 'item_id');
+    
+    // apply views_substitutions
+    \Drupal::moduleHandler()->loadInclude('views', "module");
+    views_query_views_alter($select_query);
+  }
+  
+  /**
+   *
+   * @return array
+   */
+  protected function buildValidFilters() {
+    /**
+     * Contient les informations sur chaque filtre.
+     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+     * en paramettre via les filtres exposés.
+     *
+     * @var array $filters
+     */
+    $defaultFilters = $this->view->filter;
+    $filters = [];
+    if ($defaultFilters) {
+      foreach ($defaultFilters as $currentFilter) {
+        //
+        if ($currentFilter->getPluginId() == $this->pluginId || empty($currentFilter->options['exposed'])) {
+          $filters[$currentFilter->realField] = $currentFilter;
+        }
+      }
+    }
+    return $filters;
+  }
+  
   /**
    *
    * @return array
@@ -215,6 +284,14 @@ trait MoreFieldsBaseFilter {
       $this->ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
     }
     return $this->ViewsHandlerManager;
+  }
+  
+  /**
+   *
+   * @return \Drupal\search_api\Entity\Index
+   */
+  protected function getIndexFromCurrentTable() {
+    return SearchApiQuery::getIndexFromTable($this->view->storage->get('base_table'));
   }
   
 }

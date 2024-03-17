@@ -21,42 +21,8 @@ use Drupal\mysql\Driver\Database\mysql\Select;
  * @ViewsFilter("more_fields_checkbox_list")
  */
 class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
-  /**
-   * Le clé alias qui va stoker le nombre de valeur.
-   *
-   * @var string
-   */
-  protected $alias_count = 'count_termes';
   
-  /**
-   * Contient nombre d'entites par terms.
-   *
-   * @var array
-   */
-  protected $countsTerms = [];
-  
-  /**
-   *
-   * @var array
-   */
-  protected $ViewsQuerySubstitutions = [];
-  use MoreFieldsBaseFilter;
-  
-  protected function defineOptions() {
-    $options = parent::defineOptions();
-    
-    $options['type'] = [
-      'default' => 'select'
-    ];
-    $options['show_entities_numbers'] = [
-      'default' => true
-    ];
-    // igonre la valeur selectionnée.
-    $options['ignore_default_value'] = [
-      'default' => false
-    ];
-    return $options;
-  }
+  use MoreFieldsBaseFilterSearchApi;
   
   /**
    * Sanitizes the HTML select element's options.
@@ -259,6 +225,8 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
   
   /**
    * Contruit les requetes de la vue à partir du filtre.
+   * NB: cette fonction n'impacte pas les resultats de recherche mais modifie
+   * simplement les termes afficher à l'utilisateur.
    */
   public function FilterCountEntitiesHasterm() {
     
@@ -289,52 +257,8 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
        *
        * @var Select $select_query
        */
-      $select_query = \Drupal::database()->select($base_table, $base_table);
-      // $select_query->addField($base_table, 'item_id');
-      
-      // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
-      // d'eviter que d'autre module s'y connecte.
-      $select_query->addTag('more_fields_checkbox_list__' . $base_table);
-      // On filtre les termes ayant au moins un parent.
-      $configuration = [
-        'type' => 'INNER',
-        'table' => $base_table,
-        'field' => 'item_id',
-        'left_table' => $table_field,
-        'left_field' => 'item_id',
-        'extra_operator' => 'AND',
-        'adjusted' => true
-      ];
-      
-      $this->buildQueryJoin($select_query, $configuration);
-      $select_query->addField($table_field, "value", $this->realField);
-      $select_query->addExpression("count($table_field.value)", $this->alias_count);
-      $select_query->groupBy($table_field . '.value');
-      // Add all query substitutions as metadata.
-      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
-      $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table);
-      /**
-       * On essaie d'appliquer la requete à partir du plugin
-       */
-      // $CloneSearch_api_fulltext = clone
-      // $defaultFilters["search_api_fulltext"];
-      // $this->applyQueryByPlugin($select_query, $CloneSearch_api_fulltext);
-      /**
-       * Tableau contennant les valeurs deja selectionner par l'utilisateur.
-       *
-       * @var array $exposed_inputs
-       */
-      $exposed_inputs = $this->view->getExposedInput();
-      if ($exposed_inputs)
-        $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, 'item_id', $exposed_inputs);
-      
-      if (!empty($this->view->argument))
-        $this->buildFilterArguments($select_query, $this->view->argument, $this->view->args, $base_table, 'item_id');
-      
-      // apply views_substitutions
-      \Drupal::moduleHandler()->loadInclude('views', "module");
-      views_query_views_alter($select_query);
-      //
+      $select_query = $this->buildBaseQuery();
+      $this->buildAnothersQuery($select_query);
       // dump($select_query->__toString(), $select_query);
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
       // dump($this->realField, $entities);
@@ -384,47 +308,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
      */
     $search_api_query = $PluginManager->createInstance("custom_search_api_query");
     return $search_api_query;
-  }
-  
-  /**
-   * On ajoute les filtres exposed ayant des valeurs.
-   *
-   * @param \Drupal\Core\Database\Query\Select $query
-   * @param array $filters
-   * @param string $base_table
-   * @param string $field_id
-   * @param array $exposed_inputs
-   */
-  protected function buildFilterExposedQueryByViewsJoin(Select &$select_query, array $filters, string $base_table, string $field_id, array $exposed_inputs) {
-    foreach ($exposed_inputs as $filterId => $value) {
-      if (!empty($filters[$filterId])) {
-        /**
-         *
-         * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
-         */
-        $currentFilter = $filters[$filterId];
-        $table = $this->getTableNameFromIndex($currentFilter->table);
-        $configuration = [
-          'type' => 'INNER',
-          'table' => $base_table,
-          'field' => 'item_id',
-          'left_table' => $table,
-          'left_field' => $field_id,
-          'extra_operator' => 'AND',
-          'adjusted' => true
-        ];
-        $table = $this->getTableNameFromIndex($currentFilter->table);
-        /**
-         *
-         * @var \Drupal\views\Plugin\views\join\Standard $instance
-         */
-        if (!$select_query->hasTag('more_fields_checkbox_list__' . $table)) {
-          $this->buildQueryJoin($select_query, $configuration);
-        }
-        if (!$this->options['ignore_default_value'])
-          $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
-      }
-    }
   }
   
   /**
@@ -511,21 +394,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
     parent::exposedTranslate($form, $type);
     // les types radios et checkboxes ne fonctionnent pas correctement use
     // better_exposed_filters.
-  }
-  
-  /**
-   * vue renvoit les tables suivant le scheme : search_api_index_{id_index} or
-   * la table reelle est search_api_db_{id_index};
-   *
-   * @param string $table
-   */
-  protected function getTableNameFromIndex($table) {
-    // explode("search_api_index_", $table);
-    if (str_starts_with($table, 'search_api_index_')) {
-      $index_id = substr($table, 17);
-      return "search_api_db_" . $index_id;
-    }
-    throw new \Exception("Impossible de determiner la table");
   }
   
   /**
