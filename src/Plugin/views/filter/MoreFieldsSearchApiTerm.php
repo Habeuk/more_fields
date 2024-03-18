@@ -249,14 +249,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
           $filters[$currentFilter->realField] = $currentFilter;
         }
       }
-      // dump($filters);
-      $base_table = $this->getTableNameFromIndex($this->table);
-      $table_field = $base_table . '_' . $this->realField;
-      
-      /**
-       *
-       * @var Select $select_query
-       */
       $select_query = $this->buildBaseQuery();
       $this->buildAnothersQuery($select_query);
       // dump($select_query->__toString(), $select_query);

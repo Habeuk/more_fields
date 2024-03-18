@@ -13,6 +13,10 @@ use Drupal\mysql\Driver\Database\mysql\Select;
 trait MoreFieldsBaseFilterSearchApi {
   use MoreFieldsBaseFilter;
   
+  /**
+   *
+   * @return array
+   */
   protected function defineOptions() {
     $options = parent::defineOptions();
     
@@ -128,7 +132,7 @@ trait MoreFieldsBaseFilterSearchApi {
         if (!$select_query->hasTag('more_fields_checkbox_list__' . $table)) {
           $this->buildQueryJoin($select_query, $configuration);
         }
-        if (!$this->options['ignore_default_value'])
+        if (!($this->options['ignore_default_value'] && $currentFilter->realField == $this->realField))
           $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
       }
     }

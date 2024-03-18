@@ -250,7 +250,7 @@ trait MoreFieldsBaseFilter {
     if ($defaultFilters) {
       foreach ($defaultFilters as $currentFilter) {
         //
-        if ($currentFilter->getPluginId() == $this->pluginId || empty($currentFilter->options['exposed'])) {
+        if ($currentFilter->getPluginId() == $this->pluginId || !empty($currentFilter->options['exposed'])) {
           $filters[$currentFilter->realField] = $currentFilter;
         }
       }
