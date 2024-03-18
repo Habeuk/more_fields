@@ -273,9 +273,6 @@ class GalleryOverlay extends ImageFormatter {
       "id" => "gallery-" . $rand
     ];
 
-    \Drupal::messenger()->addStatus("Just reloaded " . $rand, True);
-
-
     unset($settings["field_classes"]["field_class"]);
 
     $settings["field_classes"]["gallery_attribute"] = [
