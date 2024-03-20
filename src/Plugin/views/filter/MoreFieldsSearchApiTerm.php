@@ -8,8 +8,8 @@ use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\search_api\Entity\Index;
 use Drupal\Core\Entity\Query\QueryInterface;
-use Drupal\Component\Utility\Timer;
 use Drupal\mysql\Driver\Database\mysql\Select;
+use Drupal\monitoring_drupal\Services\TimerMonitoring;
 
 /**
  * Filter by term id.
@@ -56,7 +56,13 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
    * @see \Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid::valueForm()
    */
   protected function valueForm(&$form, FormStateInterface $form_state) {
-    Timer::start("valueForm");
+    // xhprof_enable(XHPROF_FLAGS_NO_BUILTINS | XHPROF_FLAGS_CPU |
+    // XHPROF_FLAGS_MEMORY, [
+    // 'ignored_functions' => [
+    // 'Drupal\Core\*'
+    // ]
+    // ]);
+    // TimerMonitoring::start("valueForm");
     // if ($this->realField == "field_angle_de_vision")
     // dump($this->realField, $this->options);
     $vocabulary = $this->vocabularyStorage->load($this->options['vid']);
@@ -218,9 +224,10 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
       // Show help text if not exposed to end users.
       $form['value']['#description'] = $this->t('Leave blank for all. Otherwise, the first selected term will be the default instead of "Any".');
     }
-    $routeName = \Drupal::routeMatch()->getRouteName();
-    $time = Timer::stop("valueForm");
-    $this->messenger()->addStatus("Run filter : " . $this->realField . " : $routeName" . '; count:' . $time['count'] . '; time=' . $time['time'] . 'ms ', true);
+    // TimerMonitoring::stop("valueForm");
+    // $xhprof_data = xhprof_disable();
+    // asort($xhprof_data);
+    // dump($xhprof_data);
   }
   
   /**
