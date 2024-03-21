@@ -236,7 +236,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
    * simplement les termes afficher à l'utilisateur.
    */
   public function FilterCountEntitiesHasterm() {
-    
     // Timer::start('FilterCountEntitiesHasterm');
     $tids = [];
     /**

@@ -60,12 +60,14 @@ function template_preprocess_more_fields_bef_radios(&$vars) {
 function template_preprocess_more_fields_field_chart(&$vars) {
   //
 }
-function template_preprocess_restrained_text_formatter(&$vars) {
+
+function template_preprocess_more_fields_restrained_text_formatter(&$vars) {
   $vars['#attached']['library'][] = 'more_fields/restrained_field';
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
   }
 }
+
 function template_preprocess_more_field_file_image_video($vars) {
   $vars['#attached']['library'][] = 'more_fields/more_field_file_image_video';
   if (!empty($vars["element"]["#item"])) {

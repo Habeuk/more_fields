@@ -80,7 +80,7 @@ class restrainedTextLongFormatter extends StringFormatter {
       $escapedItem = $item->value;
       $value = ($state) ? $escapedItem : Truncator::truncate($escapedItem, $this->getSetting("resumed"));
       $elements[$delta] = [
-        '#theme' => 'restrained_text_formatter',
+        '#theme' => 'more_fields_restrained_text_formatter',
         '#item' => [
           'value' => $value,
           'offlineConfig' => $state ? false : [
@@ -91,6 +91,7 @@ class restrainedTextLongFormatter extends StringFormatter {
         ]
       ];
     }
+    dump($elements);
     return $elements[0];
   }
   

@@ -336,9 +336,9 @@ function more_fields_theme() {
       'url' => null
     ]
   ];
-  $hooks['restrained_text_formatter'] = [
+  $hooks['more_fields_restrained_text_formatter'] = [
     'preprocess functions' => [
-      'template_preprocess_restrained_text_formatter'
+      'template_preprocess_more_fields_restrained_text_formatter'
     ],
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
