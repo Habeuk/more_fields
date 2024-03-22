@@ -2,7 +2,7 @@
     position: relative;
     overflow: hidden;
 }
-.restrained-field:after {
+.restrained-field.display_login_block:after {
     position: absolute;
     bottom: 0;
     right: 0;

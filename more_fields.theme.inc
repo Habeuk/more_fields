@@ -62,9 +62,10 @@ function template_preprocess_more_fields_field_chart(&$vars) {
 }
 
 function template_preprocess_more_fields_restrained_text_formatter(&$vars) {
-  $vars['#attached']['library'][] = 'more_fields/restrained_field';
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
+    $vars['attributes'] = $vars["element"]['#attributes'];
+    $vars['settings'] = $vars["element"]['#settings'];
   }
 }
 

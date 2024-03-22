@@ -1,0 +1,26 @@
+{# /** * {% set text = content.description|render|striptags|trim %} {%
+if settings.limit_text > 0 %} {{ text|length > settings.limit_text ?
+text|slice(0, settings.limit_text) ~ '...' : text }} {% else %} * * */
+#}
+
+<div {{ attributes }}>
+	<div class="restrained-field">
+		{% if settings.clean_html %}
+		    {% set text = item.value|render|striptags|trim %}
+		    {{ text | raw }}
+		{% else %}
+			{{ item.value }}
+		{% endif %}
+	</div>
+	{% if item.offlineConfig %}
+	<div class="restrained-field-footer">
+		{% if item.offlineConfig.message %}
+		<span"restrained-field-label"> {{ item.offlineConfig.message }}
+		</span> <span class="restrained-field-link"> <a
+			href="{{ item.offlineConfig.link }}"> {{ item.offlineConfig.link_label }}
+		</a>
+		</span>
+		{% endif %}
+	</div>
+	{% endif %}
+</div>

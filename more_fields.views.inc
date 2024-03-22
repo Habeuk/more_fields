@@ -24,9 +24,6 @@ function more_fields_views_data_alter(&$data) {
           $mf['filter']['title'] = $data[$table_name][$field_name]['title'];
           $data[$table_name]['more_fields_' . $field_name] = $mf;
         }
-        else {
-          \Stephane888\Debug\debugLog::kintDebugDrupal($data[$table_name], $table_name . '--empty--' . $field_name, true);
-        }
       }
     }
   }
