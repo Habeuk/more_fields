@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\monitoring_drupal\Services\TimerMonitoring;
 
 /**
  * Filter by term id.
@@ -15,35 +16,7 @@ use Drupal\taxonomy\Entity\Term;
  * @ViewsFilter("more_fields_checkbox_list")
  */
 class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInterface {
-  /**
-   * Le clé alias qui va stoker le nombre de valeur.
-   *
-   * @var string
-   */
-  protected $alias_count = 'count_termes';
-  
-  /**
-   * Contient nombre d'entites par terms.
-   *
-   * @var array
-   */
-  protected $countsTerms = [];
-  
-  /**
-   *
-   * @var array
-   */
-  protected $ViewsQuerySubstitutions = [];
-  
   use MoreFieldsBaseFilter;
-  
-  /**
-   * On ne filtre pas le html des labels car on doit afficher le html
-   * inclut.
-   */
-  protected function prepareFilterSelectOptions(&$options) {
-    // On retourne les données sans les filtrées (risque de securitée).
-  }
   
   /**
    * Copier de la version : Drupal core 10.2.4
@@ -132,7 +105,15 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
         }
         // $terms = Term::loadMultiple($query->execute());
         foreach ($terms as $term) {
-          $options[$term->id()] = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
+          $tid = $term->id();
+          $label = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
+          if (!empty($this->countsTerms[$tid])) {
+            // on doit configurer cela, afin de pouvoir l'ajouter ou pas.
+            // on peut faire cela avec before et after.
+            // $label .= ' <span> (' . $this->countsTerms[$tid] . ')</span> ';
+            $label .= ' <span> ' . $this->countsTerms[$tid] . '</span> ';
+          }
+          $options[$tid] = $label;
         }
       }
       
@@ -203,56 +184,59 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
    * {@inheritdoc}
    * @see \Drupal\more_fields\Plugin\views\filter\FilterCountInterface::FilterCountEntitiesHasterm()
    */
-  public function FilterCountEntitiesHasterm() {
+  public function FilterCountEntitiesHasterm(): array {
+    // TimerMonitoring::start('FilterCountEntitiesHasterm');
     $tids = [];
     /**
+     * L'execution à l'interieur d'un fonction bc plus rapide.
+     * de lordre de 7x plus rapide. ie, si à l'interieur on a une durée de 2 ms
+     * à l'exterieur on aurra 14 ms.
+     * NB: le temps d'exection est autour de [1.6 à 2.9]ms.
      *
-     * @var \Drupal\views\ViewExecutable $viewClone
+     * @var boolean $test_code_inside
      */
-    $viewClone = clone $this->view;
-    /**
-     * On initialise la vue, ie on construit la requete "select" de base.
-     */
-    $viewClone->initQuery();
-    $viewClone->_build('filter');
-    // On construit les autres requetes.
-    $filters = $viewClone->filter;
-    // foreach ($filters as $filter) {
-    // /**
-    // * Pas logique cette application.
-    // *
-    // * @var \Drupal\more_fields\Plugin\views\filter\MoreFieldsCheckboxList
-    // $filter
-    // */
-    // if ($filter->isExposed()) {
-    // // $filter->ensureMyTable();
-    // // N'intervient dans le cadre des elements exposed.
-    // // $filter->query();
-    // }
-    // }
-    
-    // On recupere les valeurs exposeds.
-    $exposed_inputs = $this->view->getExposedInput();
-    
-    // On s'assure que la champs encours de traitement est effectivement dans
-    // les jointures.
-    $this->ensureMyTable();
-    
-    // On construit les jointures uniquement avec les valeurs exposed.
-    foreach ($exposed_inputs as $id => $value) {
-      if (!empty($filters[$id])) {
-        $filter = $filters[$id];
-        $filter->ensureMyTable();
+    $test_code_inside = true;
+    if ($test_code_inside) {
+      /**
+       *
+       * @var \Drupal\views\ViewExecutable $viewInstance
+       */
+      $viewInstance = $this->view;
+      /**
+       * On initialise la vue, ie on construit la requete "select" de base.
+       */
+      $viewInstance->initQuery();
+      $viewInstance->_build('filter');
+      // On construit les autres requetes.
+      $filters = $viewInstance->filter;
+      
+      // On recupere les valeurs exposeds.
+      $exposed_inputs = $this->view->getExposedInput();
+      
+      // On s'assure que le champs encours de traitement est effectivement dans
+      // les jointures.
+      $this->ensureMyTable();
+      
+      // On construit les jointures uniquement avec les valeurs exposed.
+      foreach ($exposed_inputs as $id => $value) {
+        if (!empty($filters[$id])) {
+          $filter = $filters[$id];
+          $filter->ensureMyTable();
+        }
       }
+      
+      /**
+       * On recupere la requete select apres toutes les constructions.
+       * ( elle peut etre mise en cache pour une requete données ).
+       *
+       * @var \Drupal\mysql\Driver\Database\mysql\Select $select
+       */
+      $select_query = $viewInstance->query->query();
     }
-    
-    /**
-     * On recupere la requete select apres toutes les constructions.
-     * ( elle peut etre mise en cache pour une requete données ).
-     *
-     * @var \Drupal\mysql\Driver\Database\mysql\Select $select
-     */
-    $select_query = $viewClone->query->query();
+    else {
+      $filters = $viewInstance->filter;
+      $select_query = $this->buildBaseSql();
+    }
     
     /**
      * On applique les valeurs exposeds s'ils existent.
@@ -263,8 +247,8 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
       if (!empty($filters[$id])) {
         $filter = $filters[$id];
         // On implique la valeur encours si cela est explicitement definit.
-        
-        $this->buildCondition($select_query, $filter->tableAlias, $filter->realField, $value, $filter->operator);
+        if (!($this->options['ignore_default_value'] && $filter->realField == $this->realField))
+          $this->buildCondition($select_query, $filter->tableAlias, $filter->realField, $value, $filter->operator);
       }
     }
     
@@ -275,37 +259,31 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
      */
     $alias = $this->tableAlias ? $this->tableAlias : $this->table;
     $colomn_name = $this->realField;
+    $select_query->addField($alias, $colomn_name);
     $select_query->addExpression("count($alias.$colomn_name)", $this->alias_count);
     $select_query->groupBy($alias . '.' . $colomn_name);
     
     // dump($this->realField);
-    dump($select_query->__toString());
-    dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    // dump($select_query->__toString());
+    // dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
     $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
     // dump($this->realField, $entities);
     foreach ($entities as $value) {
       $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
       $tids[$value[$this->realField]] = $value[$this->realField];
     }
+    // $result = TimerMonitoring::stop('FilterCountEntitiesHasterm');
+    // dump($result);
     return $tids;
   }
   
-  protected function exposedTranslate(&$form, $type) {
-    parent::exposedTranslate($form, $type);
-    // les types radios et checkboxes ne fonctionnent pas correctement use
-    // better_exposed_filters.
-  }
-  
-  public function query() {
-    parent::query();
-  }
-  
-  public function opHelper() {
-    parent::opHelper();
-  }
-  
-  public function ensureMyTable() {
-    parent::ensureMyTable();
+  /**
+   * On ne filtre pas le html des labels car on doit afficher le html
+   * inclut.
+   */
+  protected function prepareFilterSelectOptions(&$options) {
+    // dump($options);
+    // On retourne les données sans les filtrées (risque de securitée).
   }
   
 }

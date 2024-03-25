@@ -42,6 +42,75 @@ trait MoreFieldsBaseFilter {
   protected $ViewsQuerySubstitutions = [];
   
   /**
+   * On construit la requete de base pour le sql.
+   * Pour l'instant le cache ne fonctionne pas, il faudra voir pourquoi.
+   *
+   * @return \Drupal\Core\Database\Query\SelectInterface
+   */
+  protected function buildBaseSql() {
+    // On met en cache le sql obtenu durant toute la requete.
+    static $drupal_static_fast;
+    if (!isset($drupal_static_fast)) {
+      $drupal_static_fast['buildBaseSql'] = &drupal_static(__FUNCTION__);
+      // on pourrait definir un systeme de cache avancé qui tienne compte de la
+      // requete et de l'id de la view.
+    }
+    $select_query = $drupal_static_fast['buildBaseSql'];
+    if (empty($select_query)) {
+      // dump("Run buildBaseSql");
+      /**
+       *
+       * @var \Drupal\views\ViewExecutable $viewInstance
+       */
+      $viewInstance = $this->view;
+      /**
+       * On initialise la vue, ie on construit la requete "select" de base.
+       */
+      $viewInstance->initQuery();
+      $viewInstance->_build('filter');
+      // On construit les autres requetes.
+      $filters = $viewInstance->filter;
+      // foreach ($filters as $filter) {
+      // /**
+      // * Pas logique cette application.
+      // *
+      // * @var \Drupal\more_fields\Plugin\views\filter\MoreFieldsCheckboxList
+      // $filter
+      // */
+      // if ($filter->isExposed()) {
+      // // $filter->ensureMyTable();
+      // // N'intervient dans le cadre des elements exposed.
+      // // $filter->query();
+      // }
+      // }
+      
+      // On recupere les valeurs exposeds.
+      $exposed_inputs = $this->view->getExposedInput();
+      
+      // On s'assure que la champs encours de traitement est effectivement dans
+      // les jointures.
+      $this->ensureMyTable();
+      
+      // On construit les jointures uniquement avec les valeurs exposed.
+      foreach ($exposed_inputs as $id => $value) {
+        if (!empty($filters[$id])) {
+          $filter = $filters[$id];
+          $filter->ensureMyTable();
+        }
+      }
+      
+      /**
+       * On recupere la requete select apres toutes les constructions.
+       * ( elle peut etre mise en cache pour une requete données ).
+       *
+       * @var \Drupal\mysql\Driver\Database\mysql\Select $select
+       */
+      $select_query = $viewInstance->query->query();
+    }
+    return $select_query;
+  }
+  
+  /**
    *
    * @return array
    */
@@ -361,6 +430,9 @@ trait MoreFieldsBaseFilter {
   /**
    * Contruit les requetes de la vue à partir du filtre.
    * Ancinne approche,
+   *
+   * @deprecated cette fonction est deprecié ici, car on utilise une approche un
+   *             peu plus proche de la logique de views.
    */
   public function FilterCountEntitiesHasterm() {
     /**

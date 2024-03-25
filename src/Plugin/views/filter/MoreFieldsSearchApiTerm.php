@@ -220,7 +220,7 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid implements FilterCountInt
    * {@inheritdoc}
    * @see \Drupal\more_fields\Plugin\views\filter\FilterCountInterface::FilterCountEntitiesHasterm()
    */
-  public function FilterCountEntitiesHasterm() {
+  public function FilterCountEntitiesHasterm(): array {
     // Timer::start('FilterCountEntitiesHasterm');
     $tids = [];
     /**
