@@ -3,9 +3,9 @@
 namespace Drupal\more_fields\Plugin\views\filter;
 
 use Drupal\mysql\Driver\Database\mysql\Select;
-use Drupal\search_api\Plugin\views\query\SearchApiQuery;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\views\Views;
 
 /**
  * Ficher de base poour les filtres vues.
@@ -57,12 +57,16 @@ trait MoreFieldsBaseFilter {
     }
     $select_query = $drupal_static_fast['buildBaseSql'];
     if (empty($select_query)) {
+      // On charge une nouvelle instance de vue car on a un bug de surcharge
+      // entre les requetes.
+      $view_name = $this->view->id(); // valeur à remplacer
+      $view_display = $this->view->current_display; // valeur à remplacer
+      $viewInstance = Views::getView($view_name);
+      $viewInstance->setDisplay($view_display);
+      // Execute view query.
+      $viewInstance->initHandlers();
       // dump("Run buildBaseSql");
-      /**
-       *
-       * @var \Drupal\views\ViewExecutable $viewInstance
-       */
-      $viewInstance = $this->view;
+      
       /**
        * On initialise la vue, ie on construit la requete "select" de base.
        */
@@ -391,14 +395,6 @@ trait MoreFieldsBaseFilter {
       $this->ViewsHandlerManager = \Drupal::service('plugin.manager.views.join');
     }
     return $this->ViewsHandlerManager;
-  }
-  
-  /**
-   *
-   * @return \Drupal\search_api\Entity\Index
-   */
-  protected function getIndexFromCurrentTable() {
-    return SearchApiQuery::getIndexFromTable($this->view->storage->get('base_table'));
   }
   
   /**

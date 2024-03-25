@@ -3,6 +3,7 @@
 namespace Drupal\more_fields\Plugin\views\filter;
 
 use Drupal\mysql\Driver\Database\mysql\Select;
+use Drupal\search_api\Plugin\views\query\SearchApiQuery;
 
 /**
  * Ficher de base poour les filtres issue de search_api.
@@ -116,6 +117,14 @@ trait MoreFieldsBaseFilterSearchApi {
           $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
       }
     }
+  }
+  
+  /**
+   *
+   * @return \Drupal\search_api\Entity\Index
+   */
+  protected function getIndexFromCurrentTable() {
+    return SearchApiQuery::getIndexFromTable($this->view->storage->get('base_table'));
   }
   
 }
