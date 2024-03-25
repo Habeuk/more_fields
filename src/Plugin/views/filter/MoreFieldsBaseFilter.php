@@ -56,6 +56,7 @@ trait MoreFieldsBaseFilter {
       // requete et de l'id de la view.
     }
     $select_query = $drupal_static_fast['buildBaseSql'];
+    // dump($select_query);
     if (empty($select_query)) {
       // On charge une nouvelle instance de vue car on a un bug de surcharge
       // entre les requetes.
@@ -88,12 +89,14 @@ trait MoreFieldsBaseFilter {
       // }
       // }
       
-      // On recupere les valeurs exposeds.
+      // On recupere les valeurs exposeds àa partir de la vue encours.
       $exposed_inputs = $this->view->getExposedInput();
       
       // On s'assure que la champs encours de traitement est effectivement dans
       // les jointures.
-      $this->ensureMyTable();
+      if (!empty($filters[$this->field])) {
+        $filters[$this->field]->ensureMyTable();
+      }
       
       // On construit les jointures uniquement avec les valeurs exposed.
       foreach ($exposed_inputs as $id => $value) {
@@ -107,9 +110,10 @@ trait MoreFieldsBaseFilter {
        * On recupere la requete select apres toutes les constructions.
        * ( elle peut etre mise en cache pour une requete données ).
        *
-       * @var \Drupal\mysql\Driver\Database\mysql\Select $select
+       * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
        */
       $select_query = $viewInstance->query->query();
+      // dump($select_query->__toString());
     }
     return $select_query;
   }

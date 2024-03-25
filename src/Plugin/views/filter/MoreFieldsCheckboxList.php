@@ -195,7 +195,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
      *
      * @var boolean $test_code_inside
      */
-    $test_code_inside = true;
+    $test_code_inside = false;
     if ($test_code_inside) {
       /**
        *
@@ -234,7 +234,9 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
       $select_query = $viewInstance->query->query();
     }
     else {
-      $filters = $viewInstance->filter;
+      // On recupere les valeurs exposeds.
+      $exposed_inputs = $this->view->getExposedInput();
+      $filters = $this->view->filter;
       $select_query = $this->buildBaseSql();
     }
     
