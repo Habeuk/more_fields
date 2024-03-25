@@ -14,26 +14,6 @@ trait MoreFieldsBaseFilterSearchApi {
   use MoreFieldsBaseFilter;
   
   /**
-   *
-   * @return array
-   */
-  protected function defineOptions() {
-    $options = parent::defineOptions();
-    
-    $options['type'] = [
-      'default' => 'select'
-    ];
-    $options['show_entities_numbers'] = [
-      'default' => true
-    ];
-    // igonre la valeur selectionnée.
-    $options['ignore_default_value'] = [
-      'default' => false
-    ];
-    return $options;
-  }
-  
-  /**
    * Construit la reuete de base.
    *
    * @return \Drupal\mysql\Driver\Database\mysql\Select

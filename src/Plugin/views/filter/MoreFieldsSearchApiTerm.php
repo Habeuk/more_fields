@@ -18,7 +18,7 @@ use Drupal\monitoring_drupal\Services\TimerMonitoring;
  *
  * @ingroup views_filter_handlers
  *
- * @ViewsFilter("more_fields_checkbox_list")
+ * @ViewsFilter("more_fields_search_api_term")
  */
 class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
   
@@ -31,22 +31,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
    */
   protected function prepareFilterSelectOptions(&$options) {
     // On retourne les données sans les filtrées risque de securitée.
-  }
-  
-  public function buildExposeForm(&$form, FormStateInterface $form_state) {
-    parent::buildExposeForm($form, $form_state);
-    // on ajoute la possibilite d'afficher ou pas le nombre d'entité
-    $form['show_entities_numbers'] = [
-      '#type' => 'checkbox',
-      '#title' => "Affiche le nombre d'entité par termes",
-      '#default_value' => $this->options['show_entities_numbers']
-    ];
-    $form['ignore_default_value'] = [
-      '#type' => 'checkbox',
-      '#title' => "Ignore la valeur selectionnée",
-      '#default_value' => $this->options['ignore_default_value'],
-      '#description' => "Cela permet aux termes de fonctionner un peu comme un menu"
-    ];
   }
   
   /**

@@ -19,7 +19,7 @@ use Drupal\more_fields\Plugin\Field\FieldFormatter\restrainedTextLongFormatter;
  *
  * @ingroup views_filter_handlers
  *
- * @ViewsFilter("more_fields_checkbox_list")
+ * @ViewsFilter("more_fields_search_api_options")
  */
 class MoreFieldsSearchApiOptions extends ManyToOne {
   

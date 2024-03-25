@@ -12,7 +12,7 @@ use Drupal\views\Plugin\views\filter\BooleanOperator;
  *
  * @ingroup views_filter_handlers
  *
- * @ViewsFilter("more_fields_checkbox_list")
+ * @ViewsFilter("more_fields_search_api_boolean")
  */
 class MoreFieldsSearchApiBoolean extends BooleanOperator {
   

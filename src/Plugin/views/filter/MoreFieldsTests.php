@@ -5,6 +5,12 @@ namespace Drupal\more_fields\Plugin\views\filter;
 use Drupal\mysql\Driver\Database\mysql\Select;
 use Drupal\Component\Utility\Timer;
 
+/**
+ *
+ * @author stephane
+ * @deprecated supprimé une fois que les choses seront ok.
+ *            
+ */
 trait MoreFieldsTests {
   
   /**
