@@ -20,7 +20,7 @@ use Drupal\monitoring_drupal\Services\TimerMonitoring;
  *
  * @ViewsFilter("more_fields_search_api_term")
  */
-class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
+class MoreFieldsSearchApiTerm extends TaxonomyIndexTid implements FilterCountInterface {
   
   use MoreFieldsBaseFilterSearchApi;
   
@@ -82,9 +82,6 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
       $terms = [];
       $tids = $this->FilterCountEntitiesHasterm();
       
-      if ($tids) {
-        $terms = Term::loadMultiple($tids);
-      }
       // End custom code
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         
@@ -119,15 +116,19 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
       }
       else {
         $options = [];
-        $query = \Drupal::entityQuery('taxonomy_term')->accessCheck(TRUE)->
-        // @todo Sorting on vocabulary properties -
-        // https://www.drupal.org/node/1821274.
-        sort('weight')->sort('name')->addTag('taxonomy_term_access');
-        if (!$this->currentUser->hasPermission('administer taxonomy')) {
-          $query->condition('status', 1);
-        }
-        if ($this->options['limit']) {
-          $query->condition('vid', $vocabulary->id());
+        // Pas utile mais doit etre ajouter dans le filtre de taxo.
+        // $query = \Drupal::entityQuery('taxonomy_term')->accessCheck(TRUE)->
+        // // @todo Sorting on vocabulary properties -
+        // // https://www.drupal.org/node/1821274.
+        // sort('weight')->sort('name')->addTag('taxonomy_term_access');
+        // if (!$this->currentUser->hasPermission('administer taxonomy')) {
+        // $query->condition('status', 1);
+        // }
+        // if ($this->options['limit']) {
+        // $query->condition('vid', $vocabulary->id());
+        // }
+        if ($tids) {
+          $terms = Term::loadMultiple($tids);
         }
         
         foreach ($terms as $term) {
@@ -215,9 +216,9 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid {
   }
   
   /**
-   * Contruit les requetes de la vue à partir du filtre.
-   * NB: cette fonction n'impacte pas les resultats de recherche mais modifie
-   * simplement les termes afficher à l'utilisateur.
+   *
+   * {@inheritdoc}
+   * @see \Drupal\more_fields\Plugin\views\filter\FilterCountInterface::FilterCountEntitiesHasterm()
    */
   public function FilterCountEntitiesHasterm() {
     // Timer::start('FilterCountEntitiesHasterm');

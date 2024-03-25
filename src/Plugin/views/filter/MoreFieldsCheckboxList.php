@@ -14,7 +14,7 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @ViewsFilter("more_fields_checkbox_list")
  */
-class MoreFieldsCheckboxList extends TaxonomyIndexTid {
+class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInterface {
   /**
    * Le clé alias qui va stoker le nombre de valeur.
    *
@@ -42,11 +42,11 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
    * inclut.
    */
   protected function prepareFilterSelectOptions(&$options) {
-    // On retourne les données sans les filtrées risque de securitée.
+    // On retourne les données sans les filtrées (risque de securitée).
   }
   
   /**
-   * Copier de la version : Drupal core 9.5.9
+   * Copier de la version : Drupal core 10.2.4
    *
    * {@inheritdoc}
    * @see \Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid::valueForm()
@@ -55,7 +55,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     $vocabulary = $this->vocabularyStorage->load($this->options['vid']);
     if (empty($vocabulary) && $this->options['limit']) {
       $form['markup'] = [
-        '#markup' => '<div class="js-form-item form-item">' . $this->t('An invalid vocabulary is selected. Please change it in the options.') . '</div>'
+        '#markup' => '<div class="js-form-item form-item">' . $this->t('An invalid vocabulary is selected. Change it in the options.') . '</div>'
       ];
       return;
     }
@@ -81,17 +81,34 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       }
     }
     else {
+      // Add custom code.
+      $terms = [];
+      $tids = $this->FilterCountEntitiesHasterm();
+      
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         $tree = $this->termStorage->loadTree($vocabulary->id(), 0, NULL, TRUE);
         $options = [];
+        
         if ($tree) {
           foreach ($tree as $term) {
             if (!$term->isPublished() && !$this->currentUser->hasPermission('administer taxonomy')) {
               continue;
             }
+            $tid = $term->id();
+            // Verification de l'affichage du terme.
+            if (empty($tids[$tid])) {
+              continue;
+            }
             $choice = new \stdClass();
+            $label = str_repeat('-', $term->depth) . \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
+            if (!empty($this->countsTerms[$tid])) {
+              // on doit configurer cela, afin de pouvoir l'ajouter ou pas.
+              // on peut faire cela avec before et after.
+              // $label .= ' <span> (' . $this->countsTerms[$tid] . ')</span> ';
+              $label .= ' <span> ' . $this->countsTerms[$tid] . '</span> ';
+            }
             $choice->option = [
-              $term->id() => str_repeat('-', $term->depth) . \Drupal::service('entity.repository')->getTranslationFromContext($term)->label()
+              $tid => $label
             ];
             $options[] = $choice;
           }
@@ -99,39 +116,23 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
       }
       else {
         $options = [];
-        $query = \Drupal::entityQuery('taxonomy_term')->accessCheck(TRUE)->
-        // @todo Sorting on vocabulary properties -
-        // https://www.drupal.org/node/1821274.
-        sort('weight')->sort('name')->addTag('taxonomy_term_access');
-        if (!$this->currentUser->hasPermission('administer taxonomy')) {
-          $query->condition('status', 1);
-        }
-        if ($this->options['limit']) {
-          $query->condition('vid', $vocabulary->id());
-        }
-        // Add custom code.
-        $queryEntity = $this->FilterCountEntitiesHasterm();
-        // if ($queryEntity) {
-        // $this->FilterTermHasContent($query, $queryEntity);
+        // Pas utile à ce niveau mais doit etre ajouter dans le filtre.
+        // $query = \Drupal::entityQuery('taxonomy_term')->accessCheck(TRUE)->
+        // // @todo Sorting on vocabulary properties -
+        // // https://www.drupal.org/node/1821274.
+        // sort('weight')->sort('name')->addTag('taxonomy_term_access');
+        // if (!$this->currentUser->hasPermission('administer taxonomy')) {
+        // $query->condition('status', 1);
         // }
-        // $this->messenger()->addStatus($query->__toString(), true);
-        // End custom code.
-        $terms = Term::loadMultiple($query->execute());
+        // if ($this->options['limit']) {
+        // $query->condition('vid', $vocabulary->id());
+        // }
+        if ($tids) {
+          $terms = Term::loadMultiple($tids);
+        }
+        // $terms = Term::loadMultiple($query->execute());
         foreach ($terms as $term) {
-          // On ajoute le nombre de valeur
-          if ($this->options['show_entities_numbers'] && $this->countsTerms) {
-            $tid = $term->id();
-            $label = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
-            if (!empty($this->countsTerms[$tid])) {
-              // on doit configurer cela, afin de pouvoir l'ajouter ou pas.
-              // on peut faire cela avec before et after.
-              // $label .= ' <span> (' . $this->countsTerms[$tid] . ')</span> ';
-              $label .= ' <span> ' . $this->countsTerms[$tid] . '</span> ';
-            }
-            $options[$tid] = $label;
-          }
-          else
-            $options[$term->id()] = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
+          $options[$term->id()] = \Drupal::service('entity.repository')->getTranslationFromContext($term)->label();
         }
       }
       
@@ -170,7 +171,6 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
           }
         }
       }
-      
       $form['value'] = [
         '#type' => 'select',
         '#title' => $this->options['limit'] ? $this->t('Select terms from vocabulary @voc', [
@@ -198,7 +198,13 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     }
   }
   
+  /**
+   *
+   * {@inheritdoc}
+   * @see \Drupal\more_fields\Plugin\views\filter\FilterCountInterface::FilterCountEntitiesHasterm()
+   */
   public function FilterCountEntitiesHasterm() {
+    $tids = [];
     /**
      *
      * @var \Drupal\views\ViewExecutable $viewClone
@@ -275,6 +281,13 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid {
     // dump($this->realField);
     dump($select_query->__toString());
     dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    // dump($this->realField, $entities);
+    foreach ($entities as $value) {
+      $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
+      $tids[$value[$this->realField]] = $value[$this->realField];
+    }
+    return $tids;
   }
   
   protected function exposedTranslate(&$form, $type) {
