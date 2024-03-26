@@ -187,6 +187,10 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
   public function FilterCountEntitiesHasterm(): array {
     // TimerMonitoring::start('FilterCountEntitiesHasterm');
     $tids = [];
+    // Pour determiner si la configuration de la vue est ok.
+    if (!$this->view->inited || $this->view->preview) {
+      return $tids;
+    }
     /**
      * L'execution à l'interieur d'un fonction bc plus rapide.
      * de lordre de 7x plus rapide. ie, si à l'interieur on a une durée de 2 ms
@@ -268,6 +272,13 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
     // dump($this->realField);
     // dump($select_query->__toString(), $select_query);
     // dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    // $db = [
+    // 'sql' => $select_query->__toString(),
+    // 'object' => $select_query,
+    // 'current_fielter' => $this
+    // ];
+    // \Stephane888\Debug\debugLog::kintDebugDrupal($db,
+    // 'FilterCountEntitiesHasterm', true);
     $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
     // dump($this->realField, $entities);
     foreach ($entities as $value) {
