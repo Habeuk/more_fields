@@ -266,7 +266,7 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
     $select_query->groupBy($alias . '.' . $colomn_name);
     
     // dump($this->realField);
-    // dump($select_query->__toString());
+    // dump($select_query->__toString(), $select_query);
     // dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
     $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
     // dump($this->realField, $entities);

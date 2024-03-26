@@ -51,7 +51,7 @@ trait MoreFieldsBaseFilter {
     // On met en cache le sql obtenu durant toute la requete.
     static $drupal_static_fast;
     if (!isset($drupal_static_fast)) {
-      $drupal_static_fast['buildBaseSql'] = &drupal_static(__FUNCTION__);
+      $drupal_static_fast['buildBaseSql'] = &drupal_static(__FUNCTION__ . $this->view->id());
       // on pourrait definir un systeme de cache avancé qui tienne compte de la
       // requete et de l'id de la view.
     }
@@ -63,6 +63,7 @@ trait MoreFieldsBaseFilter {
       $view_name = $this->view->id(); // valeur à remplacer
       $view_display = $this->view->current_display; // valeur à remplacer
       $viewInstance = Views::getView($view_name);
+      $viewInstance->args = $this->view->args;
       $viewInstance->setDisplay($view_display);
       // Execute view query.
       $viewInstance->initHandlers();
@@ -72,7 +73,11 @@ trait MoreFieldsBaseFilter {
        * On initialise la vue, ie on construit la requete "select" de base.
        */
       $viewInstance->initQuery();
+      // dump($viewInstance->query->query()->__toString());
+      // Le 'filter' fait les jointures left or on souhaite avoir uniquement les
+      // INNER.
       $viewInstance->_build('filter');
+      // dump($viewInstance->query->query()->__toString());
       // On construit les autres requetes.
       $filters = $viewInstance->filter;
       // foreach ($filters as $filter) {
@@ -89,13 +94,56 @@ trait MoreFieldsBaseFilter {
       // }
       // }
       
-      // On recupere les valeurs exposeds àa partir de la vue encours.
+      // On recupere les valeurs exposeds à partir de la vue encours.
       $exposed_inputs = $this->view->getExposedInput();
       
       // On s'assure que la champs encours de traitement est effectivement dans
       // les jointures.
       if (!empty($filters[$this->field])) {
         $filters[$this->field]->ensureMyTable();
+      }
+      foreach ($filters as $filter) {
+        if (!$filter->isExposed()) {
+          $filter->ensureMyTable();
+        }
+      }
+      
+      /**
+       *
+       * @var \Drupal\taxonomy\Plugin\views\argument\IndexTid $argument
+       */
+      // On construit les arguments (inspirer par:
+      // \Drupal\views\Views_buildArguments()
+      // version D : 10.2.4
+      $position = -1;
+      if (!empty($viewInstance->argument)) {
+        foreach ($viewInstance->argument as $id => $argument) {
+          $position++;
+          if ($argument->broken()) {
+            continue;
+          }
+          $argument->setRelationship();
+          
+          $arg = $viewInstance->args[$position] ?? NULL;
+          $argument->position = $position;
+          if (isset($arg) || $argument->hasDefaultArgument()) {
+            if (!isset($arg)) {
+              $arg = $argument->getDefaultArgument();
+              // make sure default args get put back.
+              if (isset($arg)) {
+                $this->args[$position] = $arg;
+              }
+              // remember that this argument was computed, not passed on the
+              // URL.
+              $argument->is_default = TRUE;
+            }
+          }
+          if (!$argument->setArgument($arg)) {
+            $status = $argument->validateFail($arg);
+            break;
+          }
+          $argument->query();
+        }
       }
       
       // On construit les jointures uniquement avec les valeurs exposed.
@@ -113,7 +161,7 @@ trait MoreFieldsBaseFilter {
        * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
        */
       $select_query = $viewInstance->query->query();
-      // dump($select_query->__toString());
+      // dd($select_query->__toString());
     }
     return $select_query;
   }
