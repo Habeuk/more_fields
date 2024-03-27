@@ -269,9 +269,13 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
     $select_query->addExpression("count($alias.$colomn_name)", $this->alias_count);
     $select_query->groupBy($alias . '.' . $colomn_name);
     
+    // apply views_substitutions
+    \Drupal::moduleHandler()->loadInclude('views', "module");
+    views_query_views_alter($select_query);
+    
     // dump($this->realField);
     // dump($select_query->__toString(), $select_query);
-    // dump($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
+    // dd($select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
     // $db = [
     // 'sql' => $select_query->__toString(),
     // 'object' => $select_query,

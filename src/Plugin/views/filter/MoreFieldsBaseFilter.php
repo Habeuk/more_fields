@@ -73,26 +73,14 @@ trait MoreFieldsBaseFilter {
        * On initialise la vue, ie on construit la requete "select" de base.
        */
       $viewInstance->initQuery();
-      // dump($viewInstance->query->query()->__toString());
-      // Le 'filter' fait les jointures left or on souhaite avoir uniquement les
-      // INNER.
-      $viewInstance->_build('filter');
+      
+      // On applique le filter, ce dernier ajoute globalement le WHERE et
+      // certaines JOINTUREs.
+      $viewInstance->_build('filter', true);
       // dump($viewInstance->query->query()->__toString());
       // On construit les autres requetes.
       $filters = $viewInstance->filter;
-      // foreach ($filters as $filter) {
-      // /**
-      // * Pas logique cette application.
-      // *
-      // * @var \Drupal\more_fields\Plugin\views\filter\MoreFieldsCheckboxList
-      // $filter
-      // */
-      // if ($filter->isExposed()) {
-      // // $filter->ensureMyTable();
-      // // N'intervient dans le cadre des elements exposed.
-      // // $filter->query();
-      // }
-      // }
+      // dump($view_display, $filters);
       
       // On recupere les valeurs exposeds à partir de la vue encours.
       $exposed_inputs = $this->view->getExposedInput();
@@ -102,22 +90,23 @@ trait MoreFieldsBaseFilter {
       if (!empty($filters[$this->field])) {
         $filters[$this->field]->ensureMyTable();
       }
+      // on ajoute les filtres statiques.
       foreach ($filters as $filter) {
         if (!$filter->isExposed()) {
           $filter->ensureMyTable();
         }
       }
       
-      /**
-       *
-       * @var \Drupal\taxonomy\Plugin\views\argument\IndexTid $argument
-       */
       // On construit les arguments (inspirer par:
       // \Drupal\views\Views_buildArguments()
       // version D : 10.2.4
       $position = -1;
       if (!empty($viewInstance->argument)) {
         foreach ($viewInstance->argument as $id => $argument) {
+          /**
+           *
+           * @var \Drupal\taxonomy\Plugin\views\argument\IndexTid $argument
+           */
           $position++;
           if ($argument->broken()) {
             continue;
@@ -139,7 +128,7 @@ trait MoreFieldsBaseFilter {
             }
           }
           if (!$argument->setArgument($arg)) {
-            $status = $argument->validateFail($arg);
+            $argument->validateFail($arg);
             break;
           }
           $argument->query();
@@ -161,7 +150,8 @@ trait MoreFieldsBaseFilter {
        * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
        */
       $select_query = $viewInstance->query->query();
-      // dd($select_query->__toString());
+      // Add all query substitutions as metadata.
+      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
     }
     return $select_query;
   }
