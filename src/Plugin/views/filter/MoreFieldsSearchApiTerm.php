@@ -40,12 +40,11 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid implements FilterCountInt
    * @see \Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid::valueForm()
    */
   protected function valueForm(&$form, FormStateInterface $form_state) {
-    // xhprof_enable(XHPROF_FLAGS_NO_BUILTINS | XHPROF_FLAGS_CPU |
-    // XHPROF_FLAGS_MEMORY, [
-    // 'ignored_functions' => [
-    // 'Drupal\Core\*'
-    // ]
-    // ]);
+    xhprof_enable(XHPROF_FLAGS_NO_BUILTINS | XHPROF_FLAGS_CPU | XHPROF_FLAGS_MEMORY, [
+      'ignored_functions' => [
+        'Drupal\Core\*'
+      ]
+    ]);
     // TimerMonitoring::start("valueForm");
     // if ($this->realField == "field_angle_de_vision")
     // dump($this->realField, $this->options);
