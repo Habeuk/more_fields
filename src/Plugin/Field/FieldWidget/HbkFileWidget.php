@@ -98,6 +98,7 @@ class HbkFileWidget extends FileWidget {
    * and create the thumbnail for videos
    */
   public function validateElement($element, FormStateInterface &$form_state, $form) {
+    // dd($element["#files"]);
     if (\Drupal::moduleHandler()->moduleExists('more_fields_video')) {
       /**
        * @var EntityStorageInterface  $videoConverter 
@@ -123,7 +124,7 @@ class HbkFileWidget extends FileWidget {
             # code...
             $result = \Drupal::service("more_fields_video.video_converter")->createThumbFile($id);
             if ($result !== FALSE) {
-              $this->sync_multiformat($id, $result, $multiformatHandler);
+              self::sync_multiformat($id, $result, $multiformatHandler);
             }
           }
         }
@@ -135,7 +136,7 @@ class HbkFileWidget extends FileWidget {
    *
    * @var File $thumb_file
    */
-  public function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
+  public static function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
     // creating and handling the multiformat
     /**
      *
