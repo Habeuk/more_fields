@@ -98,7 +98,6 @@ class HbkFileWidget extends FileWidget {
    * and create the thumbnail for videos
    */
   public function validateElement($element, FormStateInterface &$form_state, $form) {
-    // dd($element["#files"]);
     if (\Drupal::moduleHandler()->moduleExists('more_fields_video')) {
       /**
        * @var EntityStorageInterface  $videoConverter 
@@ -133,7 +132,8 @@ class HbkFileWidget extends FileWidget {
   }
 
   /**
-   *
+   * Cette methode est statique car elle est utilisé par à l'exterieur de la classe.
+   * la transférer dans un service est une option
    * @var File $thumb_file
    */
   public static function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
