@@ -18,6 +18,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Template\Attribute;
 use Drupal\fullswiperoptions\Fullswiperoptions;
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\image\Entity\ImageStyle;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
 
@@ -44,11 +45,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
 
 
   /**
-   *
-   * @var EntityStorageInterface $multifomatHandler
+   * @var EntityTypeManagerInterface $entityManager
    */
-  protected $multiformatHandler;
-
+  protected $entityManager;
   /**
    *
    * @var EntityStorageInterface $fileHandler
@@ -75,7 +74,21 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * @param \Drupal\video\ProviderManagerInterface $provider_manager
    *        The video embed provider manager.
    */
-  public function __construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, ProviderManagerInterface $provider_manager, AccountInterface $current_user, EntityStorageInterface $image_style_storage, EntityStorageInterface $multiformat_handler, EntityStorageInterface $file_handler, FileUrlGeneratorInterface $file_url_generator = NULL) {
+  public function __construct(
+    $plugin_id,
+    $plugin_definition,
+    $field_definition,
+    $settings,
+    $label,
+    $view_mode,
+    $third_party_settings,
+    ProviderManagerInterface $provider_manager,
+    AccountInterface $current_user,
+    EntityStorageInterface $image_style_storage,
+    EntityTypeManagerInterface $entity_manager,
+    EntityStorageInterface $file_handler,
+    FileUrlGeneratorInterface $file_url_generator = NULL
+  ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
     $this->videoFormatter = new VideoPlayerListFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user);
     $this->imageFormatter = new ImageFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user, $image_style_storage, $file_url_generator);
@@ -84,8 +97,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       @trigger_error('Calling ImageFormatter::__construct() without the $file_url_generator argument is deprecated in drupal:9.3.0 and the $file_url_generator argument will be required in drupal:10.0.0. See https://www.drupal.org/node/2940031', E_USER_DEPRECATED);
       $file_url_generator = \Drupal::service('file_url_generator');
     }
+    $this->entityManager = $entity_manager;
     $this->fileUrlGenerator = $file_url_generator;
-    $this->multiformatHandler = $multiformat_handler;
+    // $this->multiformatHandler = $multiformat_handler;multiformat_handler
     $this->fileHandler = $file_handler;
   }
 
@@ -94,7 +108,21 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('video.provider_manager'), $container->get('current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('entity_type.manager')->getStorage('multiformat_video'), $container->get('entity_type.manager')->getStorage('file'), $container->get('file_url_generator'));
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['label'],
+      $configuration['view_mode'],
+      $configuration['third_party_settings'],
+      $container->get('video.provider_manager'),
+      $container->get('current_user'),
+      $container->get('entity_type.manager')->getStorage('image_style'),
+      $container->get('entity_type.manager'),
+      $container->get('entity_type.manager')->getStorage('file'),
+      $container->get('file_url_generator')
+    );
   }
 
   /**
@@ -244,6 +272,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
+    $multiformatHandler = \Drupal::moduleHandler()->moduleExists('more_fields_video') ? $this->entityManager->getStorage("multiformat_video") : NULL;
     $elements = [];
     $thumb_elements = [];
     $entity = $items->getEntity();
@@ -312,20 +341,22 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         // Gestion des videos
         $items_types[] = 'video';
         $thumb_file = null;
-        /**
-         *
-         * @var MultiformatVideo $multiformat_video
-         */
-        $multiformat_video = $this->multiformatHandler->load($file->id());
-        if (isset($multiformat_video)) {
-          $thumb_id = $multiformat_video->getThumbId();
+
+        if (isset($multiformatHandler)) {
           /**
            *
-           * @var File $thumb_file
+           * @var MultiformatVideo $multiformat_video
            */
-          $thumb_file = $this->fileHandler->load($thumb_id);
+          $multiformat_video = $multiformatHandler->load($file->id());
+          if (isset($multiformat_video)) {
+            $thumb_id = $multiformat_video->getThumbId();
+            /**
+             *
+             * @var File $thumb_file
+             */
+            $thumb_file = $this->fileHandler->load($thumb_id);
+          }
         }
-
 
         $this->viewVideoElement($file, $elements, $delta, $thumb_file);
         if (isset($thumb_file)) {

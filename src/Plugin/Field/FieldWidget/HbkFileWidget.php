@@ -12,6 +12,7 @@ use Drupal\file\Plugin\Field\FieldWidget\FileWidget;
 use Drupal\more_fields_video\Services\MoreFieldsVideoConverter;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Plugin implementation of the 'file_generic' widget.
@@ -26,46 +27,59 @@ use Drupal\Core\Entity\EntityStorageInterface;
  * )
  */
 class HbkFileWidget extends FileWidget {
-  
+
+  // /**
+  //  * The element info manager.
+  //  *
+  //  * @var MoreFieldsVideoConverter $videoConverter
+  //  */
+  // protected $videoConverter;
+
   /**
-   * The element info manager.
-   *
-   * @var MoreFieldsVideoConverter $videoConverter
+   * @var EntityTypeManagerInterface $entityManager
    */
-  protected $videoConverter;
-  
-  /**
-   *
-   * @var EntityStorageInterface $fileHandler
-   */
-  protected $fileHandler;
-  
-  /**
-   *
-   * @var EntityStorageInterface $multiformatHandler
-   */
-  protected $multiformatHandler;
-  
+  protected $entityManager;
   /**
    *
    * {@inheritdoc}
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ElementInfoManagerInterface $element_info, MoreFieldsVideoConverter $video_converter, EntityStorageInterface $file_handler, EntityStorageInterface $multiformat_handler) {
+  public function __construct(
+    $plugin_id,
+    $plugin_definition,
+    FieldDefinitionInterface $field_definition,
+    array $settings,
+    array $third_party_settings,
+    ElementInfoManagerInterface $element_info,
+    // MoreFieldsVideoConverter $video_converter,
+    EntityTypeManagerInterface $entity_manager
+    // EntityStorageInterface $file_handler,
+    // EntityStorageInterface $multiformat_handler
+  ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $element_info);
-    $this->videoConverter = $video_converter;
-    // $this->entityManager = $entity_manager;
-    $this->multiformatHandler = $multiformat_handler;
-    $this->fileHandler = $file_handler;
+    // $this->videoConverter = $video_converter;
+    $this->entityManager = $entity_manager;
+    // $this->multiformatHandler = $multiformat_handler;
+    // $this->fileHandler = $file_handler;
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['third_party_settings'], $container->get('element_info'), $container->get("more_fields_video.video_converter"), $container->get('entity_type.manager')->getStorage("file"), $container->get('entity_type.manager')->getStorage("multiformat_video"));
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['third_party_settings'],
+      $container->get('element_info'),
+      // $container->get("more_fields_video.video_converter"),
+      $container->get('entity_type.manager'),
+      // $container->get('entity_type.manager')->getStorage("multiformat_video")
+    );
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -78,13 +92,18 @@ class HbkFileWidget extends FileWidget {
     ];
     return $element;
   }
-  
+
   /**
    * handling the validation of the field
    * and create the thumbnail for videos
    */
   public function validateElement($element, FormStateInterface &$form_state, $form) {
     if (\Drupal::moduleHandler()->moduleExists('more_fields_video')) {
+      /**
+       * @var EntityStorageInterface  $videoConverter 
+       */
+      $multiformatHandler = $this->entityManager->getStorage("multiformat_video");
+
       $vid_extensions = [
         'mp4',
         'ogv',
@@ -99,30 +118,30 @@ class HbkFileWidget extends FileWidget {
         $fileExtension = pathinfo($fileUri, PATHINFO_EXTENSION);
         if (in_array($fileExtension, $vid_extensions)) {
           # code...
-          $multiformat = $this->multiformatHandler->load($id);
+          $multiformat = $multiformatHandler->load($id);
           if (!$multiformat) {
             # code...
-            $result = $this->videoConverter->createThumbFile($id);
+            $result = \Drupal::service("more_fields_video.video_converter")->createThumbFile($id);
             if ($result !== FALSE) {
-              $this->sync_multiformat($id, $result);
+              $this->sync_multiformat($id, $result, $multiformatHandler);
             }
           }
         }
       }
     }
   }
-  
+
   /**
    *
    * @var File $thumb_file
    */
-  public function sync_multiformat($video_id, File $thumb_file) {
+  public function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
     // creating and handling the multiformat
     /**
      *
      * @var MultiformatVideo $multiformat
      */
-    $multiformat = $this->multiformatHandler->load($video_id) ?? $this->multiformatHandler->create();
+    $multiformat = $multiformatHandler->load($video_id) ?? $multiformatHandler->create();
     $thumb_file->setPermanent();
     $thumb_file->save();
     $multiformat->setThumbId($thumb_file->id());
@@ -130,5 +149,4 @@ class HbkFileWidget extends FileWidget {
     $multiformat->save();
     return $multiformat;
   }
-  
 }
