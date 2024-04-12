@@ -83,14 +83,14 @@ class MoreFieldsVideoConverter {
     if ($convertVideo) {
       $multiformat = null;
       $fileMime = explode("/", $file->getMimeType());
-      if ($fileMime[0] !== "video") {
-        throw new Exception("The file is not a video__" . $fileMime[0], 1);
-      }
-      if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
-        $convertedFilePath = $this->convertVideo($file, $vFormat);
-        $file->setFileUri($convertedFilePath);
-        $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
-        $file->save();
+
+      if ($fileMime[0] === "video") {
+        if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
+          $convertedFilePath = $this->convertVideo($file, $vFormat);
+          $file->setFileUri($convertedFilePath);
+          $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
+          $file->save();
+        }
       }
     }
 
@@ -165,8 +165,7 @@ class MoreFieldsVideoConverter {
       $thumb_file->setFilename(pathinfo($thumb_path, PATHINFO_FILENAME));
       $thumb_file->setMimeType($this->thumb_mime);
       return $thumb_file;
-    }
-    catch (\Throwable $th) {
+    } catch (\Throwable $th) {
       return FALSE;
     }
   }
@@ -196,8 +195,7 @@ class MoreFieldsVideoConverter {
     try {
       $ffm_video->save(new WebM(), $file_system->realpath($convertedVidPath));
       return $convertedVidPath;
-    }
-    catch (\Throwable $th) {
+    } catch (\Throwable $th) {
       return FALSE;
     }
   }
@@ -213,5 +211,4 @@ class MoreFieldsVideoConverter {
     $this->thumb_extension = "." . $extension;
     $this->thumb_mime = "image/" . $extension;
   }
-
 }
