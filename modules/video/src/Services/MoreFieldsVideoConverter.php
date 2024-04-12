@@ -32,14 +32,14 @@ class MoreFieldsVideoConverter {
    * Constructs a new MyCustomService object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
+   *        The entity type manager.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
     $this->entityTypeManager = $entity_type_manager;
   }
 
-
   /**
+   *
    * @param File $file
    * @param EntityStorageInterface $multiformatHandler
    * @return MultiformatVideo|NULL
@@ -50,17 +50,18 @@ class MoreFieldsVideoConverter {
 
     if ($fileType === "video") {
       if (!isset($multiformatHandler)) {
-        $multiformatHandler =  $this->entityTypeManager->getStorage("multiformat_video");
+        $multiformatHandler = $this->entityTypeManager->getStorage("multiformat_video");
       }
       /**
+       *
        * @param MultiformatVideo|null $multiformat
        */
       $multiformat = $multiformatHandler->load($file->id());
 
       if (!$multiformat) {
-        $result = $this->createThumbFile((int)$file->id());
+        $result = $this->createThumbFile((int) $file->id());
         if ($result !== FALSE) {
-          $multiformat =  $this->sync_multiformat($file->id(), $result, $multiformatHandler);
+          $multiformat = $this->sync_multiformat($file->id(), $result, $multiformatHandler);
         }
       }
     }
@@ -68,11 +69,15 @@ class MoreFieldsVideoConverter {
   }
 
   /**
+   *
    * @param int $fid
    * @param EntityStorageInterface $multiformatHandler
    * @return MultiformatVideo|NULL
    */
-  public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = ["mov", "quicktime"]) {
+  public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = [
+    "mov",
+    "quicktime"
+  ]) {
     $file = File::load($fid);
     $multiformat = null;
     if ($convertVideo) {
@@ -84,7 +89,7 @@ class MoreFieldsVideoConverter {
       if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
         $convertedFilePath = $this->convertVideo($file, $vFormat);
         $file->setFileUri($convertedFilePath);
-        $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME));
+        $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
         $file->save();
       }
     }
@@ -92,16 +97,21 @@ class MoreFieldsVideoConverter {
     if ($generateThumb) {
       $multiformat = $this->getMultiFormat($file, $multiformatHandler);
     }
-    return ["multiformat" => $multiformat, "furi" => $file->getFileUri()];
+    return [
+      "multiformat" => $multiformat,
+      "furi" => $file->getFileUri()
+    ];
   }
 
   /**
-   * Cette methode est statique car elle est utilisé par à l'exterieur de la classe.
+   * Cette methode est statique car elle est utilisé par à l'exterieur de la
+   * classe.
    * la transférer dans un service est une option
+   *
    * @param File $thumb_file
    * @return MultiformatVideo
    */
-  public function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
+  public function sync_multiformat($video_id, File $thumb_file, EntityStorageInterface &$multiformatHandler) {
     // creating and handling the multiformat
     /**
      *
@@ -155,12 +165,14 @@ class MoreFieldsVideoConverter {
       $thumb_file->setFilename(pathinfo($thumb_path, PATHINFO_FILENAME));
       $thumb_file->setMimeType($this->thumb_mime);
       return $thumb_file;
-    } catch (\Throwable $th) {
+    }
+    catch (\Throwable $th) {
       return FALSE;
     }
   }
 
   /**
+   *
    * @param File $file
    * @return string path of the new file
    */
@@ -184,7 +196,8 @@ class MoreFieldsVideoConverter {
     try {
       $ffm_video->save(new WebM(), $file_system->realpath($convertedVidPath));
       return $convertedVidPath;
-    } catch (\Throwable $th) {
+    }
+    catch (\Throwable $th) {
       return FALSE;
     }
   }
@@ -200,4 +213,5 @@ class MoreFieldsVideoConverter {
     $this->thumb_extension = "." . $extension;
     $this->thumb_mime = "image/" . $extension;
   }
+
 }
