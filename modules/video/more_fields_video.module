@@ -10,7 +10,6 @@ use Drupal\more_fields_video\Entity\MultiformatVideo;
  * Implements hook_file_delete().
  */
 function more_fields_video_file_delete($file) {
-    dump($file->id());
     $multiformat = MultiformatVideo::load($file->id);
     if (isset($multiformat)) {
         $thumb_id = $multiformat->getThumbId();
