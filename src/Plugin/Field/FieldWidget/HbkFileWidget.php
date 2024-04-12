@@ -104,50 +104,13 @@ class HbkFileWidget extends FileWidget {
        */
       $multiformatHandler = $this->entityManager->getStorage("multiformat_video");
 
-      $vid_extensions = [
-        'mp4',
-        'ogv',
-        'webm'
-      ];
       /**
        *
        * @var File $file
        */
-      foreach ($element["#files"] as $id => $file) {
-        $fileUri = $file->getFileUri();
-        $fileExtension = pathinfo($fileUri, PATHINFO_EXTENSION);
-        if (in_array($fileExtension, $vid_extensions)) {
-          # code...
-          $multiformat = $multiformatHandler->load($id);
-          if (!$multiformat) {
-            # code...
-            $result = \Drupal::service("more_fields_video.video_converter")->createThumbFile($id);
-            if ($result !== FALSE) {
-              self::sync_multiformat($id, $result, $multiformatHandler);
-            }
-          }
-        }
+      foreach ($element["#files"] as $id => &$file) {
+        $result = \Drupal::service("more_fields_video.video_converter")->manageUploadedFile($file->id(), $multiformatHandler);
       }
     }
-  }
-
-  /**
-   * Cette methode est statique car elle est utilisé par à l'exterieur de la classe.
-   * la transférer dans un service est une option
-   * @var File $thumb_file
-   */
-  public static function sync_multiformat($video_id, File $thumb_file,  EntityStorageInterface &$multiformatHandler) {
-    // creating and handling the multiformat
-    /**
-     *
-     * @var MultiformatVideo $multiformat
-     */
-    $multiformat = $multiformatHandler->load($video_id) ?? $multiformatHandler->create();
-    $thumb_file->setPermanent();
-    $thumb_file->save();
-    $multiformat->setThumbId($thumb_file->id());
-    $multiformat->setVideoId($video_id);
-    $multiformat->save();
-    return $multiformat;
   }
 }
