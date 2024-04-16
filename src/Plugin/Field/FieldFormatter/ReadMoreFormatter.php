@@ -24,7 +24,8 @@ class ReadMoreFormatter extends HtlBtn {
   public static function defaultSettings() {
     return [
       'text_display' => 'Read more',
-      'text_display' => true
+      'text_display' => true,
+      'link_to_entity' => true
     ] + parent::defaultSettings();
   }
 
@@ -33,7 +34,7 @@ class ReadMoreFormatter extends HtlBtn {
    * {@inheritdoc}
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
-    return [
+    $my_form =  [
       'text_display' => [
         '#type' => 'textfield',
         '#title' => 'Texte à afficher',
@@ -42,6 +43,13 @@ class ReadMoreFormatter extends HtlBtn {
         '#description' => "don't forget to active linck to content"
       ]
     ] + parent::settingsForm($form, $form_state);
+    if (isset($my_form['link_to_entity'])) {
+      $my_form['link_to_entity'] = [
+        "#type" => "hidden",
+        "#default_value" => true
+      ] + $my_form['link_to_entity'];
+    }
+    return $my_form;
   }
 
   /**
@@ -62,8 +70,10 @@ class ReadMoreFormatter extends HtlBtn {
       /**
        * @var \Drupal\Core\Url $url
        */
-      $url = $elements[0]["#url"];
-      $url->setOption("language", $currentLanguage);
+      $url = $elements[0]["#url"] ?? null;
+      if (isset($url)) {
+        $url->setOption("language", $currentLanguage);
+      }
     }
     if ($this->getSetting('link_to_entity'))
       foreach ($elements as &$element) {
