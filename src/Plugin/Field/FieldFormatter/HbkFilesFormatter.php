@@ -20,6 +20,7 @@ use Drupal\fullswiperoptions\Fullswiperoptions;
 use Drupal\Component\Serialization\Json;
 use Drupal\image\Entity\ImageStyle;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Plugin implementation of the 'text_long, text_with_summary' formatter.
@@ -48,6 +49,12 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * @var EntityStorageInterface $multifomatHandler
    */
   protected $multiformatHandler;
+
+  /**
+   *
+   * @var EntityTypeManagerInterface $entityManager
+   */
+  protected $entityManager;
 
   /**
    *
@@ -84,6 +91,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     AccountInterface $current_user,
     EntityStorageInterface $image_style_storage,
     EntityStorageInterface $file_handler,
+    EntityTypeManagerInterface $entity_type_manager_interface,
     FileUrlGeneratorInterface $file_url_generator = NULL
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
@@ -96,6 +104,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     }
     $this->fileUrlGenerator = $file_url_generator;
     $this->fileHandler = $file_handler;
+    $this->entityManager = $entity_type_manager_interface;
   }
 
   /**
@@ -114,7 +123,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $container->get('current_user'),
       $container->get('entity_type.manager')->getStorage('image_style'),
       $container->get('entity_type.manager')->getStorage('file'),
-      $container->get('file_url_generator')
+      $container->get('entity_type.manager'),
+      $container->get('file_url_generator'),
     );
   }
 
