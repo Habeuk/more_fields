@@ -74,28 +74,32 @@ class MoreFieldsVideoConverter {
    * @param EntityStorageInterface $multiformatHandler
    * @return MultiformatVideo|NULL
    */
-  public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = [
+   public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = [
     "mov",
     "quicktime"
   ]) {
-    $file = File::load($fid);
     $multiformat = null;
-    if ($convertVideo) {
-      $multiformat = null;
-      $fileMime = explode("/", $file->getMimeType());
-
-      if ($fileMime[0] === "video") {
-        if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
-          $convertedFilePath = $this->convertVideo($file, $vFormat);
-          $file->setFileUri($convertedFilePath);
-          $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
-          $file->save();
+    $file = File::load($fid);
+    try {
+      if ($convertVideo) {
+        $multiformat = null;
+        $fileMime = explode("/", $file->getMimeType());
+        
+        if ($fileMime[0] === "video") {
+          if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
+            $convertedFilePath = $this->convertVideo($file, $vFormat);
+            $file->setFileUri($convertedFilePath);
+            $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
+            $file->save();
+          }
         }
       }
+      if ($generateThumb) {
+        $multiformat = $this->getMultiFormat($file, $multiformatHandler);
+      }
     }
-
-    if ($generateThumb) {
-      $multiformat = $this->getMultiFormat($file, $multiformatHandler);
+    catch (\Error $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
     }
     return [
       "multiformat" => $multiformat,
