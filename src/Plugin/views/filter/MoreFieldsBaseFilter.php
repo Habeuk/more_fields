@@ -248,8 +248,11 @@ trait MoreFieldsBaseFilter {
   }
   
   protected function buildCondition(\Drupal\Core\Database\Query\Select &$select_query, $alias, $field, $value, $operator) {
+    $AddCondition = true;
     if ($operator == 'or') {
       $operator = 'in';
+      if ($value === '')
+        $AddCondition = false;
       // Specifique à or car les données sont censer etre dans un array.
       if (!is_array($value))
         $value = [
@@ -260,8 +263,27 @@ trait MoreFieldsBaseFilter {
       $operator = 'LIKE';
       $value = '%' . $select_query->escapeLike($value) . '%';
     }
-    // dump($alias . '.' . $field, $value, $operator);
-    $select_query->condition($alias . '.' . $field, $value, $operator);
+    elseif ($operator == 'between') {
+      if (!empty($value['min']) && empty($value['max'])) {
+        $operator = '>=';
+        $value = $value['min'];
+      }
+      elseif (empty($value['min']) && !empty($value['max'])) {
+        $operator = '<=';
+        $value = $value['max'];
+      }
+      if (empty($value['min']) && empty($value['max'])) {
+        $AddCondition = false;
+      }
+    }
+    // $db = [
+    // 'field' => $field,
+    // 'value' => $value,
+    // 'operateur' => $operator
+    // ];
+    // dump($db);
+    if ($AddCondition)
+      $select_query->condition($alias . '.' . $field, $value, $operator);
   }
   
   /**

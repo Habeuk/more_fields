@@ -11,23 +11,24 @@ use Drupal\file\Entity\File;
 use FFMpeg\Coordinate\TimeCode;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
 use Drupal\Core\File\FileSystem;
+use FFMpeg\Exception\ExecutableNotFoundException;
 
 /**
  * Prepares the salutation to the world.
  */
 class MoreFieldsVideoConverter {
-
+  
   use StringTranslationTrait;
   protected $thumb_extension = '.png';
   protected $thumb_mime = 'image/png';
-
+  
   /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
-
+  
   /**
    * Constructs a new MyCustomService object.
    *
@@ -37,7 +38,7 @@ class MoreFieldsVideoConverter {
   public function __construct(EntityTypeManagerInterface $entity_type_manager) {
     $this->entityTypeManager = $entity_type_manager;
   }
-
+  
   /**
    *
    * @param File $file
@@ -47,7 +48,7 @@ class MoreFieldsVideoConverter {
   public function getMultiFormat(&$file, &$multiformatHandler = null) {
     $multiformat = null;
     $fileType = explode("/", $file->getMimeType())[0];
-
+    
     if ($fileType === "video") {
       if (!isset($multiformatHandler)) {
         $multiformatHandler = $this->entityTypeManager->getStorage("multiformat_video");
@@ -57,7 +58,7 @@ class MoreFieldsVideoConverter {
        * @param MultiformatVideo|null $multiformat
        */
       $multiformat = $multiformatHandler->load($file->id());
-
+      
       if (!$multiformat) {
         $result = $this->createThumbFile((int) $file->id());
         if ($result !== FALSE) {
@@ -67,14 +68,14 @@ class MoreFieldsVideoConverter {
     }
     return $multiformat;
   }
-
+  
   /**
    *
    * @param int $fid
    * @param EntityStorageInterface $multiformatHandler
    * @return MultiformatVideo|NULL
    */
-   public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = [
+  public function manageUploadedFile($fid, $multiformatHandler = null, $generateThumb = True, $convertVideo = True, $vFormat = "webm", $toConvert = [
     "mov",
     "quicktime"
   ]) {
@@ -98,6 +99,9 @@ class MoreFieldsVideoConverter {
         $multiformat = $this->getMultiFormat($file, $multiformatHandler);
       }
     }
+    catch (ExecutableNotFoundException $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
+    }
     catch (\Error $e) {
       \Drupal::logger('more_fields_video')->error($e->getMessage());
     }
@@ -106,7 +110,7 @@ class MoreFieldsVideoConverter {
       "furi" => $file->getFileUri()
     ];
   }
-
+  
   /**
    * Cette methode est statique car elle est utilisé par à l'exterieur de la
    * classe.
@@ -129,7 +133,7 @@ class MoreFieldsVideoConverter {
     $multiformat->save();
     return $multiformat;
   }
-
+  
   /**
    * create the thumb file for a video in a given format (the default format is
    * png)
@@ -147,18 +151,18 @@ class MoreFieldsVideoConverter {
       'filename' => $filename,
       'dirname' => $dirname
     ] = pathinfo($file_uri);
-
-    // create thumb path + name
-    $thumb_path = $dirname . '/' . $filename . $this->thumb_extension;
-
-    $ffmpeg = FFMpeg::create();
-    /**
-     *
-     * @var FileSystem $file_system
-     */
-    $file_system = \Drupal::service('file_system');
-    $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
     try {
+      // create thumb path + name
+      $thumb_path = $dirname . '/' . $filename . $this->thumb_extension;
+      
+      $ffmpeg = FFMpeg::create();
+      /**
+       *
+       * @var FileSystem $file_system
+       */
+      $file_system = \Drupal::service('file_system');
+      $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
+      
       $ffm_video->frame(TimeCode::fromSeconds($frame_seconde))->save($file_system->realpath($thumb_path));
       /**
        *
@@ -169,11 +173,13 @@ class MoreFieldsVideoConverter {
       $thumb_file->setFilename(pathinfo($thumb_path, PATHINFO_FILENAME));
       $thumb_file->setMimeType($this->thumb_mime);
       return $thumb_file;
-    } catch (\Throwable $th) {
+    }
+    catch (\Error $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
       return FALSE;
     }
   }
-
+  
   /**
    *
    * @param File $file
@@ -185,10 +191,10 @@ class MoreFieldsVideoConverter {
       'filename' => $filename,
       'dirname' => $dirname
     ] = pathinfo($file_uri);
-
+    
     // create thumb path + name
     $convertedVidPath = $dirname . '/' . $filename . "." . $finalType;
-
+    
     $ffmpeg = FFMpeg::create();
     /**
      *
@@ -199,11 +205,12 @@ class MoreFieldsVideoConverter {
     try {
       $ffm_video->save(new WebM(), $file_system->realpath($convertedVidPath));
       return $convertedVidPath;
-    } catch (\Throwable $th) {
+    }
+    catch (\Throwable $th) {
       return FALSE;
     }
   }
-
+  
   /**
    * define in the extension of the thumb when it will be genereted
    * at the same time it define the thumb mime
@@ -215,4 +222,5 @@ class MoreFieldsVideoConverter {
     $this->thumb_extension = "." . $extension;
     $this->thumb_mime = "image/" . $extension;
   }
+  
 }

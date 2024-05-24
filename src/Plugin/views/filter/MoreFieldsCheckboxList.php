@@ -242,6 +242,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
       $exposed_inputs = $this->view->getExposedInput();
       $filters = $this->view->filter;
       $select_query = $this->buildBaseSql();
+      /**
+       *
+       * @var \Drupal\taxonomy\TermStorage $storageTerm
+       */
+      $storageTerm = $this->termStorage;
+      $storageTerm->loadChildren($tid, $this->options['vid']);
     }
     
     /**
@@ -292,6 +298,12 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
     // $result = TimerMonitoring::stop('FilterCountEntitiesHasterm');
     // dump($result);
     return $tids;
+  }
+  
+  /**
+   * Permet de recuperer les enfants.
+   */
+  protected function loadAllChildren() {
   }
   
   /**
