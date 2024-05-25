@@ -34,8 +34,9 @@ class IconTextDescriptionWidget extends IconTextWidget {
       '#title' => t($this->getSetting('label_1')),
       '#type' => 'text_format',
       '#default_value' => isset($items[$delta]->value) ? $items[$delta]->value : NULL,
+      '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'basic_html',
       '#size' => $this->getSetting('size'),
-      '#description' => 'cest un champs type varchar, le but est mettre du html'
+      '#description' => 'NB: cest un champs type varchar, le but est mettre du html'
     ] + $element;
     $elements['text'] = [
       '#title' => t($this->getSetting('label_2')),

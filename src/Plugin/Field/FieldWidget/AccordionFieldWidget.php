@@ -21,7 +21,7 @@ use Drupal\Core\Annotation\Translation;
  * )
  */
 class AccordionFieldWidget extends WidgetBase {
-
+  
   /**
    *
    * {@inheritdoc}
@@ -33,7 +33,7 @@ class AccordionFieldWidget extends WidgetBase {
       'label_3' => "Description"
     ] + parent::defaultSettings();
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -56,7 +56,7 @@ class AccordionFieldWidget extends WidgetBase {
     ];
     return $elements;
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -65,13 +65,12 @@ class AccordionFieldWidget extends WidgetBase {
     $summary = [];
     return $summary;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-    $elements = [];
     if (!empty($element['#title_display']))
       unset($element['#title_display']);
     $elts['title'] = [
@@ -102,7 +101,7 @@ class AccordionFieldWidget extends WidgetBase {
     ] + $element;
     return $elts;
   }
-
+  
   function massageFormValues($values, $form, $form_state) {
     $vals = parent::massageFormValues($values, $form, $form_state);
     foreach ($vals as $k => &$val) {
@@ -121,4 +120,5 @@ class AccordionFieldWidget extends WidgetBase {
     }
     return $vals;
   }
+  
 }
