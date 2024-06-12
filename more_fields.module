@@ -216,6 +216,13 @@ function more_fields_field_widget_single_element_form_alter(array &$element, \Dr
  */
 function more_fields_theme() {
   $hooks = [];
+  $hooks['more_field_mit_gallery_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_field_mit_gallery_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
   $hooks['more_fields_experience_formatter'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_experience_formatter'
