@@ -75,3 +75,10 @@ function template_preprocess_more_field_file_image_video($vars) {
     $vars["item"] = $vars["element"]["#item"];
   }
 }
+
+function template_preprocess_more_field_mit_gallery_formatter(&$vars){
+  $vars['#attached']['library'][] = 'more_fields/more_field_mit_gallery_formatter';
+  if (!empty($vars["element"]["#item"])) {
+    $vars["item"] = $vars["element"]["#item"];
+  }
+}
