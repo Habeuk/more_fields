@@ -3,13 +3,13 @@
 namespace Drupal\more_fields\Plugin\views\filter;
 
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\taxonomy\Plugin\views\filter\TaxonomyIndexTid;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\search_api\Entity\Index;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\mysql\Driver\Database\mysql\Select;
 use Drupal\monitoring_drupal\Services\TimerMonitoring;
+use Drupal\search_api\Plugin\views\filter\SearchApiTerm;
 
 /**
  * Filter by term id.
@@ -17,10 +17,8 @@ use Drupal\monitoring_drupal\Services\TimerMonitoring;
  * plugin : search_api_term
  *
  * @ingroup views_filter_handlers
- *
- * @ViewsFilter("more_fields_search_api_term")
  */
-class MoreFieldsSearchApiTerm extends TaxonomyIndexTid implements FilterCountInterface {
+class MoreFieldsSearchApiTerm extends SearchApiTerm implements FilterCountInterface {
   
   use MoreFieldsBaseFilterSearchApi;
   
@@ -234,15 +232,15 @@ class MoreFieldsSearchApiTerm extends TaxonomyIndexTid implements FilterCountInt
     // dump($defaultFilters);
     $filters = [];
     if ($defaultFilters) {
-      foreach ($defaultFilters as $currentFilter) {
-        //
-        if ($currentFilter->getPluginId() == 'search_api_term' || empty($currentFilter->options['exposed'])) {
-          $filters[$currentFilter->realField] = $currentFilter;
-        }
-      }
+      // foreach ($defaultFilters as $currentFilter) {
+      // //
+      // if ($currentFilter->getPluginId() == 'search_api_term' ||
+      // empty($currentFilter->options['exposed'])) {
+      // $filters[$currentFilter->realField] = $currentFilter;
+      // }
+      // }
       $select_query = $this->buildBaseQuery();
       $this->buildAnothersQuery($select_query);
-      // dump($select_query->__toString(), $select_query);
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
       // dump($this->realField, $entities);
       foreach ($entities as $value) {
