@@ -4,7 +4,8 @@ namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Field\Plugin\Field\FieldFormatter\StringFormatter;
+use Drupal\Core\Field\FieldItemInterface;
+use Drupal\Core\Render\Element\InlineTemplate;
 
 /**
  * Plugin implementation of the 'string' formatter.
@@ -35,7 +36,7 @@ class ReadMoreFormatter extends HtlBtn {
   public function settingsForm(array $form, FormStateInterface $form_state) {
     return [
       'text_display' => [
-        '#type' => 'textfield',
+        '#type' => 'textarea',
         '#title' => 'Texte à afficher',
         '#default_value' => $this->getSetting('text_display'),
         '#required' => true,
@@ -76,10 +77,29 @@ class ReadMoreFormatter extends HtlBtn {
         $element['#options']['attributes']['class'][] = !$this->getSetting('haslinktag') ? 'hasnotlink' : '';
         $element['#options']['attributes']['class'][] = $this->getSetting('custom_class');
         //
-        if (isset($element['#title']['#context']['value']))
-          $element['#title']['#context']['value'] = $this->t($this->getSetting('text_display'));
+        $element['#title'] = $this->viewValueFull($this->t($this->getSetting('text_display')));
       }
     return $elements;
   }
   
+  /**
+   * Afin de permettre d'ajouter des SVG ou autre balise au niveau des buttons.
+   *
+   * @param string $value
+   * @return array
+   */
+  protected function viewValueFull($value) {
+    return [
+      '#markup' => $value,
+      '#allowed_tags' => [
+        'svg',
+        'title',
+        'g',
+        'path',
+        'div',
+        'defs',
+        'span'
+      ]
+    ];
+  }
 }
