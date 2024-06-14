@@ -86,7 +86,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $this->imageFormatter = new ImageFormatter($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings, $current_user, $image_style_storage, $file_url_generator);
     $this->imageStyleStorage = $image_style_storage;
     if (!$file_url_generator) {
-      @trigger_error('Calling ImageFormatter::__construct() without the $file_url_generator argument is deprecated in drupal:9.3.0 and the $file_url_generator argument will be required in drupal:10.0.0. See https://www.drupal.org/node/2940031', E_USER_DEPRECATED);
+      @trigger_error(
+        'Calling ImageFormatter::__construct() without the $file_url_generator argument is deprecated in drupal:9.3.0 and the $file_url_generator argument will be required in drupal:10.0.0. See https://www.drupal.org/node/2940031',
+        E_USER_DEPRECATED);
       $file_url_generator = \Drupal::service('file_url_generator');
     }
     $this->fileUrlGenerator = $file_url_generator;
@@ -99,7 +101,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get('current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('entity_type.manager')->getStorage('file'), $container->get('entity_type.manager'), $container->get('file_url_generator'));
+    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['label'], $configuration['view_mode'], $configuration['third_party_settings'], $container->get(
+      'current_user'), $container->get('entity_type.manager')->getStorage('image_style'), $container->get('entity_type.manager')->getStorage('file'), $container->get('entity_type.manager'), $container->get(
+      'file_url_generator'));
   }
   
   /**
@@ -107,12 +111,20 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public static function defaultSettings() {
+    $swiper_config = [
+      'pagination_model' => '',
+      'pagination_color' => '',
+      'pagination_postion' => '',
+      'buttons_color' => '',
+      'buttons_position' => 'buttons_position',
+      'breakpoints' => []
+    ];
     $default = [
       "video_settings" => VideoPlayerListFormatter::defaultSettings(),
       "image_settings" => ImageFormatter::defaultSettings(),
       "thumbs_settings" => ImageFormatter::defaultSettings(),
-      'swiper_main' => Fullswiperoptions::options(),
-      'swiper_thumb' => Fullswiperoptions::options(),
+      'swiper_main' => Fullswiperoptions::options() + $swiper_config,
+      'swiper_thumb' => Fullswiperoptions::options() + $swiper_config,
       "layoutgenentitystyles_view" => "more_fields/field-files",
       "thumbs_galleries_position" => '',
       "enable_zoom_on_hover" => false
@@ -237,7 +249,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     
     // ----------------creating Swipers Settings form----------------//
     $swiper_main_options = $this->getSetting('swiper_main');
-    
+    // dd($swiper_main_options);
     $form['swiper_main'] = [
       '#title' => $this->t('Main slider'),
       '#type' => 'fieldset',
@@ -586,5 +598,4 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       unset($item->_attributes);
     }
   }
-  
 }
