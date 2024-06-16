@@ -7,6 +7,7 @@ use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Field\Annotation\FieldWidget;
 use Drupal\Core\Annotation\Translation;
+use phpDocumentor\Reflection\Types\This;
 
 /**
  * Plugin implementation of the 'more_fields_accordion_field' widget.
@@ -73,31 +74,41 @@ class AccordionFieldWidget extends WidgetBase {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     if (!empty($element['#title_display']))
       unset($element['#title_display']);
-    $elts['title'] = [
-      '#title' => $this->t('Title'),
-      '#type' => 'textfield',
-      '#weight' => 0,
-      '#default_value' => isset($items[$delta]->title) ? $items[$delta]->title : NULL
-    ] + $element;
     $elts['field'] = [
       '#type' => 'details',
-      '#title' => t('Description + Icon'),
+      '#title' => $items[$delta]->title ? $this->getTitleDisplay($items[$delta]->title) : t('Title + Description + icon '),
       '#weight' => 10,
+      '#open' => false,
       '#tree' => True
     ];
+    $elts['field']['title'] = [
+      '#title' => $this->t('Title'),
+      '#type' => 'text_format',
+      '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'full_html',
+      '#weight' => 0,
+      '#default_value' => isset($items[$delta]->title) ? $items[$delta]->title : NULL,
+      '#rows' => 2,
+      '#cols' => 50
+    ] + $element;
     //
     $elts['field']['icon'] = [
       '#title' => $this->t('Icon'),
       '#type' => 'text_format',
-      '#format' => 'full_html',
-      '#default_value' => isset($items[$delta]->icon) ? $items[$delta]->icon : NULL
+      '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'full_html',
+      '#weight' => 2,
+      '#default_value' => isset($items[$delta]->icon) ? $items[$delta]->icon : NULL,
+      '#rows' => 3,
+      '#cols' => 50
     ] + $element;
     //
     $elts['field']['description'] = [
       '#title' => $this->t('Description'),
-      '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'basic_html',
+      '#format' => isset($items[$delta]->format) ? $items[$delta]->format : 'full_html',
       '#type' => 'text_format',
-      '#default_value' => isset($items[$delta]->description) ? $items[$delta]->description : NULL
+      '#weight' => 0,
+      '#default_value' => isset($items[$delta]->description) ? $items[$delta]->description : NULL,
+      '#rows' => 5,
+      '#cols' => 50
     ] + $element;
     return $elts;
   }
@@ -105,20 +116,29 @@ class AccordionFieldWidget extends WidgetBase {
   function massageFormValues($values, $form, $form_state) {
     $vals = parent::massageFormValues($values, $form, $form_state);
     foreach ($vals as $k => &$val) {
-      if (empty($val['title'])) {
+      // si le titre est vide, on ignore l'element.
+      if (empty($val['field']['title']['value'])) {
         unset($vals[$k]);
         continue;
       }
+      // Get Format, on tient compte du format de la description.
       if (isset($val['field']['description']['format'])) {
         $val['format'] = $val['field']['description']['format'];
       }
-      if (isset($val['icon']['format'])) {
-        $val['format'] = $val['field']['icon']['format'];
-      }
+      // on recupere les données.
       $val['description'] = $val['field']['description']['value'];
       $val['icon'] = $val['field']['icon']['value'];
+      $val['title'] = $val['field']['title']['value'];
     }
     return $vals;
   }
   
+  protected function getTitleDisplay($title) {
+    $title = strip_tags($title);
+    if (!empty($title)) {
+      if (strlen($title) > 70)
+        $title = substr($title, 0, 70);
+    }
+    return $title;
+  }
 }

@@ -127,7 +127,8 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       'swiper_thumb' => Fullswiperoptions::options() + $swiper_config,
       "layoutgenentitystyles_view" => "more_fields/field-files",
       "thumbs_galleries_position" => '',
-      "enable_zoom_on_hover" => false
+      "enable_zoom_on_hover" => false,
+      "enable_thumb_slider" => true
     ];
     $default["video_settings"]["field_extension"] = "mp4, ogv, webm";
     $default["image_settings"]["field_extension"] = "png, gif, jpg, jpeg, webp";
@@ -143,10 +144,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    */
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $form = parent::settingsForm($form, $form_state);
-    // dump(VideoPlayerListFormatter::defaultSettings());
+    $enable_thumb_slider = $this->getSetting("enable_thumb_slider");
+    
     $default_configs = $this->defaultSettings();
     $configs = $this->getSettings();
-    // dump($default_configs);
+    
     $video_settings = $configs['video_settings'] ?? $default_configs["video_default"];
     $image_settings = $configs['image_settings'] ?? $default_configs["image_default"];
     $thumbs_settings = $configs['thumbs_settings'] ?? $default_configs["thumbs_settings"];
@@ -230,6 +232,11 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "#title" => "Enable zoom on hover",
       '#default_value' => $this->getSetting('enable_zoom_on_hover')
     ];
+    $form['enable_thumb_slider'] = [
+      "#type" => 'checkbox',
+      "#title" => "Enable thumb slider",
+      '#default_value' => $this->getSetting('enable_thumb_slider')
+    ];
     
     // dump($video_settings);
     // update default value for video
@@ -258,15 +265,15 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     Fullswiperoptions::buildGeneralOptionsForm($form['swiper_main'], $swiper_main_options);
     Fullswiperoptions::buildSwiperjsOptions($form['swiper_main'], $swiper_main_options);
     $swiper_thumb_options = $this->getSetting('swiper_thumb');
-    
-    $form['swiper_thumb'] = [
-      '#title' => $this->t('Thumbs slider'),
-      '#type' => 'fieldset',
-      '#open' => false
-    ];
-    Fullswiperoptions::buildGeneralOptionsForm($form['swiper_thumb'], $swiper_thumb_options);
-    Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], $swiper_thumb_options);
-    
+    if ($enable_thumb_slider) {
+      $form['swiper_thumb'] = [
+        '#title' => $this->t('Thumbs slider'),
+        '#type' => 'fieldset',
+        '#open' => false
+      ];
+      Fullswiperoptions::buildGeneralOptionsForm($form['swiper_thumb'], $swiper_thumb_options);
+      Fullswiperoptions::buildSwiperjsOptions($form['swiper_thumb'], $swiper_thumb_options);
+    }
     $form = array_merge($form, $temp_form);
     return $form;
   }
@@ -276,6 +283,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
+    $enable_thumb_slider = $this->getSetting("enable_thumb_slider");
     $multiformatHandler = \Drupal::moduleHandler()->moduleExists('more_fields_video') ? $this->entityManager->getStorage("multiformat_video") : NULL;
     $elements = [];
     $thumb_elements = [];
@@ -317,13 +325,14 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
      * @var File $file
      */
     foreach ($files as $delta => $file) {
-      // get file extension
+      // Get file extension
       $file_extension = pathinfo($file->getFileUri(), PATHINFO_EXTENSION);
       if (strpos($image_settings["field_extension"], $file_extension) !== false) {
         // Gestion des images
         $items_types[] = 'image';
         $this->viewImageElement($file, $elements, $url, $image_style_setting, $base_cache_tags, $image_loading_settings, $delta, isset($link_file) ? $link_file : NULL);
-        $this->viewImageElement($file, $thumb_elements, $url, $thumb_image_style_setting, $thumb_base_cache_tags, $thumbs_settings["image_loading"], $delta, isset($link_file) ? $link_file : NULL);
+        if ($enable_thumb_slider)
+          $this->viewImageElement($file, $thumb_elements, $url, $thumb_image_style_setting, $thumb_base_cache_tags, $thumbs_settings["image_loading"], $delta, isset($link_file) ? $link_file : NULL);
       }
       elseif (strpos($video_settings["field_extension"], $file_extension) !== false) {
         // Gestion des videos
@@ -347,18 +356,19 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
         }
         
         $this->viewVideoElement($file, $elements, $delta, $thumb_file);
-        if (isset($thumb_file)) {
-          $this->viewThumbElement($thumb_file, $thumb_elements, $thumbs_settings, $delta);
-        }
-        else {
-          $thumb_elements[$delta] = $elements[$delta];
-        }
-        $video_id = $file->id();
+        if ($enable_thumb_slider)
+          if (isset($thumb_file)) {
+            $this->viewThumbElement($thumb_file, $thumb_elements, $thumbs_settings, $delta);
+          }
+          else {
+            $thumb_elements[$delta] = $elements[$delta];
+          }
       }
       else {
         // Autres types de fichiers
         $this->viewParentElement($file, $elements, $delta);
-        $thumb_elements[$delta] = $elements[$delta];
+        if ($enable_thumb_slider)
+          $thumb_elements[$delta] = $elements[$delta];
       }
     }
     
@@ -367,21 +377,28 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $random_id = rand(1000000, 9999999);
     
     $main_slider_attributes = new Attribute([
-      "data-key-parent" => $base_class . "parent-" . (string) $random_id,
-      "data-key-children" => $base_class . "thumbs-" . (string) $random_id,
       "class" => [
         'swiper-full-options',
-        'swiper'
+        'swiper',
+        !$enable_thumb_slider ? 'swiper-unique' : 'swiper-with-thumbs'
       ]
     ]);
-    $thumbs_slider_attributes = new Attribute([
-      "data-key-parent" => $base_class . "parent-" . (string) $random_id,
-      "data-key-children" => $base_class . "thumbs-" . (string) $random_id,
-      "class" => [
-        'swiper-full-options',
-        'swiper'
-      ]
-    ]);
+    
+    if ($enable_thumb_slider) {
+      // si le thumb est activé, on ajoute les attributs de synchonisation.
+      $main_slider_attributes->setAttribute("data-key-parent", $base_class . "parent-" . (string) $random_id);
+      $main_slider_attributes->setAttribute("data-key-children", $base_class . "thumbs-" . (string) $random_id);
+      //
+      $thumbs_slider_attributes = new Attribute([
+        "data-key-parent" => $base_class . "parent-" . (string) $random_id,
+        "data-key-children" => $base_class . "thumbs-" . (string) $random_id,
+        "class" => [
+          'swiper-full-options',
+          'swiper'
+        ]
+      ]);
+    }
+    
     // ////////
     // constructing attributes of the main slide
     $swiper_main = $this->getSetting('swiper_main');
@@ -410,32 +427,45 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       $swipper_attributes_buttons_next->addClass($swiper_main['buttons_color'], $swiper_main['buttons_position']);
     // ////////
     // Constructing attributes of the thumbs slide
-    $swiper_thumb = $this->getSetting('swiper_thumb');
-    $swiper_thumb_options = Fullswiperoptions::formatOptions($swiper_thumb);
-    $thumbs_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_thumb_options));
-    $thumbs_slider_items_attributes = new Attribute([
-      "class" => [
-        "slide-item",
-        "thumb-slide-item",
-        $this->getSetting('thumbs_galleries_position')
-      ]
-    ]);
-    //
-    $thumbs_attributes_paginations = new Attribute();
-    $thumbs_attributes_paginations->addClass('swiper-pagination');
-    if (isset($swiper_thumb['pagination_color']))
-      $thumbs_attributes_paginations->addClass($swiper_thumb['pagination_color'], $swiper_thumb['pagination_postion'], $swiper_thumb['pagination_model']);
-    //
-    $thumbs_attributes_buttons_prev = new Attribute();
-    $thumbs_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev');
-    if (isset($swiper_thumb['buttons_color']))
-      $thumbs_attributes_buttons_prev->addClass($swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
-    //
-    $thumbs_attributes_buttons_next = new Attribute();
-    $thumbs_attributes_buttons_next->addClass('swiper-button', 'swiper-button-next');
-    if (isset($swiper_thumb['buttons_color']))
-      $thumbs_attributes_buttons_next->addClass($swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
-    //
+    $thumb_slider_template = [];
+    if ($enable_thumb_slider) {
+      $swiper_thumb = $this->getSetting('swiper_thumb');
+      $swiper_thumb_options = Fullswiperoptions::formatOptions($swiper_thumb);
+      $thumbs_slider_attributes->setAttribute('data-swiper', Json::encode($swiper_thumb_options));
+      $thumbs_slider_items_attributes = new Attribute([
+        "class" => [
+          "slide-item",
+          "thumb-slide-item",
+          $this->getSetting('thumbs_galleries_position')
+        ]
+      ]);
+      //
+      $thumbs_attributes_paginations = new Attribute();
+      $thumbs_attributes_paginations->addClass('swiper-pagination');
+      if (isset($swiper_thumb['pagination_color']))
+        $thumbs_attributes_paginations->addClass($swiper_thumb['pagination_color'], $swiper_thumb['pagination_postion'], $swiper_thumb['pagination_model']);
+      //
+      $thumbs_attributes_buttons_prev = new Attribute();
+      $thumbs_attributes_buttons_prev->addClass('swiper-button', 'swiper-button-prev');
+      if (isset($swiper_thumb['buttons_color']))
+        $thumbs_attributes_buttons_prev->addClass($swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
+      //
+      $thumbs_attributes_buttons_next = new Attribute();
+      $thumbs_attributes_buttons_next->addClass('swiper-button', 'swiper-button-next');
+      if (isset($swiper_thumb['buttons_color']))
+        $thumbs_attributes_buttons_next->addClass($swiper_thumb['buttons_color'], $swiper_thumb['buttons_position']);
+      //
+      $thumb_slider_template = [
+        "#thumbs_slider_items" => $thumb_elements,
+        "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
+        "#thumbs_slider_attributes" => $thumbs_slider_attributes,
+        "#thumbs_slider_settings" => $swiper_thumb_options,
+        //
+        "#thumbs_attributes_paginations" => $thumbs_attributes_paginations,
+        '#thumbs_attributes_buttons_prev' => $thumbs_attributes_buttons_prev,
+        "#thumbs_attributes_buttons_next" => $thumbs_attributes_buttons_next
+      ];
+    }
     return [
       "#theme" => "more_field_file_image_video",
       "#main_slider_items" => $elements,
@@ -445,18 +475,9 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "#swipper_attributes_paginations" => $swipper_attributes_paginations,
       "#swipper_attributes_buttons_prev" => $swipper_attributes_buttons_prev,
       "#swipper_attributes_buttons_next" => $swipper_attributes_buttons_next,
-      //
-      "#thumbs_slider_items" => $thumb_elements,
-      "#thumbs_slider_items_attributes" => $thumbs_slider_items_attributes,
-      "#thumbs_slider_attributes" => $thumbs_slider_attributes,
-      "#thumbs_slider_settings" => $swiper_thumb_options,
-      //
-      "#thumbs_attributes_paginations" => $thumbs_attributes_paginations,
-      '#thumbs_attributes_buttons_prev' => $thumbs_attributes_buttons_prev,
-      "#thumbs_attributes_buttons_next" => $thumbs_attributes_buttons_next,
       "#items_types" => $items_types,
       "#videos_settings" => $video_settings
-    ];
+    ] + $thumb_slider_template;
   }
   
   /**

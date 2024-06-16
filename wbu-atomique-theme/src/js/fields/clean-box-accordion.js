@@ -1,0 +1,1 @@
+import "@stephane888/wbu-atomique/scss/fields/clean-box-accordion.scss"; 

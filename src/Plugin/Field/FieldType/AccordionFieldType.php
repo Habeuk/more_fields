@@ -15,7 +15,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @FieldType(
  *   id = "more_fields_accordion_field",
- *   label = @Translation("Accordion field(event on header) "),
+ *   label = @Translation("Accordions or Field with icon, title and description  "),
  *   description = @Translation("Allows to generate an element of an accordion"),
  *   default_widget = "more_fields_accordion_field_widget",
  *   default_formatter = "more_fields_accordion_field_formatter",
@@ -122,5 +122,4 @@ class AccordionFieldType extends FieldItemBase {
     // ];
     return [];
   }
-  
 }

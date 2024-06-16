@@ -21,7 +21,7 @@ use Drupal\Core\Template\Attribute;
  * )
  */
 class AccordionFieldFormatter extends FormatterBase {
-
+  
   /**
    *
    * {@inheritdoc}
@@ -31,11 +31,13 @@ class AccordionFieldFormatter extends FormatterBase {
       'layoutgenentitystyles_view' => 'more_fields/field-accordion',
       'open_action' => 'fisrt',
       'custom_class' => '',
+      'custom_class_item' => '',
       'attribute_content' => 'h6 text-black-50',
-      'attribute_header' => ''
+      'attribute_header' => '',
+      'use_as_accordion' => true
     ] + parent::defaultSettings();
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -44,8 +46,19 @@ class AccordionFieldFormatter extends FormatterBase {
     return [
       // utilile pour mettre à jour le style
       'layoutgenentitystyles_view' => [
-        '#type' => 'hidden',
-        '#value' => 'more_fields/field-accordion'
+        '#type' => 'select',
+        '#title' => 'Selectionner le style',
+        '#options' => [
+          '' => 'Default template bootstrap5',
+          'more_fields/field-accordion' => 'fields-box',
+          'more_fields/clean-box-accordion' => 'clean-box-accordion'
+        ],
+        '#default_value' => $this->getSetting('layoutgenentitystyles_view')
+      ],
+      'use_as_accordion' => [
+        '#type' => 'checkbox',
+        '#title' => 'use_as_accordion',
+        '#default_value' => $this->getSetting('use_as_accordion')
       ],
       'open_action' => [
         '#type' => 'select',
@@ -59,8 +72,14 @@ class AccordionFieldFormatter extends FormatterBase {
       ],
       'custom_class' => [
         '#type' => 'textfield',
-        '#title' => 'Custom class for accordion',
-        '#default_value' => $this->getSetting('custom_class')
+        '#title' => "Class personaliser pour l'accorddion",
+        '#default_value' => $this->getSetting('custom_class'),
+        '#description' => "Add class 'accordion-flush' to clear border"
+      ],
+      'custom_class_item' => [
+        '#type' => 'textfield',
+        '#title' => "Class personaliser pour chaque item d'accorddion",
+        '#default_value' => $this->getSetting('custom_class_item')
       ],
       'attribute_header' => [
         '#type' => 'textfield',
@@ -74,7 +93,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ] + parent::settingsForm($form, $form_state);
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -82,30 +101,37 @@ class AccordionFieldFormatter extends FormatterBase {
   public function settingsSummary() {
     $summary = [];
     // Implement settings summary.
-
+    
     return $summary;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    $id = 'habeuk-' . $this->getName(8);
+    $id = 'hbk-' . $this->getName(8);
     $attribute = new Attribute([
       'class' => [
-        'accordion',
-        'fields-box',
         $this->getSetting('custom_class')
       ],
       'id' => $id
     ]);
+    if ($this->getSetting('use_as_accordion'))
+      $attribute->addClass("accordion");
     $attribute_box = new Attribute([
       'class' => [
-        'field-box',
-        'mb-3',
+        'accordion-item',
+        $this->getSetting('custom_class_item')
       ]
     ]);
+    if ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/field-accordion') {
+      $attribute->addClass("fields-box");
+      $attribute_box->addClass('field-box');
+    }
+    elseif ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/clean-box-accordion') {
+      $attribute->addClass("clean-box-accordion");
+    }
     $elements = [
       '#theme' => 'more_fields_accordion_field_formatter',
       '#items' => [],
@@ -114,37 +140,59 @@ class AccordionFieldFormatter extends FormatterBase {
     ];
     $open_action = $this->getSetting('open_action');
     foreach ($items as $delta => $item) {
-      $attribute_t = new Attribute([
+      $attribute_header = new Attribute([
         'class' => [
-          'field-meta',
-          'btn btn-block p-0 border-0'
+          'accordion-header',
+          'd-flex'
         ],
         'data-bs-toggle' => "collapse",
         'data-bs-target' => "#" . $id . '-' . $delta,
         'aria-expanded' => "true",
         'aria-controls' => $id
       ]);
-      $attribute_t->addClass($this->getSetting('attribute_header'));
+      $attribute_title = new Attribute([
+        'class' => [
+          'field-title',
+          'font-weight-bold'
+        ]
+        // 'data-bs-toggle' => "collapse",
+        // 'data-bs-target' => "#" . $id . '-' . $delta,
+        // 'aria-expanded' => "true",
+        // 'aria-controls' => $id
+      ]);
+      if ($this->getSetting('use_as_accordion'))
+        $attribute_header->addClass('accordion-button');
+      if ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/field-accordion') {
+        $attribute_header->addClass('btn btn-block p-0 border-0');
+      }
+      $attribute_header->addClass($this->getSetting('attribute_header'));
       $attr_desc = new Attribute([
         'class' => [
           'collapse',
-          ($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all') ? 'show' : ''
+          'accordion-collapse'
         ],
         'data-bs-parent' => "#" . $id,
         'id' => $id . '-' . $delta
       ]);
+      if (($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all')) {
+        $attr_desc->addClass('show');
+      }
+      else {
+        $attribute_header->addClass('collapsed');
+      }
       $attr_desc->addClass($this->getSetting('attribute_content'));
       $elements['#items'][$delta] = [
         'icon' => $this->viewValue($item->icon),
         'title' => $this->viewValue($item->title),
         'description' => $this->viewValue($item->description),
-        'attribute_title' => $attribute_t,
-        'attribute_content' => $attr_desc
+        'attribute_title' => $attribute_title,
+        'attribute_content' => $attr_desc,
+        'attribute_header' => $attribute_header
       ];
     }
     return $elements;
   }
-
+  
   /**
    * Generate the output appropriate for one field item.
    *
@@ -164,7 +212,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ];
   }
-
+  
   /**
    *
    * @param
@@ -172,7 +220,7 @@ class AccordionFieldFormatter extends FormatterBase {
    * @return string
    */
   public function getName($n) {
-    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     $lgt = strlen($characters);
     $randomString = '';
     for ($i = 0; $i < $n; $i++) {

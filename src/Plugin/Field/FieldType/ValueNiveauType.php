@@ -13,6 +13,7 @@ use Drupal\Core\TypedData\DataDefinition;
 /**
  * Plugin implementation of the 'more_fields_experience_type' field type.
  *
+ * @deprecated remove to 3x
  * @FieldType(
  *   id = "more_fields_value_niveau_type",
  *   label = @Translation("Value Niveau"),
@@ -109,5 +110,4 @@ class ValueNiveauType extends FieldItemBase {
   public static function mainPropertyName() {
     return 'target_id';
   }
-  
 }
