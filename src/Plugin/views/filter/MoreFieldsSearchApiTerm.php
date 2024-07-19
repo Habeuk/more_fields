@@ -79,7 +79,6 @@ class MoreFieldsSearchApiTerm extends SearchApiTerm implements FilterCountInterf
       // Add custom code.
       $terms = [];
       $tids = $this->FilterCountEntitiesHasterm();
-      
       // End custom code
       if (!empty($this->options['hierarchy']) && $this->options['limit']) {
         
@@ -241,6 +240,7 @@ class MoreFieldsSearchApiTerm extends SearchApiTerm implements FilterCountInterf
       // }
       $select_query = $this->buildBaseQuery();
       $this->buildAnothersQuery($select_query);
+      // dd($select_query, $select_query->__toString());
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
       // dump($this->realField, $entities);
       foreach ($entities as $value) {
@@ -396,5 +396,4 @@ class MoreFieldsSearchApiTerm extends SearchApiTerm implements FilterCountInterf
     
     return $fields;
   }
-  
 }

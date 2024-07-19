@@ -92,9 +92,29 @@ trait MoreFieldsBaseFilterSearchApi {
       if (!empty($filters[$filterId])) {
         /**
          *
-         * @var \Drupal\views\Plugin\views\filter\FilterPluginBase $currentFilter
+         * @var \Drupal\search_api\Plugin\views\filter\SearchApiFulltext $currentFilter
          */
         $currentFilter = $filters[$filterId];
+        $pluginId = $currentFilter->getPluginId();
+        if ("search_api_fulltext" == $pluginId) {
+          /**
+           * Cette logique n'est pas propre.
+           * Le nom de la table qui contient les textes de recherche se termine
+           * par "_text". On ajouter "_text" sur la valeur par defaut.
+           */
+          $currentFilter->table = $currentFilter->table . "_text";
+          $currentFilter->realField = "word";
+          $currentFilter->operator = "contains";
+          // dump($currentFilter);
+        }
+        /**
+         * Afin de gagner un peu en tamps, si non, il faut un filtre en
+         * interface UI.
+         */
+        elseif ("search_api_string" == $pluginId && $currentFilter->realField == 'aggregated_field') {
+          $currentFilter->operator = "contains";
+        }
+        
         $table = $this->getTableNameFromIndex($currentFilter->table);
         $configuration = [
           'type' => 'INNER',
@@ -126,5 +146,4 @@ trait MoreFieldsBaseFilterSearchApi {
   protected function getIndexFromCurrentTable() {
     return SearchApiQuery::getIndexFromTable($this->view->storage->get('base_table'));
   }
-  
 }

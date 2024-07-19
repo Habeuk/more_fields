@@ -581,5 +581,4 @@ trait MoreFieldsBaseFilter {
       return $select_query;
     }
   }
-  
 }
