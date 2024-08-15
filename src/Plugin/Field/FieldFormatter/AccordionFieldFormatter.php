@@ -21,7 +21,7 @@ use Drupal\Core\Template\Attribute;
  * )
  */
 class AccordionFieldFormatter extends FormatterBase {
-  
+
   /**
    *
    * {@inheritdoc}
@@ -37,7 +37,7 @@ class AccordionFieldFormatter extends FormatterBase {
       'use_as_accordion' => true
     ] + parent::defaultSettings();
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -93,7 +93,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ] + parent::settingsForm($form, $form_state);
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -101,16 +101,16 @@ class AccordionFieldFormatter extends FormatterBase {
   public function settingsSummary() {
     $summary = [];
     // Implement settings summary.
-    
+
     return $summary;
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    $id = 'hbk-' . $this->getName(8);
+    $id = 'hbk-' . static::getName(8);
     $attribute = new Attribute([
       'class' => [
         $this->getSetting('custom_class')
@@ -128,8 +128,7 @@ class AccordionFieldFormatter extends FormatterBase {
     if ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/field-accordion') {
       $attribute->addClass("fields-box");
       $attribute_box->addClass('field-box');
-    }
-    elseif ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/clean-box-accordion') {
+    } elseif ($this->getSetting('layoutgenentitystyles_view') == 'more_fields/clean-box-accordion') {
       $attribute->addClass("clean-box-accordion");
     }
     $elements = [
@@ -176,8 +175,7 @@ class AccordionFieldFormatter extends FormatterBase {
       ]);
       if (($open_action == 'fisrt' && $delta == 0) || ($open_action == 'all')) {
         $attr_desc->addClass('show');
-      }
-      else {
+      } else {
         $attribute_header->addClass('collapsed');
       }
       $attr_desc->addClass($this->getSetting('attribute_content'));
@@ -192,7 +190,7 @@ class AccordionFieldFormatter extends FormatterBase {
     }
     return $elements;
   }
-  
+
   /**
    * Generate the output appropriate for one field item.
    *
@@ -212,14 +210,14 @@ class AccordionFieldFormatter extends FormatterBase {
       ]
     ];
   }
-  
+
   /**
    *
    * @param
    *        $n
    * @return string
    */
-  public function getName($n) {
+  public static function getName($n) {
     $characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     $lgt = strlen($characters);
     $randomString = '';

@@ -43,6 +43,16 @@ function template_preprocess_more_fields_accordion_field_formatter(&$vars) {
   }
 }
 
+function template_preprocess_more_fields_accordion_field_tab_formatter(&$vars) {
+  // dd($vars);
+  if (!empty($vars['element']['#items'])) {
+    $vars['items'] = $vars['element']['#items'];
+    $vars['attribute_field'] = $vars['element']['#attribute_field'];
+    $vars['field_header_class'] = $vars['element']['#field_header_class'];
+    $vars['field_content_class'] = $vars['element']['#field_content_class'];
+  }
+}
+
 function template_preprocess_more_fields_bef_checkboxes(&$vars) {
   //
 }
