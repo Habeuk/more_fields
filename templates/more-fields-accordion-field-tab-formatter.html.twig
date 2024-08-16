@@ -1,0 +1,17 @@
+{% if items %}
+	<div {{attribute_field}}>
+
+		<ul {{field_header_class}}>
+			{% for item in items %}
+				<li class="nav-item">
+					<button {{item.header_attributes}}>{{item.title}}</button>
+				</li>
+			{% endfor %}
+		</ul>
+		<div {{field_content_class}}>
+			{% for item in items %}
+				<div {{item.content_attributes}}>{{item.description}}</div>
+			{% endfor %}
+		</div>
+	</div>
+{% endif %}
