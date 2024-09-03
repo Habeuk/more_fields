@@ -58,17 +58,23 @@ class AccordionFieldType extends FieldItemBase {
         'icon' => [
           'type' => 'text',
           'unsigned' => FALSE,
-          'binary' => ''
+          'binary' => '',
+          'not null' => FALSE,
+          'default' => NULL
         ],
         'title' => [
           'type' => 'text',
           'unsigned' => FALSE,
-          'binary' => ''
+          'binary' => '',
+          'not null' => FALSE,
+          'default' => NULL
         ],
         'description' => [
           'type' => 'text',
           'unsigned' => FALSE,
-          'binary' => ''
+          'binary' => '',
+          'not null' => FALSE,
+          'default' => NULL
         ],
         'format' => [
           'type' => 'varchar_ascii',
