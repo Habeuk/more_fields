@@ -106,7 +106,9 @@ class AccordionFieldType extends FieldItemBase {
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
     $random = new Random();
-    $values['value'] = $random->word(mt_rand(1, $field_definition->getSetting('max_length')));
+    $values['title'] = $random->word(mt_rand(1, $field_definition->getSetting('max_length')));
+    $values['icon'] = $random->word(mt_rand(1, $field_definition->getSetting('max_length')));
+    $values['description'] = $random->word(mt_rand(1, $field_definition->getSetting('max_length')));
     return $values;
   }
   
