@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\wb_horizon_public\Plugin\Field\FieldFormatter;
+namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\Plugin\Field\FieldFormatter\EntityReferenceFormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
