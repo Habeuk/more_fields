@@ -3,13 +3,10 @@
 namespace Drupal\wb_horizon_public\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\Plugin\Field\FieldFormatter\EntityReferenceFormatterBase;
-use Drupal\Core\Entity\Exception\UndefinedLinkTemplateException;
-use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\system\Entity\Menu;
-use Drupal\system\Plugin\Block\SystemMenuBlock;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
