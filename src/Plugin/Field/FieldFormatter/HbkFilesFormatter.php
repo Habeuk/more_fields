@@ -314,6 +314,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
     $thumb_base_cache_tags = [];
     if (!empty($image_style_setting)) {
       $image_style = $this->imageStyleStorage->load($image_style_setting);
+      dd($this->imageStyleStorage, $image_style_setting, $image_style);
       $base_cache_tags = $image_style->getCacheTags();
     }
     if (!empty($image_style_setting)) {

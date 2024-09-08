@@ -1,0 +1,36 @@
+field.formatter.settings.more_fields_hbk_file_formatter:
+  type: mapping
+  label: "Galleries File Image Video"
+  mapping:
+    layoutgenentitystyles_view:
+      type: string
+      label: "layoutgenentitystyles_view"
+    thumbs_galleries_position:
+      type: string
+      label: "thumbs_galleries_position"
+    enable_thumb_slider:
+      type: interger
+      label: "enable_thumb_slider"
+    enable_zoom_on_hover:
+      type: interger
+      label: "enable_zoom_on_hover"
+    image_settings:
+      type: mapping
+      label: "image config"
+      mapping:
+        field_extension:
+          type: string
+          label: "field_extension"
+        image_style:
+          type: image_style
+          label: "image_style"
+    thumbs_settings:
+      type: mapping
+      label: "image thumbs config"
+      mapping:
+        field_extension:
+          type: string
+          label: "field_extension"
+        image_style:
+          type: image_style
+          label: "image_style"
