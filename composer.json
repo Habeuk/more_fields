@@ -1,7 +1,7 @@
 {
   "name": "habeuk/more_fields",
   "description": "more fields",
-  "type": "drupal-custom-module",
+  "type": "drupal-module",
   "license": "MIT",
   "authors": [
     {
