@@ -67,10 +67,6 @@ function template_preprocess_more_fields_bef_radios(&$vars) {
   template_preprocess_bef_radios($vars);
 }
 
-function template_preprocess_more_fields_field_chart(&$vars) {
-  //
-}
-
 function template_preprocess_more_fields_restrained_text_formatter(&$vars) {
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
@@ -86,7 +82,7 @@ function template_preprocess_more_field_file_image_video($vars) {
   }
 }
 
-function template_preprocess_more_field_mit_gallery_formatter(&$vars){
+function template_preprocess_more_field_mit_gallery_formatter(&$vars) {
   $vars['#attached']['library'][] = 'more_fields/more_field_mit_gallery_formatter';
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];

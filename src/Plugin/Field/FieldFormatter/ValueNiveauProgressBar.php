@@ -134,5 +134,4 @@ class ValueNiveauProgressBar extends ValueNiveauFormatterType {
     ];
     return $container;
   }
-  
 }
