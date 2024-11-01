@@ -44,10 +44,14 @@ class VideoWithConverter extends VideoPlayerListFormatter {
         'filemime' => $file->getMimeType()
       ];
     }
+    
+    $settings = array_filter($this->getSettings(), function ($item) {
+      return $item ? true : false;
+    });
     $elements[] = [
       '#theme' => 'more_fields_video_player_with_type_formatter',
       '#items' => $video_items,
-      '#video_attributes' => new Attribute($this->getSettings())
+      '#video_attributes' => new Attribute($settings)
     ];
     return $elements;
   }
