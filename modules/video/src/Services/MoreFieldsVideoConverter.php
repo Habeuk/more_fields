@@ -6,12 +6,14 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use FFMpeg\FFMpeg;
 use FFMpeg\Format\Video\WebM;
+use FFMpeg\Format\Video\X264;
+use FFMpeg\Format\Video\Ogg;
+use FFMpeg\Exception\ExecutableNotFoundException;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\Entity\File;
 use FFMpeg\Coordinate\TimeCode;
 use Drupal\more_fields_video\Entity\MultiformatVideo;
 use Drupal\Core\File\FileSystem;
-use FFMpeg\Exception\ExecutableNotFoundException;
 
 /**
  * Prepares the salutation to the world.
@@ -28,6 +30,11 @@ class MoreFieldsVideoConverter {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+  /**
+   *
+   * @var \Drupal\Core\File\FileSystem
+   */
+  protected $FileSystem;
   
   /**
    * Constructs a new MyCustomService object.
@@ -35,17 +42,19 @@ class MoreFieldsVideoConverter {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *        The entity type manager.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, FileSystem $FileSystem) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->FileSystem = $FileSystem;
   }
   
   /**
+   * Permet de generer la miniature à partir de la video.
    *
    * @param File $file
    * @param EntityStorageInterface $multiformatHandler
    * @return MultiformatVideo|NULL
    */
-  public function getMultiFormat(&$file, &$multiformatHandler = null) {
+  public function getMultiFormat($file, $multiformatHandler = null) {
     $multiformat = null;
     $fileType = explode("/", $file->getMimeType())[0];
     
@@ -60,7 +69,7 @@ class MoreFieldsVideoConverter {
       $multiformat = $multiformatHandler->load($file->id());
       
       if (!$multiformat) {
-        $result = $this->createThumbFile((int) $file->id());
+        $result = $this->createThumbFile($file);
         if ($result !== FALSE) {
           $multiformat = $this->sync_multiformat($file->id(), $result, $multiformatHandler);
         }
@@ -70,6 +79,7 @@ class MoreFieldsVideoConverter {
   }
   
   /**
+   * Cette fonction vise à convertir les videos mov et quictime en webm.
    *
    * @param int $fid
    * @param EntityStorageInterface $multiformatHandler
@@ -85,12 +95,13 @@ class MoreFieldsVideoConverter {
       if ($convertVideo) {
         $multiformat = null;
         $fileMime = explode("/", $file->getMimeType());
-        
         if ($fileMime[0] === "video") {
           if ($fileMime[1] != $vFormat && in_array($fileMime[1], $toConvert)) {
-            $convertedFilePath = $this->convertVideo($file, $vFormat);
-            $file->setFileUri($convertedFilePath);
-            $file->setFilename(pathinfo($convertedFilePath, PATHINFO_FILENAME) . '.' . $vFormat);
+            $convertedFilePath = $this->convertVideo($file, [
+              $vFormat
+            ]);
+            $file->setFileUri($convertedFilePath[$vFormat]['uri']);
+            $file->setFilename(pathinfo($convertedFilePath[$vFormat]['uri'], PATHINFO_FILENAME) . '.' . $vFormat);
             $file->save();
           }
         }
@@ -109,6 +120,87 @@ class MoreFieldsVideoConverter {
       "multiformat" => $multiformat,
       "furi" => $file->getFileUri()
     ];
+  }
+  
+  /**
+   * Permet de convertir les videos en un formet bien definit.
+   */
+  public function ConvertVideoToRightFormat(File $file, array $outputFormat, $updateFile = false) {
+    try {
+      $files = [];
+      $fileMime = explode("/", $file->getMimeType());
+      $files[$file->id()] = $file;
+      if ($fileMime[0] === "video" && $outputFormat) {
+        $extention = $fileMime[1];
+        if ($extention == 'mp4' && $this->isMp4H264($file)) {
+          $index = array_search("mp4", $outputFormat);
+          if ($index !== false) {
+            unset($outputFormat[$index]);
+          }
+        }
+        elseif ($extention == 'ogg') {
+          $index = array_search("ogg", $outputFormat);
+          if ($index !== false) {
+            unset($outputFormat[$index]);
+          }
+        }
+        elseif ($extention == 'webm') {
+          $index = array_search("webm", $outputFormat);
+          
+          if ($index !== false) {
+            unset($outputFormat[$index]);
+          }
+        }
+        if ($outputFormat) {
+          $convertedFilePath = $this->convertVideo($file, $outputFormat);
+          $uid = \Drupal::currentUser()->id();
+          // Pour l'instant, nous avons un soucis pour ajouter les nouveaux
+          // elements aux contenus encours.
+          foreach ($convertedFilePath as $format => $data) {
+            if ($updateFile)
+              $newFile = $file;
+            else
+              $newFile = $file->createDuplicate();
+            $newFile->setFileUri($data['uri']);
+            $newFile->setFilename(pathinfo($data['filename'], PATHINFO_FILENAME) . '.' . $format);
+            $newFile->setMimeType("video/$format");
+            $newFile->setOwnerId($uid);
+            $newFile->save();
+            $files[$newFile->id()] = $newFile;
+          }
+        }
+        return $files;
+      }
+      return $files;
+    }
+    catch (ExecutableNotFoundException $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
+    }
+    catch (\Error $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
+    }
+  }
+  
+  /**
+   *
+   * @param File $file
+   * @return boolean
+   */
+  function isMp4H264(File $file) {
+    $filePath = $this->FileSystem->realpath($file->getFileUri());
+    // Commande pour obtenir les informations du fichier vidéo
+    $command = "ffmpeg -i " . escapeshellarg($filePath) . " 2>&1";
+    $output = shell_exec($command);
+    
+    // Vérification du format et du codec
+    $isMp4 = strpos($output, 'Video: h264') !== false;
+    $isH264 = strpos($output, 'mp4') !== false;
+    if ($isH264) {
+      \Drupal::messenger()->addStatus("Le format video mp4 est H264");
+    }
+    else
+      \Drupal::messenger()->addWarning("Le format video mp4 n'est pas H264");
+    return $isMp4 && $isH264;
   }
   
   /**
@@ -144,8 +236,7 @@ class MoreFieldsVideoConverter {
    *        the second where the frame will be captured
    * @return File|boolean the not saved file that have been generated or false
    */
-  public function createThumbFile($video_id, $frame_seconde = 1) {
-    $file = File::load($video_id);
+  protected function createThumbFile(File $file, $frame_seconde = 1) {
     $file_uri = $file->getFileUri();
     [
       'filename' => $filename,
@@ -154,16 +245,9 @@ class MoreFieldsVideoConverter {
     try {
       // create thumb path + name
       $thumb_path = $dirname . '/' . $filename . $this->thumb_extension;
-      
       $ffmpeg = FFMpeg::create();
-      /**
-       *
-       * @var FileSystem $file_system
-       */
-      $file_system = \Drupal::service('file_system');
-      $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
-      
-      $ffm_video->frame(TimeCode::fromSeconds($frame_seconde))->save($file_system->realpath($thumb_path));
+      $ffm_video = $ffmpeg->open($this->FileSystem->realpath($file_uri));
+      $ffm_video->frame(TimeCode::fromSeconds($frame_seconde))->save($this->FileSystem->realpath($thumb_path));
       /**
        *
        * @var File $thumb_file
@@ -185,28 +269,52 @@ class MoreFieldsVideoConverter {
    * @param File $file
    * @return string path of the new file
    */
-  public function convertVideo(&$file, $finalType = "webm") {
+  protected function convertVideo(File $file, array $finalTypes) {
     $file_uri = $file->getFileUri();
     [
       'filename' => $filename,
       'dirname' => $dirname
     ] = pathinfo($file_uri);
-    
-    // create thumb path + name
-    $convertedVidPath = $dirname . '/' . $filename . "." . $finalType;
-    
+    $convertedVidPath = [];
     $ffmpeg = FFMpeg::create();
-    /**
-     *
-     * @var FileSystem $file_system
-     */
-    $file_system = \Drupal::service('file_system');
-    $ffm_video = $ffmpeg->open($file_system->realpath($file_uri));
+    
+    $ffm_video = $ffmpeg->open($this->FileSystem->realpath($file_uri));
     try {
-      $ffm_video->save(new WebM(), $file_system->realpath($convertedVidPath));
+      \Drupal::messenger()->addStatus("Video converti");
+      foreach ($finalTypes as $extention) {
+        $PathUri = $dirname . '/' . $filename . "." . $extention;
+        $newpath = $this->FileSystem->realpath($PathUri);
+        switch ($extention) {
+          case 'webm':
+            $ffm_video->save(new WebM(), $newpath);
+            $convertedVidPath[$extention] = [];
+            $convertedVidPath[$extention]['uri'] = $PathUri;
+            $convertedVidPath[$extention]['filename'] = $filename . "." . $extention;
+            // $convertedVidPath[$extention]['size'] = filesize($realpath);
+            break;
+          case 'mp4':
+            $ffm_video->save(new X264(), $newpath);
+            $convertedVidPath[$extention] = [];
+            $convertedVidPath[$extention]['uri'] = $PathUri;
+            $convertedVidPath[$extention]['filename'] = $filename . "." . $extention;
+            // $convertedVidPath[$extention]['size'] = filesize($realpath);
+            break;
+          case 'ogg':
+            $ffm_video->save(new Ogg(), $newpath);
+            $convertedVidPath[$extention] = [];
+            $convertedVidPath[$extention]['uri'] = $PathUri;
+            $convertedVidPath[$extention]['filename'] = $filename . "." . $extention;
+            // $convertedVidPath[$extention]['size'] = filesize($realpath);
+            break;
+        }
+      }
       return $convertedVidPath;
     }
+    catch (ExecutableNotFoundException $e) {
+      \Drupal::logger('more_fields_video')->error($e->getMessage());
+    }
     catch (\Throwable $th) {
+      \Drupal::logger('more_fields_video')->error($th->getMessage());
       return FALSE;
     }
   }
@@ -222,5 +330,4 @@ class MoreFieldsVideoConverter {
     $this->thumb_extension = "." . $extension;
     $this->thumb_mime = "image/" . $extension;
   }
-  
 }

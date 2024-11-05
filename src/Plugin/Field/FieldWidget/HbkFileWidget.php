@@ -17,7 +17,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  *
  * @FieldWidget(
  *   id = "hbk_file_generic",
- *   label = @Translation("File"),
+ *   label = @Translation("HBK Files for Gallery"),
  *   field_types = {
  *     "file",
  *     "more_fields_hbk_file"
@@ -25,34 +25,27 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  * )
  */
 class HbkFileWidget extends FileWidget {
-
+  
   // /**
   // * The element info manager.
   // *
   // * @var MoreFieldsVideoConverter $videoConverter
   // */
   // protected $videoConverter;
-
+  
   /**
    *
    * @var EntityTypeManagerInterface $entityManager
    */
   protected $entityManager;
-
+  
   /**
    *
    * {@inheritdoc}
    */
-  public function __construct(
-    $plugin_id,
-    $plugin_definition,
-    FieldDefinitionInterface $field_definition,
-    array $settings,
-    array $third_party_settings,
-    ElementInfoManagerInterface $element_info,
-    // MoreFieldsVideoConverter $video_converter,
-    EntityTypeManagerInterface $entity_manager
-  )
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, ElementInfoManagerInterface $element_info, 
+      // MoreFieldsVideoConverter $video_converter,
+      EntityTypeManagerInterface $entity_manager) 
   // EntityStorageInterface $file_handler,
   // EntityStorageInterface $multiformat_handler
   {
@@ -62,25 +55,18 @@ class HbkFileWidget extends FileWidget {
     // $this->multiformatHandler = $multiformat_handler;
     // $this->fileHandler = $file_handler;
   }
-
+  
   /**
    *
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $plugin_id,
-      $plugin_definition,
-      $configuration['field_definition'],
-      $configuration['settings'],
-      $configuration['third_party_settings'],
-      $container->get('element_info'),
-      // $container->get("more_fields_video.video_converter"),
-      $container->get('entity_type.manager')
-    );
+    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['third_party_settings'], $container->get('element_info'), 
+        // $container->get("more_fields_video.video_converter"),
+        $container->get('entity_type.manager'));
     // $container->get('entity_type.manager')->getStorage("multiformat_video")
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -95,7 +81,7 @@ class HbkFileWidget extends FileWidget {
     $element['#accept'] = "." . str_replace(" ", ", .", $field_settings['file_extensions']);
     return $element;
   }
-
+  
   /**
    * handling the validation of the field
    * and create the thumbnail for videos
@@ -111,7 +97,7 @@ class HbkFileWidget extends FileWidget {
        *
        * @var File $file
        */
-      foreach ($element["#files"] as $id => &$file) {
+      foreach ($element["#files"] as $file) {
         /**
          *
          * @var \Drupal\more_fields_video\Services\MoreFieldsVideoConverter $video_converter

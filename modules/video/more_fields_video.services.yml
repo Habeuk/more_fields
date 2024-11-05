@@ -1,4 +1,4 @@
 services:
   more_fields_video.video_converter:
     class: Drupal\more_fields_video\Services\MoreFieldsVideoConverter
-    arguments: ["@entity_type.manager"]
+    arguments: ["@entity_type.manager","@file_system"]

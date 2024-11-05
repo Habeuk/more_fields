@@ -17,7 +17,7 @@ use Drupal\Core\Template\Attribute;
  *   }
  * )
  */
-class VideoWithConverter extends VideoPlayerListFormatter {
+class VideoWithMimeType extends VideoPlayerListFormatter {
   
   /**
    *
