@@ -4,6 +4,7 @@ namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\video\Plugin\Field\FieldFormatter\VideoPlayerListFormatter;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Template\Attribute;
 
 /**
@@ -54,5 +55,13 @@ class VideoWithMimeType extends VideoPlayerListFormatter {
       '#video_attributes' => new Attribute($settings)
     ];
     return $elements;
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public static function isApplicable(FieldDefinitionInterface $field_definition) {
+    return TRUE;
   }
 }
