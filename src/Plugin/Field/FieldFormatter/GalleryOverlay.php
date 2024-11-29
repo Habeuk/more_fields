@@ -249,17 +249,17 @@ class GalleryOverlay extends ImageFormatter {
        * @var \Drupal\Core\Url $url
        */
       $url = $element["#url"];
-      if (!isset($url)) {
-        dd($element, $url);
-      }
       $path = "/" . implode("/", array_slice(explode("/", $url->getUri()), -2, 2));
-      // dd($url, $element);
 
-      /**
-       * @var \Drupal\image\Entity\ImageStyle $overlayImageStyle
-       */
-      $overlayImageStyle = ImageStyle::load($settings["image_overlay_style"]);
-      $overlayUrl = $overlayImageStyle->buildUrl($path);
+      $overlayUrl = $element["#url"]->toString();
+
+      if (isset($settings["image_overlay_style"]) && $settings["image_overlay_style"]) {
+        /**
+         * @var \Drupal\image\Entity\ImageStyle $overlayImageStyle
+         */
+        $overlayImageStyle = ImageStyle::load($settings["image_overlay_style"]);
+        $overlayUrl = $overlayImageStyle->buildUrl($path);
+      }
       /**
        * @var  \Drupal\Core\Url  $url
        */
