@@ -301,6 +301,8 @@ function more_fields_theme() {
     'file' => 'more_fields.theme.inc'
   ];
 
+
+
   // gallery overlay
   $hooks['more_field_gallery_overlay'] = [
     'preprocess functions' => [
@@ -373,6 +375,14 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
+  $hooks['more_fields_flexible_text_long_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_flexible_text_long_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
+
 
   $hooks['more_fields_links'] = [
     'render element' => 'element'

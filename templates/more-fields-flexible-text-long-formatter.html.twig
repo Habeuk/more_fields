@@ -1,0 +1,15 @@
+{# /** * {% set text = content.description|render|striptags|trim %} {%
+if settings.limit_text > 0 %} {{ text|length > settings.limit_text ?
+text|slice(0, settings.limit_text) ~ '...' : text }} {% else %} * * */
+#}
+
+<div {{ attributes }}>
+	{% if item.title %}
+		<div {{item.title.attributes}}>
+			{{item.title.label|raw}}
+		</div>
+	{% endif %}
+	<div class="restrained-field-footer">
+		{{item.field.value}}
+	</div>
+</div>

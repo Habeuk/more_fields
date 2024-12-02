@@ -70,6 +70,15 @@ function template_preprocess_more_fields_bef_radios(&$vars) {
   template_preprocess_bef_radios($vars);
 }
 
+
+function template_preprocess_more_fields_flexible_text_long_formatter(&$vars) {
+  if (!empty($vars["element"]["#item"])) {
+    $vars["item"] = $vars["element"]["#item"];
+    $vars['attributes'] = $vars["element"]['#attributes'];
+    $vars['settings'] = $vars["element"]['#settings'];
+  }
+}
+
 function template_preprocess_more_fields_restrained_text_formatter(&$vars) {
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
