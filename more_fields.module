@@ -383,6 +383,13 @@ function more_fields_theme() {
     'file' => 'more_fields.theme.inc'
   ];
 
+  $hooks['more_fields_multirender_formatter'] = [
+    'preprocess functions' => [
+      'template_preprocess_more_fields_multirender_formatter'
+    ],
+    'render element' => 'element',
+    'file' => 'more_fields.theme.inc'
+  ];
 
   $hooks['more_fields_links'] = [
     'render element' => 'element'

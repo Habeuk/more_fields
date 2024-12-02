@@ -1,0 +1,13 @@
+{# /** * {% set text = content.description|render|striptags|trim %} {%
+if settings.limit_text > 0 %} {{ text|length > settings.limit_text ?
+text|slice(0, settings.limit_text) ~ '...' : text }} {% else %} * * */
+#}
+<div {{ attributes }}>
+	{% for i  in 1 .. item.total %}
+		{% if i <= item.value %}
+			{{item.filled_icon|raw}}
+		{% else %}
+			{{item.unfilled_icon| raw}}
+		{% endif %}
+	{% endfor %}
+</div>

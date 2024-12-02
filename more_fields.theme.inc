@@ -71,6 +71,18 @@ function template_preprocess_more_fields_bef_radios(&$vars) {
 }
 
 
+function template_preprocess_more_fields_base(&$vars) {
+  if (!empty($vars["element"]["#item"])) {
+    $vars["item"] = $vars["element"]["#item"];
+    $vars['attributes'] = $vars["element"]['#attributes'];
+  }
+}
+
+
+function template_preprocess_more_fields_multirender_formatter(&$vars) {
+  template_preprocess_more_fields_base($vars);
+}
+
 function template_preprocess_more_fields_flexible_text_long_formatter(&$vars) {
   if (!empty($vars["element"]["#item"])) {
     $vars["item"] = $vars["element"]["#item"];
