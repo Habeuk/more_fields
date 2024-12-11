@@ -4,10 +4,11 @@
 			{% for element in elements %}
 				<div {{image_attributes.image_wrappers_class.addClass("base-image-container")}}>
 					<div class="go-img-wrapper img-wrapper">
-						<a href="{{element.url}}">{{element.image}}</a>
-						<div class="go-img-overlay img-overlay">
+						<div >{{element.image}}</div>
+						<a class="go-img-overlay img-overlay" href="{{element.url}}">
+							<!-- il faut remplacer ceci par du SVG -->
 							<i {{image_attributes.icon_class}} aria-hidden="true"></i>
-						</div>
+						</a>
 					</div>
 				</div>
 			{% endfor %}

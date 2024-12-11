@@ -1,5 +1,4 @@
 <?php
-
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 
@@ -54,7 +53,7 @@ function __more_fields_update_schema_value_to_text($entity_type_id, $field_name,
   $updateManager = \Drupal::entityDefinitionUpdateManager();
   $storagedef = $updateManager->getFieldStorageDefinition($field_name, $entity_type_id);
   $updateManager->uninstallFieldStorageDefinition($storagedef);
-
+  
   // Load new definition field in code.
   /**
    *
@@ -126,7 +125,7 @@ function _more_fields_get_current_ratio(array $element, FormStateInterface $form
        * @var \Drupal\file\Plugin\Field\FieldType\FileFieldItemList $field_image
        */
       $field_image = $content->get($element['#field_name']);
-
+      
       /**
        * (
        *
@@ -300,18 +299,16 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
-
-
+  
   // gallery overlay
   $hooks['more_field_gallery_overlay'] = [
     'preprocess functions' => [
-      'template_preprocess_gallery_overlay',
+      'template_preprocess_gallery_overlay'
     ],
     'variables' => [
       'elements' => [],
       'image_attributes' => [],
-      'settings' => [],
+      'settings' => []
     ],
     'file' => 'more_fields.theme.inc'
   ];
@@ -355,7 +352,8 @@ function more_fields_theme() {
   $hooks['more_fields_video_player_with_type_formatter'] = [
     'variables' => [
       'items' => [],
-      'video_attributes' => []
+      'video_attributes' => [],
+      'all_settings' => []
     ]
   ];
   $hooks['more_fields_thumb_formatter'] = [
@@ -382,7 +380,7 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
+  
   $hooks['more_fields_multirender_formatter'] = [
     'preprocess functions' => [
       'template_preprocess_more_fields_multirender_formatter'
@@ -390,7 +388,7 @@ function more_fields_theme() {
     'render element' => 'element',
     'file' => 'more_fields.theme.inc'
   ];
-
+  
   $hooks['more_fields_links'] = [
     'render element' => 'element'
   ];
