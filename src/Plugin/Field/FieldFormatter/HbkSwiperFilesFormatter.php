@@ -27,13 +27,13 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
  *
  * @FieldFormatter(
  *   id = "more_fields_hbk_file_formatter",
- *   label = @Translation("Galleries File Image Video"),
+ *   label = @Translation("Slide files (images and videos) with Swiper "),
  *   field_types = {
  *     "more_fields_hbk_file"
  *   }
  * )
  */
-class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactoryPluginInterface {
+class HbkSwiperFilesFormatter extends GenericFileFormatter implements ContainerFactoryPluginInterface {
   protected $imageStyleStorage;
   protected $videoFormatter;
   protected $imageFormatter;
@@ -130,7 +130,7 @@ class HbkFilesFormatter extends GenericFileFormatter implements ContainerFactory
       "enable_zoom_on_hover" => false,
       "enable_thumb_slider" => true
     ];
-    $default["video_settings"]["field_extension"] = "mp4, ogv, webm";
+    $default["video_settings"]["field_extension"] = "mp4, ogg, webm";
     $default["image_settings"]["field_extension"] = "png, gif, jpg, jpeg, webp";
     unset($default["thumbs_settings"]["image_link"]);
     unset($default['video_settings']['width']);

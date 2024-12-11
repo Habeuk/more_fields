@@ -398,6 +398,11 @@ function more_fields_theme() {
       'player_attributes' => NULL
     ]
   ];
+  $hooks['more_field_galleries_images_videos'] = [
+    'variables' => [
+      'items' => []
+    ]
+  ];
   return $hooks;
 }
 
