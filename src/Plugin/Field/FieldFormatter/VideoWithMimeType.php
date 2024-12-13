@@ -7,6 +7,7 @@ use Drupal\video\Plugin\Field\FieldFormatter\VideoPlayerListFormatter;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Template\Attribute;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Serialization\Json;
 
 /**
  * Plugin implementation of the 'experience_formatter_type' formatter.
@@ -28,7 +29,11 @@ class VideoWithMimeType extends VideoPlayerListFormatter {
   public static function defaultSettings() {
     return [
       "layoutgenentitystyles_view" => "more_fields/more_fields_video_with_converter",
-      "control_js" => false
+      "control_js" => false,
+      'read_auto' => true,
+      'read_mouse_enter' => true,
+      'stop_video_over_display' => true,
+      'show_custom_control' => true
     ] + parent::defaultSettings();
   }
   
@@ -46,6 +51,26 @@ class VideoWithMimeType extends VideoPlayerListFormatter {
       '#title' => t('Controls with JS'),
       '#type' => 'checkbox',
       '#default_value' => $this->getSetting('control_js')
+    ];
+    $elements['read_auto'] = [
+      '#title' => t('read_auto'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('read_auto')
+    ];
+    $elements['read_mouse_enter'] = [
+      '#title' => t('read_mouse_enter'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('read_mouse_enter')
+    ];
+    $elements['stop_video_over_display'] = [
+      '#title' => t('stop_video_over_display'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('stop_video_over_display')
+    ];
+    $elements['show_custom_control'] = [
+      '#title' => t('show_custom_control'),
+      '#type' => 'checkbox',
+      '#default_value' => $this->getSetting('show_custom_control')
     ];
     return $elements;
   }
@@ -100,7 +125,8 @@ class VideoWithMimeType extends VideoPlayerListFormatter {
       '#theme' => 'more_fields_video_player_with_type_formatter',
       '#items' => $video_items,
       '#video_attributes' => new Attribute($videos_settings),
-      '#all_settings' => $settings
+      '#all_settings' => $settings,
+      '#settings' => Json::encode($settings)
     ];
     return $elements;
   }

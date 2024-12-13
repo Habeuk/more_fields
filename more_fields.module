@@ -353,7 +353,8 @@ function more_fields_theme() {
     'variables' => [
       'items' => [],
       'video_attributes' => [],
-      'all_settings' => []
+      'all_settings' => [],
+      'settings' => null
     ]
   ];
   $hooks['more_fields_thumb_formatter'] = [
