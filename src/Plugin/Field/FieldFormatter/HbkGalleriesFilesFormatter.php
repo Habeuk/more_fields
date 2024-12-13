@@ -322,7 +322,6 @@ class HbkGalleriesFilesFormatter extends GenericFileFormatter implements Contain
       $url = $this->fileUrlGenerator->generate($image_uri);
     }
     $cache_tags = Cache::mergeTags($base_cache_tags, $file->getCacheTags());
-    
     // Extract field item attributes for the theme function, and unset them
     // from the $item so that the field template does not re-render them.
     $item = $file->_referringItem;
@@ -331,12 +330,10 @@ class HbkGalleriesFilesFormatter extends GenericFileFormatter implements Contain
       # code...
       unset($item->_attributes);
     }
-    
     $item_attributes['loading'] = $image_loading_settings['attribute'];
     $item_attributes["class"] = [
       "img-fluide"
     ];
-    
     $elements[$delta] = [
       'content' => [
         '#theme' => 'image_formatter',
