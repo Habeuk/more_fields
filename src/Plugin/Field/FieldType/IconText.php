@@ -52,22 +52,13 @@ class IconText extends FieldItemBase {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     $schema = [
       'columns' => [
-        // 'value' => [
-        // 'type' => $field_definition->getSetting('is_ascii') === TRUE ?
-        // 'varchar_ascii' : 'varchar',
-        // 'length' => (int) $field_definition->getSetting('max_length'),
-        // 'binary' => $field_definition->getSetting('case_sensitive'),
-        // 'unsigned' => FALSE
-        // ],
         'value' => [
           'type' => 'text',
-          'unsigned' => FALSE,
-          'binary' => ''
+          'size' => 'big'
         ],
         'text' => [
           'type' => 'text',
-          'unsigned' => FALSE,
-          'binary' => ''
+          'size' => 'big'
         ],
         'format' => [
           'type' => 'varchar_ascii',
@@ -143,5 +134,4 @@ class IconText extends FieldItemBase {
     $value = $this->get('value')->getValue();
     return $value === NULL || $value === '';
   }
-  
 }
