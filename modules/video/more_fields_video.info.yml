@@ -6,3 +6,8 @@ core_version_requirement: ^9 || ^10
 dependencies:
   - more_fields:more_fields
   - video:video
+
+# Information added by Drupal.org packaging script on 2024-12-13
+version: '2.2.37'
+project: 'more_fields'
+datestamp: 1734095015
