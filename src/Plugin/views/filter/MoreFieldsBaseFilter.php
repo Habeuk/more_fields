@@ -74,9 +74,13 @@ trait MoreFieldsBaseFilter {
        */
       $viewInstance->initQuery();
       
+      // Build all the relationships first thing.
+      $viewInstance->_build('relationship');
+      
       // On applique le filter, ce dernier ajoute globalement le WHERE et
       // certaines JOINTUREs.
       $viewInstance->_build('filter', true);
+      
       // dump($viewInstance->query->query()->__toString());
       // On construit les autres requetes.
       $filters = $viewInstance->filter;
