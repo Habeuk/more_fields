@@ -255,7 +255,7 @@ trait MoreFieldsBaseFilter {
     $AddCondition = true;
     if ($operator == 'or') {
       $operator = 'in';
-      if ($value === '')
+      if ($value === '' || $value === 'All')
         $AddCondition = false;
       // Specifique à or car les données sont censer etre dans un array.
       if (!is_array($value))
@@ -279,6 +279,10 @@ trait MoreFieldsBaseFilter {
       if (empty($value['min']) && empty($value['max'])) {
         $AddCondition = false;
       }
+    }
+    elseif ($operator == 'in' && is_array($value) && $value[0] == 'All') {
+      $AddCondition = false;
+      dd($value);
     }
     // $db = [
     // 'field' => $field,

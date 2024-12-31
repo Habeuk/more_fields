@@ -243,7 +243,8 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
       $filters = $this->view->filter;
       $select_query = $this->buildBaseSql();
     }
-    // dd($select_query->__toString());
+    // dump($select_query->__toString(),
+    // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC));
     /**
      * On applique les valeurs exposeds s'ils existent.
      *
@@ -257,7 +258,9 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
           $this->buildCondition($select_query, $filter->tableAlias, $filter->realField, $value, $filter->operator);
       }
     }
-    
+    //
+    // dd($select_query->__toString(),
+    // $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC), $select_query);
     /**
      * On applique ce qui est necessaire au champs en cours.
      * On a besoin de ressortir la liste des termes rataché au moins à une
