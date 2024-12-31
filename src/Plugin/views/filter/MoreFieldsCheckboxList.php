@@ -242,14 +242,8 @@ class MoreFieldsCheckboxList extends TaxonomyIndexTid implements FilterCountInte
       $exposed_inputs = $this->view->getExposedInput();
       $filters = $this->view->filter;
       $select_query = $this->buildBaseSql();
-    /**
-     *
-     * @var \Drupal\taxonomy\TermStorage $storageTerm
-     */
-      // $storageTerm = $this->termStorage;
-      // $storageTerm->loadChildren($tid, $this->options['vid']);
     }
-    
+    // dd($select_query->__toString());
     /**
      * On applique les valeurs exposeds s'ils existent.
      *

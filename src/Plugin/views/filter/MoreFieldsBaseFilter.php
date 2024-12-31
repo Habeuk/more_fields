@@ -45,7 +45,7 @@ trait MoreFieldsBaseFilter {
    * On construit la requete de base pour le sql.
    * Pour l'instant le cache ne fonctionne pas, il faudra voir pourquoi.
    *
-   * @return \Drupal\Core\Database\Query\SelectInterface
+   * @return \Drupal\mysql\Driver\Database\mysql\Select
    */
   protected function buildBaseSql() {
     // On met en cache le sql obtenu durant toute la requete.

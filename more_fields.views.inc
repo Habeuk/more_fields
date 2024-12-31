@@ -41,6 +41,8 @@ function more_fields_views_data_alter(&$data) {
 
 /**
  * Implements hook_views_plugins_filter_alter().
+ * ( This hook may be used to modify handler properties after they have been
+ * specified by other modules )
  */
 function more_fields_views_plugins_filter_alter(&$plugins) {
   // Extend plufin search_api_term.
