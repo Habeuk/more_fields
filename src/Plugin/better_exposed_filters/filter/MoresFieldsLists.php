@@ -19,7 +19,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 class MoresFieldsLists extends Links implements ContainerFactoryPluginInterface {
   use TraitHelpper;
   /**
-   * Permet de differencier les differents version d'affichage.
+   * Class css permettant de differencier les differentes version d'affichage.
    *
    * @var string
    */
@@ -51,5 +51,4 @@ class MoresFieldsLists extends Links implements ContainerFactoryPluginInterface 
       $form[$field_id]['#attributes']['class'][] = $this->classByModel;
     }
   }
-  
 }

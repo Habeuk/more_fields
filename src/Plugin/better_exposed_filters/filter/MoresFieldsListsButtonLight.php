@@ -17,5 +17,4 @@ class MoresFieldsListsButtonLight extends MoresFieldsLists {
    * @var string
    */
   protected $classByModel = 'more_fields_list_button_light';
-
 }
