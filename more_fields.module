@@ -3,7 +3,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 
 /**
- * Mise du schema more_fields_icon_text.
+ * Update fields schema more_fields_icon_text et more_fields_accordion_field.
  */
 function more_fields_update_8002() {
   // On recupere tous les champs.
