@@ -3,6 +3,39 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 
 /**
+ * Mise du schema more_fields_icon_text.
+ */
+function more_fields_update_8002() {
+  // On recupere tous les champs.
+  $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
+  $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
+  // On a un soucis avec les tables "field_deleted_data_*", elle cause parfois
+  // des erreurs, elle contient les données de la precedante mise à jours.
+  // On va les supprimer avant d'importer.
+  $database = \Drupal::database();
+  $query = $database->query("SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'field_deleted_data_%' or table_name LIKE 'field_deleted_revision_%' ");
+  // Récupérer les résultats de la requête.
+  $results = $query->fetchAll();
+  // Afficher les noms des tables.
+  foreach ($results as $table) {
+    if (str_contains($table->table_name, "field_deleted_data_") || str_contains($table->table_name, "field_deleted_revision_")) {
+      $database->schema()->dropTable($table->table_name);
+      \Drupal::logger('more_fields')->notice("La table '$table->table_name' a été supprimé ");
+    }
+  }
+  // on filtre les champs creer à partir de "more_fields_icon_text".
+  foreach ($field_config_entities as $field_config_entity) {
+    /**
+     *
+     * @var \Drupal\field\Entity\FieldStorageConfig $field_config_entity
+     */
+    if ($field_config_entity->get('type') == 'more_fields_icon_text' || $field_config_entity->get('type') == 'more_fields_accordion_field') {
+      __more_fields_update_schema_value_to_text($field_config_entity->get('entity_type'), $field_config_entity->get('field_name'), 'value');
+    }
+  }
+}
+
+/**
  * Proceduire:
  * On met à jour le schema du champs, cela va etre valide pour les prochaines
  * champs.
@@ -20,7 +53,7 @@ function more_fields_update_8001() {
   // On recupere tous les champs.
   $field_config_ids = \Drupal::entityQuery('field_storage_config')->accessCheck(FALSE)->condition('status', 1)->execute();
   $field_config_entities = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadMultipleOverrideFree($field_config_ids);
-  // on filtre les champs creer à partir de "more_fields_icon_text".
+  // On filtre les champs creer à partir de "more_fields_icon_text".
   foreach ($field_config_entities as $field_config_entity) {
     /**
      *
