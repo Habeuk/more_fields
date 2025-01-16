@@ -28,7 +28,7 @@ use Drupal\formatage_models\Plugin\Field\FieldFormatter\SwiperjsImageFormatter;
  *
  * @FieldFormatter(
  *   id = "more_fields_hbk_swiper_img_formatter",
- *   label = @Translation("Swipper images (by hbk)"),
+ *   label = @Translation("Swipper only images with Swiper"),
  *   description = "Doit etre ameliorer, afin d'eviter de charger les videos",
  *   field_types = {
  *     "more_fields_hbk_file"
