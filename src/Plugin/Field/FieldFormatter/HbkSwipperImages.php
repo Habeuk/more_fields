@@ -61,6 +61,20 @@ class HbkSwipperImages extends SwiperjsImageFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
+    // remove video datas.
+    foreach ($items as $delta => $item) {
+      /**
+       *
+       * @var \Drupal\more_fields\Plugin\Field\FieldType\HbkFiles $item
+       */
+      $fid = $item->getValue()['target_id'] ?? false;
+      if ($fid) {
+        $file = \Drupal\file\Entity\File::load($fid);
+        if ($file && str_contains($file->getMimeType(), "video")) {
+          unset($items[$delta]);
+        }
+      }
+    }
     $elements = parent::viewElements($items, $langcode);
     return $elements;
   }
