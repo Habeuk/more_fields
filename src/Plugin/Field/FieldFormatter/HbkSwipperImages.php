@@ -4,24 +4,8 @@ namespace Drupal\more_fields\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\file\Plugin\Field\FieldFormatter\GenericFileFormatter;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\video\ProviderManagerInterface;
-use Drupal\video\Plugin\Field\FieldFormatter\VideoPlayerListFormatter;
-use Drupal\image\Plugin\Field\FieldFormatter\ImageFormatter;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\File\FileUrlGeneratorInterface;
-use Drupal\file\Entity\File;
-use Drupal\Core\Cache\Cache;
-use Drupal\Core\Template\Attribute;
-use Drupal\fullswiperoptions\Fullswiperoptions;
-use Drupal\Component\Serialization\Json;
-use Drupal\image\Entity\ImageStyle;
-use Drupal\more_fields_video\Entity\MultiformatVideo;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\formatage_models\Plugin\Field\FieldFormatter\SwiperjsImageFormatter;
+use Drupal\Core\TypedData\Plugin\DataType\ItemList;
 
 /**
  * Plugin implementation of the 'text_long, text_with_summary' formatter.
@@ -61,21 +45,36 @@ class HbkSwipperImages extends SwiperjsImageFormatter {
    * {@inheritdoc}
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
-    // remove video datas.
-    foreach ($items as $delta => $item) {
-      /**
-       *
-       * @var \Drupal\more_fields\Plugin\Field\FieldType\HbkFiles $item
-       */
-      $fid = $item->getValue()['target_id'] ?? false;
+    /**
+     *
+     * @var ItemList $items
+     */
+    $values = $items->getValue();
+    foreach ($values as $value) {
+      $fid = $value['target_id'] ?? false;
       if ($fid) {
         $file = \Drupal\file\Entity\File::load($fid);
         if ($file && str_contains($file->getMimeType(), "video")) {
-          unset($items[$delta]);
+          // Les index sont reconstruit apres chaque remove.
+          $delta_to_delete = $this->findIndexByFid($items, $fid);
+          if ($delta_to_delete !== NULL)
+            $items->removeItem($delta_to_delete);
         }
       }
     }
     $elements = parent::viewElements($items, $langcode);
     return $elements;
+  }
+  
+  /**
+   * Recherche l'index en function de l'id du fichier.
+   */
+  protected function findIndexByFid(FieldItemListInterface $items, $fid) {
+    $values = $items->getValue();
+    foreach ($values as $delta => $value) {
+      if ($value['target_id'] == $fid)
+        return $delta;
+    }
+    return NULL;
   }
 }
