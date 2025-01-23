@@ -124,7 +124,7 @@ trait MoreFieldsBaseFilter {
               $arg = $argument->getDefaultArgument();
               // make sure default args get put back.
               if (isset($arg)) {
-                $this->args[$position] = $arg;
+                $viewInstance->args[$position] = $arg;
               }
               // remember that this argument was computed, not passed on the
               // URL.
