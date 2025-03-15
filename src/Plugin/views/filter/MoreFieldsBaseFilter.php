@@ -14,7 +14,6 @@ use Drupal\views\Views;
  *        
  */
 trait MoreFieldsBaseFilter {
-  
   /**
    *
    * @var \Drupal\views\Plugin\ViewsHandlerManager
@@ -56,108 +55,115 @@ trait MoreFieldsBaseFilter {
       // requete et de l'id de la view.
     }
     $select_query = $drupal_static_fast['buildBaseSql'];
-    // dump($select_query);
     if (empty($select_query)) {
-      // On charge une nouvelle instance de vue car on a un bug de surcharge
-      // entre les requetes.
-      $view_name = $this->view->id(); // valeur à remplacer
-      $view_display = $this->view->current_display; // valeur à remplacer
-      $viewInstance = Views::getView($view_name);
-      $viewInstance->args = $this->view->args;
-      $viewInstance->setDisplay($view_display);
-      // Execute view query.
-      $viewInstance->initHandlers();
-      // dump("Run buildBaseSql");
-      
-      /**
-       * On initialise la vue, ie on construit la requete "select" de base.
-       */
-      $viewInstance->initQuery();
-      
-      // Build all the relationships first thing.
-      $viewInstance->_build('relationship');
-      
-      // On applique le filter, ce dernier ajoute globalement le WHERE et
-      // certaines JOINTUREs.
-      $viewInstance->_build('filter', true);
-      
-      // dump($viewInstance->query->query()->__toString());
-      // On construit les autres requetes.
-      $filters = $viewInstance->filter;
-      // dump($view_display, $filters);
-      
-      // On recupere les valeurs exposeds à partir de la vue encours.
-      $exposed_inputs = $this->view->getExposedInput();
-      
-      // On s'assure que la champs encours de traitement est effectivement dans
-      // les jointures.
-      if (!empty($filters[$this->field])) {
-        $filters[$this->field]->ensureMyTable();
-      }
-      // on ajoute les filtres statiques.
-      foreach ($filters as $filter) {
-        if (!$filter->isExposed()) {
-          $filter->ensureMyTable();
-        }
-      }
-      
-      // On construit les arguments (inspirer par:
-      // \Drupal\views\Views_buildArguments()
-      // version D : 10.2.4
-      $position = -1;
-      if (!empty($viewInstance->argument)) {
-        foreach ($viewInstance->argument as $id => $argument) {
-          /**
-           *
-           * @var \Drupal\taxonomy\Plugin\views\argument\IndexTid $argument
-           */
-          $position++;
-          if ($argument->broken()) {
-            continue;
-          }
-          $argument->setRelationship();
-          
-          $arg = $viewInstance->args[$position] ?? NULL;
-          $argument->position = $position;
-          if (isset($arg) || $argument->hasDefaultArgument()) {
-            if (!isset($arg)) {
-              $arg = $argument->getDefaultArgument();
-              // make sure default args get put back.
-              if (isset($arg)) {
-                $viewInstance->args[$position] = $arg;
-              }
-              // remember that this argument was computed, not passed on the
-              // URL.
-              $argument->is_default = TRUE;
-            }
-          }
-          if (!$argument->setArgument($arg)) {
-            $argument->validateFail($arg);
-            break;
-          }
-          $argument->query();
-        }
-      }
-      
-      // On construit les jointures uniquement avec les valeurs exposed.
-      foreach ($exposed_inputs as $id => $value) {
-        if (!empty($filters[$id])) {
-          $filter = $filters[$id];
-          $filter->ensureMyTable();
-        }
-      }
-      
-      /**
-       * On recupere la requete select apres toutes les constructions.
-       * ( elle peut etre mise en cache pour une requete données ).
-       *
-       * @var \Drupal\mysql\Driver\Database\mysql\Select $select_query
-       */
-      $select_query = $viewInstance->query->query();
+      $select_query = $this->baseSql();
       // Add all query substitutions as metadata.
-      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
+      if ($select_query instanceof \Drupal\mysql\Driver\Database\mysql\Select)
+        $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
     }
     return $select_query;
+  }
+  
+  /**
+   * Retourne la requette de base.
+   *
+   * @return \Drupal\mysql\Driver\Database\mysql\Select|\Drupal\search_api\Query\Query
+   */
+  protected function baseSql() {
+    // On charge une nouvelle instance de vue car on a un bug de surcharge
+    // entre les requetes.
+    $view_name = $this->view->id(); // valeur à remplacer
+    $view_display = $this->view->current_display; // valeur à remplacer
+    $viewInstance = Views::getView($view_name);
+    $viewInstance->args = $this->view->args;
+    $viewInstance->setDisplay($view_display);
+    // Execute view query.
+    $viewInstance->initHandlers();
+    // dump("Run buildBaseSql");
+    
+    /**
+     * On initialise la vue, ie on construit la requete "select" de base.
+     */
+    $viewInstance->initQuery();
+    
+    // Build all the relationships first thing.
+    $viewInstance->_build('relationship');
+    
+    // On applique le filter, ce dernier ajoute globalement le WHERE et
+    // certaines JOINTUREs.
+    $viewInstance->_build('filter', true);
+    
+    // dump($viewInstance->query->query()->__toString());
+    // On construit les autres requetes.
+    $filters = $viewInstance->filter;
+    // dump($view_display, $filters);
+    
+    // On recupere les valeurs exposeds à partir de la vue encours.
+    $exposed_inputs = $this->view->getExposedInput();
+    
+    // On s'assure que la champs encours de traitement est effectivement dans
+    // les jointures.
+    if (!empty($filters[$this->field])) {
+      $filters[$this->field]->ensureMyTable();
+    }
+    // on ajoute les filtres statiques.
+    foreach ($filters as $filter) {
+      if (!$filter->isExposed()) {
+        $filter->ensureMyTable();
+      }
+    }
+    
+    // On construit les arguments (inspirer par:
+    // \Drupal\views\Views_buildArguments()
+    // version D : 10.2.4
+    $position = -1;
+    if (!empty($viewInstance->argument)) {
+      foreach ($viewInstance->argument as $id => $argument) {
+        /**
+         *
+         * @var \Drupal\taxonomy\Plugin\views\argument\IndexTid $argument
+         */
+        $position++;
+        if ($argument->broken()) {
+          continue;
+        }
+        $argument->setRelationship();
+        
+        $arg = $viewInstance->args[$position] ?? NULL;
+        $argument->position = $position;
+        if (isset($arg) || $argument->hasDefaultArgument()) {
+          if (!isset($arg)) {
+            $arg = $argument->getDefaultArgument();
+            // make sure default args get put back.
+            if (isset($arg)) {
+              $viewInstance->args[$position] = $arg;
+            }
+            // remember that this argument was computed, not passed on the
+            // URL.
+            $argument->is_default = TRUE;
+          }
+        }
+        if (!$argument->setArgument($arg)) {
+          $argument->validateFail($arg);
+          break;
+        }
+        $argument->query();
+      }
+    }
+    
+    // On construit les jointures uniquement avec les valeurs exposed.
+    foreach ($exposed_inputs as $id => $value) {
+      if (!empty($filters[$id])) {
+        $filter = $filters[$id];
+        $filter->ensureMyTable();
+      }
+    }
+    
+    /**
+     * On recupere la requete select apres toutes les constructions.
+     * ( elle peut etre mise en cache pour une requete données ).
+     */
+    return $viewInstance->query->query();
   }
   
   /**
@@ -276,20 +282,18 @@ trait MoreFieldsBaseFilter {
         $operator = '<=';
         $value = $value['max'];
       }
-      if (empty($value['min']) && empty($value['max'])) {
+      elseif (empty($value['min']) && empty($value['max'])) {
         $AddCondition = false;
       }
     }
     elseif ($operator == 'in' && is_array($value) && $value[0] == 'All') {
       $AddCondition = false;
-      dd($value);
     }
     // $db = [
     // 'field' => $field,
     // 'value' => $value,
     // 'operateur' => $operator
     // ];
-    // dump($db);
     if ($AddCondition)
       $select_query->condition($alias . '.' . $field, $value, $operator);
   }
@@ -400,11 +404,22 @@ trait MoreFieldsBaseFilter {
     }
   }
   
+  /**
+   * Ajoute dans la requetes les selections de l'utilisateur.
+   *
+   * @param select $select_query
+   */
   protected function buildAnothersQuery(select $select_query) {
     $filters = $this->buildValidFilters();
     $base_table = $this->getTableNameFromIndex($this->table);
     $this->buildStaticQueryByViewsJoin($select_query, $filters, $base_table);
+    /**
+     * Liste des champs contenant les inputs present dans l'url.
+     *
+     * @var array $exposed_inputs
+     */
     $exposed_inputs = $this->view->getExposedInput();
+    
     if ($exposed_inputs)
       $this->buildFilterExposedQueryByViewsJoin($select_query, $filters, $base_table, 'item_id', $exposed_inputs);
     
@@ -417,6 +432,7 @@ trait MoreFieldsBaseFilter {
   }
   
   /**
+   * Liste des filtres exposed.
    *
    * @return array
    */
@@ -432,9 +448,13 @@ trait MoreFieldsBaseFilter {
     $filters = [];
     if ($defaultFilters) {
       foreach ($defaultFilters as $currentFilter) {
-        //
+        /**
+         *
+         * @var \Drupal\views\Plugin\views\filter\ManyToOne $currentFilter
+         */
         if ($currentFilter->getPluginId() == $this->pluginId || !empty($currentFilter->options['exposed'])) {
-          $filters[$currentFilter->realField] = $currentFilter;
+          $key = !empty($currentFilter->options['expose']['identifier']) ? $currentFilter->options['expose']['identifier'] : $currentFilter->realField;
+          $filters[$key] = $currentFilter;
         }
       }
     }

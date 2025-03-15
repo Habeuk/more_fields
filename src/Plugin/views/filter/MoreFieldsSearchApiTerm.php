@@ -218,36 +218,57 @@ class MoreFieldsSearchApiTerm extends SearchApiTerm implements FilterCountInterf
    * @see \Drupal\more_fields\Plugin\views\filter\FilterCountInterface::FilterCountEntitiesHasterm()
    */
   public function FilterCountEntitiesHasterm(): array {
-    // Timer::start('FilterCountEntitiesHasterm');
+    // TimerMonitoring::start('FilterCountEntitiesHasterm');
     $tids = [];
-    /**
-     * Contient les informations sur chaque filtre.
-     * On va ajouter les filtres statiques et aussi ajouter les filtre passé
-     * en paramettre via les filtres exposés.
-     *
-     * @var array $filters
-     */
-    $defaultFilters = $this->view->filter;
-    // dump($defaultFilters);
-    $filters = [];
-    if ($defaultFilters) {
-      // foreach ($defaultFilters as $currentFilter) {
-      // //
-      // if ($currentFilter->getPluginId() == 'search_api_term' ||
-      // empty($currentFilter->options['exposed'])) {
-      // $filters[$currentFilter->realField] = $currentFilter;
-      // }
-      // }
-      $select_query = $this->buildBaseQuery();
+    // Pour determiner si la configuration de la vue est ok.
+    if (!$this->view->inited || $this->view->preview) {
+      return $tids;
+    }
+    $old_code = false;
+    if ($old_code) {
+      /**
+       * Contient les informations sur chaque filtre.
+       * On va ajouter les filtres statiques et aussi ajouter les filtre passé
+       * en paramettre via les filtres exposés.
+       *
+       * @var array $filters
+       */
+      $defaultFilters = $this->view->filter;
+      // dump($defaultFilters);
+      $filters = [];
+      if ($defaultFilters) {
+        // foreach ($defaultFilters as $currentFilter) {
+        // //
+        // if ($currentFilter->getPluginId() == 'search_api_term' ||
+        // empty($currentFilter->options['exposed'])) {
+        // $filters[$currentFilter->realField] = $currentFilter;
+        // }
+        // }
+        $select_query = $this->buildBaseQuery();
+        $this->buildAnothersQuery($select_query);
+        // dd($select_query, $select_query->__toString());
+        $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+        // dump($this->realField, $entities);
+        foreach ($entities as $value) {
+          $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
+          $tids[$value[$this->realField]] = $value[$this->realField];
+        }
+        // dump(Timer::stop('FilterCountEntitiesHasterm'));
+      }
+    }
+    else {
+      /**
+       *
+       * @var \Drupal\search_api\Query\Query $select_query
+       */
+      $select_query = $this->buildBaseSql();
       $this->buildAnothersQuery($select_query);
-      // dd($select_query, $select_query->__toString());
       $entities = $select_query->execute()->fetchAll(\PDO::FETCH_ASSOC);
       // dump($this->realField, $entities);
       foreach ($entities as $value) {
         $this->countsTerms[$value[$this->realField]] = $value[$this->alias_count];
         $tids[$value[$this->realField]] = $value[$this->realField];
       }
-      // dump(Timer::stop('FilterCountEntitiesHasterm'));
     }
     return $tids;
   }

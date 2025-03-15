@@ -15,6 +15,67 @@ trait MoreFieldsBaseFilterSearchApi {
   use MoreFieldsBaseFilter;
   
   /**
+   * Construit la requette en relation avec le champs encours.
+   *
+   * @return \Drupal\search_api\Query\Query
+   */
+  protected function buildBaseSql() {
+    // On met en cache le sql obtenu durant toute la requete.
+    static $drupal_static_fast;
+    if (!isset($drupal_static_fast)) {
+      $drupal_static_fast['buildBaseSql'] = &drupal_static(__FUNCTION__ . $this->view->id());
+      // On pourrait definir un systeme de cache avancé qui tienne compte de la
+      // requete et de l'id de la view.
+    }
+    $select_query = $drupal_static_fast['buildBaseSql'];
+    if (empty($select_query)) {
+      /**
+       * On part sur une construction manuelle car
+       * \Drupal\search_api\Query\Query n'est pas evident à utiliser.
+       */
+      $base_table = $this->getTableNameFromIndex($this->table);
+      $table_field = $base_table . '_' . $this->realField;
+      /**
+       *
+       * @var Select $select_query
+       */
+      $select_query = \Drupal::database()->select($base_table, $base_table);
+      // $select_query->addField($base_table, 'item_id');
+      
+      // On ajoute la table dans les tags et on y ajoute l'id du pludin afin
+      // d'eviter que d'autre module s'y connecte.
+      $select_query->addTag('more_fields_checkbox_list__' . $base_table);
+      // On filtre les termes ayant au moins un parent.
+      $configuration = [
+        'type' => 'INNER',
+        'table' => $base_table,
+        'field' => 'item_id',
+        'left_table' => $table_field,
+        'left_field' => 'item_id',
+        'extra_operator' => 'AND',
+        'adjusted' => true
+      ];
+      $field_settings = $this->getIndexFromCurrentTable()->get("field_settings");
+      // On ajoute le necessaire pour faire comptage.
+      if ($field_settings[$this->realField]['type'] === 'text') {
+        $select_query->addField($base_table, $this->realField, $this->realField);
+        $select_query->addExpression("count($base_table.$this->realField)", $this->alias_count);
+        $select_query->groupBy($base_table . '.' . $this->realField);
+      }
+      else {
+        $this->buildQueryJoin($select_query, $configuration);
+        $select_query->addField($table_field, "value", $this->realField);
+        $select_query->addExpression("count($table_field.value)", $this->alias_count);
+        $select_query->groupBy($table_field . '.value');
+      }
+      
+      // Add all query substitutions as metadata.
+      $select_query->addMetaData('views_substitutions', $this->buildViewsQuerySubstitutions());
+    }
+    return $select_query;
+  }
+  
+  /**
    * Construit la reuete de base.
    *
    * @return \Drupal\mysql\Driver\Database\mysql\Select
@@ -133,8 +194,9 @@ trait MoreFieldsBaseFilterSearchApi {
         if (!$select_query->hasTag('more_fields_checkbox_list__' . $table)) {
           $this->buildQueryJoin($select_query, $configuration);
         }
-        if (!($this->options['ignore_default_value'] && $currentFilter->realField == $this->realField))
+        if (!($this->options['ignore_default_value'] && $currentFilter->realField == $this->realField)) {
           $this->buildCondition($select_query, $table, $currentFilter->realField, $value, $currentFilter->operator);
+        }
       }
     }
   }
