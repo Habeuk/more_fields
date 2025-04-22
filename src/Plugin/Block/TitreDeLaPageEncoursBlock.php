@@ -65,6 +65,7 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
    */
   public function blockSubmit($form, FormStateInterface $form_state) {
     $this->configuration['suffix_title'] = $form_state->getValue('suffix_title');
+    $this->configuration['prefix_title'] = $form_state->getValue('prefix_title');
     $this->configuration['tag'] = $form_state->getValue('tag');
     $this->configuration['custom_class'] = $form_state->getValue('custom_class');
   }
@@ -108,7 +109,10 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
     $title = $titleResolver->getTitle($this->request, $this->route_match->getRouteObject());
     $suffix = $this->configuration['suffix_title'] ?? "";
     $prefix = $this->configuration['prefix_title'] ?? "";
-    $title["#markup"] = $prefix . $title["#markup"] . $suffix;
+    // If the title is a render array, we need to add the prefix and suffix
+    if (is_array($title)) {
+      $title["#markup"] = $prefix . $title["#markup"] . $suffix;
+    }
     return $title;
   }
 
