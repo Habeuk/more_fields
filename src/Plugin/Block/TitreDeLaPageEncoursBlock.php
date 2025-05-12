@@ -17,7 +17,7 @@ use Drupal\Core\Form\FormStateInterface;
 class TitreDeLaPageEncoursBlock extends BlockBase {
   protected $request;
   protected $route_match;
-  
+
   /**
    *
    * {@inheritdoc}
@@ -25,16 +25,22 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
   public function defaultConfiguration() {
     return [
       'suffix_title' => '',
+      'prefix_title' => '',
       'tag' => 'h1',
       'custom_class' => ''
     ];
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function blockForm($form, FormStateInterface $form_state) {
+    $form['prefix_title'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('suffix title'),
+      '#default_value' => $this->configuration['prefix_title']
+    ];
     $form['suffix_title'] = [
       '#type' => 'textfield',
       '#title' => $this->t('suffix title'),
@@ -52,17 +58,18 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
     ];
     return $form;
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function blockSubmit($form, FormStateInterface $form_state) {
     $this->configuration['suffix_title'] = $form_state->getValue('suffix_title');
+    $this->configuration['prefix_title'] = $form_state->getValue('prefix_title');
     $this->configuration['tag'] = $form_state->getValue('tag');
     $this->configuration['custom_class'] = $form_state->getValue('custom_class');
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -80,13 +87,12 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
         ],
         $this->viewValue($title)
       ];
-    }
-    else
+    } else
       $build = $this->viewValue($title);
-    
+
     return $build;
   }
-  
+
   /**
    * Contruit le titre.
    *
@@ -101,11 +107,15 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
      */
     $titleResolver = \Drupal::service('title_resolver');
     $title = $titleResolver->getTitle($this->request, $this->route_match->getRouteObject());
-    if (!empty($this->configuration['suffix_title']))
-      $title = $title . ' ' . $this->configuration['suffix_title'];
+    $suffix = $this->configuration['suffix_title'] ?? "";
+    $prefix = $this->configuration['prefix_title'] ?? "";
+    // If the title is a render array, we need to add the prefix and suffix
+    if (is_array($title)) {
+      $title["#markup"] = $prefix . $title["#markup"] . $suffix;
+    }
     return $title;
   }
-  
+
   /**
    * Generate the output appropriate for one field item.
    *
