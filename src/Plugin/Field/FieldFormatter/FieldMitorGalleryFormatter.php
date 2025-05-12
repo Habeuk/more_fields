@@ -53,7 +53,7 @@ class FieldMitorGalleryFormatter extends ImageFormatter {
     ];
     $elements['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
-      "#value" => $this->getSetting("layoutgenentitystyles_view")
+      "#value" => "more_fields/field-gallery-mitor"
     ];
     return $elements;
   }
@@ -80,5 +80,4 @@ class FieldMitorGalleryFormatter extends ImageFormatter {
     ];
     return $elements;
   }
-  
 }

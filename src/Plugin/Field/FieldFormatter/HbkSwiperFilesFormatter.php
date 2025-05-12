@@ -216,7 +216,7 @@ class HbkSwiperFilesFormatter extends GenericFileFormatter implements ContainerF
     $form['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
       // "#value" => "more_fields/field-files",
-      "#value" => $this->getSetting("layoutgenentitystyles_view")
+      "#value" => "more_fields/field-files"
     ];
     $form['thumbs_galleries_position'] = [
       "#type" => 'select',

@@ -202,7 +202,7 @@ class HbkGalleriesFilesFormatter extends GenericFileFormatter implements Contain
     $form['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
       // "#value" => "more_fields/field-files",
-      "#value" => $this->getSetting("layoutgenentitystyles_view")
+      "#value" => "more_fields/galleries-files-images-videos"
     ];
     
     // dump($video_settings);

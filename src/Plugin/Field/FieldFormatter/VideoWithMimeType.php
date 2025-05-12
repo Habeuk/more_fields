@@ -45,7 +45,7 @@ class VideoWithMimeType extends VideoPlayerListFormatter {
     $elements = parent::settingsForm($form, $form_state);
     $elements['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
-      "#value" => $this->getSetting("layoutgenentitystyles_view")
+      "#value" => "more_fields/more_fields_video_with_converter"
     ];
     $elements['control_js'] = [
       '#title' => t('Controls with JS'),

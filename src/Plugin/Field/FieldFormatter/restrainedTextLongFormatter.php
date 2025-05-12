@@ -50,7 +50,7 @@ class restrainedTextLongFormatter extends StringFormatter {
       // utilile pour mettre à jour le style
       'layoutgenentitystyles_view' => [
         '#type' => 'hidden',
-        "#value" => $this->getSetting("layoutgenentitystyles_view")
+        "#value" => 'more_fields/restrained-field'
       ],
       'resumed' => [
         '#title' => t('Number of characters'),
@@ -156,5 +156,4 @@ class restrainedTextLongFormatter extends StringFormatter {
       ]
     ];
   }
-  
 }

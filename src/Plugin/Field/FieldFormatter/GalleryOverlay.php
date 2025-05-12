@@ -135,7 +135,7 @@ class GalleryOverlay extends ImageFormatter {
 
     $elements['layoutgenentitystyles_view'] = [
       '#type' => 'hidden',
-      "#value" => $this->getSetting("layoutgenentitystyles_view")
+      "#value" => "more_fields/field-gallery-overlay"
     ];
     $elements['gabarit'] = [
       '#type' => 'select',
