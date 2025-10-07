@@ -4,6 +4,11 @@ namespace Drupal\more_fields\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\Core\Controller\TitleResolver;
+use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Provides a titre de la page encours block.
@@ -14,10 +19,29 @@ use Drupal\Core\Form\FormStateInterface;
  *   category = @Translation("Custom")
  * )
  */
-class TitreDeLaPageEncoursBlock extends BlockBase {
-  protected $request;
-  protected $route_match;
-
+class TitreDeLaPageEncoursBlock extends BlockBase implements ContainerFactoryPluginInterface {
+  
+  /**
+   *
+   * @param array $configuration
+   * @param string $plugin_id
+   * @param array $plugin_definition
+   * @param RequestStack $requestStack
+   * @param RouteMatchInterface $route_match
+   * @param TitleResolver $titleResolver
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, private readonly RequestStack $requestStack, private readonly RouteMatchInterface $route_match, private readonly TitleResolver $titleResolver) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('request_stack'), $container->get('current_route_match'), $container->get('title_resolver'));
+  }
+  
   /**
    *
    * {@inheritdoc}
@@ -30,7 +54,7 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
       'custom_class' => ''
     ];
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -58,7 +82,7 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
     ];
     return $form;
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -69,7 +93,7 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
     $this->configuration['tag'] = $form_state->getValue('tag');
     $this->configuration['custom_class'] = $form_state->getValue('custom_class');
   }
-
+  
   /**
    *
    * {@inheritdoc}
@@ -87,26 +111,21 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
         ],
         $this->viewValue($title)
       ];
-    } else
+    }
+    else
       $build = $this->viewValue($title);
-
+    
     return $build;
   }
-
+  
   /**
    * Contruit le titre.
    *
    * @return string|NULL
    */
   protected function buildTitre() {
-    $this->request = \Drupal::request();
-    $this->route_match = \Drupal::routeMatch();
-    /**
-     *
-     * @var \Drupal\Core\Controller\TitleResolver $titleResolver
-     */
-    $titleResolver = \Drupal::service('title_resolver');
-    $title = $titleResolver->getTitle($this->request, $this->route_match->getRouteObject());
+    $request = $this->requestStack->getCurrentRequest();
+    $title = $this->titleResolver->getTitle($request, $this->route_match->getRouteObject());
     $suffix = $this->configuration['suffix_title'] ?? "";
     $prefix = $this->configuration['prefix_title'] ?? "";
     // If the title is a render array, we need to add the prefix and suffix
@@ -115,7 +134,7 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
     }
     return $title;
   }
-
+  
   /**
    * Generate the output appropriate for one field item.
    *
@@ -135,4 +154,5 @@ class TitreDeLaPageEncoursBlock extends BlockBase {
       ]
     ];
   }
+  
 }
