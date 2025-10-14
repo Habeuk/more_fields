@@ -114,7 +114,6 @@ class TitreDeLaPageEncoursBlock extends BlockBase implements ContainerFactoryPlu
     }
     else
       $build = $this->viewValue($title);
-    
     return $build;
   }
   
@@ -152,6 +151,19 @@ class TitreDeLaPageEncoursBlock extends BlockBase implements ContainerFactoryPlu
       '#context' => [
         'value' => $value
       ]
+    ];
+  }
+  
+  /**
+   * Le cache varie par URL et par session utilisateur
+   *
+   * {@inheritdoc}
+   */
+  public function getCacheContexts() {
+    return [
+      'url',
+      'user',
+      'session'
     ];
   }
   
