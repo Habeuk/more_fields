@@ -161,9 +161,9 @@ class TitreDeLaPageEncoursBlock extends BlockBase implements ContainerFactoryPlu
    */
   public function getCacheContexts() {
     return [
-      'url',
-      'user',
-      'session'
+      'url.path',
+      'user.roles',
+      'languages:language_interface'
     ];
   }
   
