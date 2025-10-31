@@ -2,7 +2,7 @@
 <div {{ attribute }}>
 	{% for item in items %}
         <div {{ attribute_box }}>
-          <div {{ item.attribute_header }}>
+          <div {{ item.attribute_header }} role="button" tabindex="0" onkeydown="if(event.key==='Enter' || event.key===' ') this.click();">
             {% if item.icon %}
               <div class="field-icon text-light">
                 {{ item.icon }}
