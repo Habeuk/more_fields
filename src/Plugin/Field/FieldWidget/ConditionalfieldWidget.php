@@ -172,7 +172,7 @@ class ConditionalfieldWidget extends WidgetBase {
 
         switch ($field_type) {
           case 'image':
-            $value['content_target_id'] = $value['content']['target_id'] ?? NULL;
+            $value['content_target_id'] = $value['content']['target_id'][0] ?? NULL;
             $value['content_alt'] = $value['content']['alt'] ?? '';
             $value['content_title'] = $value['content']['title'] ?? '';
             break;

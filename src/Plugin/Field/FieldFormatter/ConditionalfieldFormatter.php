@@ -6,6 +6,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\image\Entity\ImageStyle;
 
 /**
  * @FieldFormatter(
@@ -527,7 +528,6 @@ class ConditionalfieldFormatter extends FormatterBase {
         if (!$file) {
             return ['#markup' => $settings['empty_image_text'] ?? ''];
         }
-
         $image = [
             '#theme' => 'image',
             '#uri' => $file->getFileUri(),
@@ -537,7 +537,11 @@ class ConditionalfieldFormatter extends FormatterBase {
 
         // Style d'image
         if (!empty($settings['image_style'])) {
-            $image['#style_name'] = $settings['image_style'];
+            /**
+             * @var \Drupal\image\Entity\ImageStyle $overlayImageStyle
+             */
+            $overlayImageStyle = ImageStyle::load($settings["image_style"]);
+            $image["#uri"] = $overlayImageStyle->buildUrl($image['#uri']);
         }
 
         // Classes CSS
@@ -557,7 +561,6 @@ class ConditionalfieldFormatter extends FormatterBase {
         if (isset($settings['lazy_loading']) && !$settings['lazy_loading']) {
             $image['#attributes']['loading'] = 'eager';
         }
-
         return $image;
     }
 
