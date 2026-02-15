@@ -146,18 +146,12 @@ class AccordionFieldFormatter extends FormatterBase {
         ],
         'data-bs-toggle' => "collapse",
         'data-bs-target' => "#" . $id . '-' . $delta,
-        'aria-expanded' => "true",
-        'aria-controls' => $id
       ]);
       $attribute_title = new Attribute([
         'class' => [
           'field-title',
           'font-weight-bold'
         ]
-        // 'data-bs-toggle' => "collapse",
-        // 'data-bs-target' => "#" . $id . '-' . $delta,
-        // 'aria-expanded' => "true",
-        // 'aria-controls' => $id
       ]);
       if ($this->getSetting('use_as_accordion'))
         $attribute_header->addClass('accordion-button');
