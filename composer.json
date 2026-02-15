@@ -12,7 +12,7 @@
   "minimum-stability": "dev",
   "require": {
     "drupal/better_exposed_filters": "^6.0",
-    "drupal/fullswiperoptions": "^1.2.40|dev-1x",
+    "drupal/fullswiperoptions": "2.x-dev|^2.0.0",
     "drupal/video": "^3.0",
     "php-ffmpeg/php-ffmpeg": "^0.19.0|^v1.1.0"
   }
