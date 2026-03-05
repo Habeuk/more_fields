@@ -198,7 +198,6 @@ class LazyImageFormatter extends ImageFormatter {
       $attributes = [
         'loading' => $settings['lazy_method'],
         'alt' => $item->alt ?: '',
-        'title' => $item->title ?: '',
         'width' => $item->width,
         'height' => $item->height,
         'class' => [
@@ -206,6 +205,8 @@ class LazyImageFormatter extends ImageFormatter {
           'lazy-image'
         ]
       ];
+      if ($item->title)
+        $attributes['title'] = $item->title;
       $image_url = $this->buildImageUrl($file->getFileUri(), $settings['image_style']);
       $placeholder_url = $this->buildPlaceholderUrl((int) $attributes['width'], (int) $attributes['height'], $settings);
       // Apply lazy loading method.
