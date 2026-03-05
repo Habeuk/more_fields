@@ -12,6 +12,7 @@ use Drupal\image\Entity\ImageStyle;
 use Drupal\Core\File\FileUrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\image\Plugin\Field\FieldFormatter\ImageFormatter;
+use Drupal\Core\Cache\Cache;
 
 /**
  * Plugin implementation of the 'lazy_image' formatter.
@@ -37,7 +38,7 @@ class LazyImageFormatter extends ImageFormatter {
       'placeholder_custom' => '',
       'threshold' => 200,
       'decoding' => 'auto',
-      'fetchpriority' => 'auto'
+      'fetchpriority' => 'low'
     ] + parent::defaultSettings();
   }
   
@@ -53,7 +54,7 @@ class LazyImageFormatter extends ImageFormatter {
       '#type' => 'select',
       '#options' => [
         'data-src' => $this->t('data-src + JavaScript (IntersectionObserver)'),
-        'loading' => $this->t('loading="lazy" (native)'),
+        'lazy' => $this->t('loading="lazy" (native)'),
         'eager' => $this->t('loading="eager" (native)'),
         'both' => $this->t('Both (data-src + loading="lazy")')
       ],
@@ -144,6 +145,119 @@ class LazyImageFormatter extends ImageFormatter {
    *
    * {@inheritdoc}
    */
+  public function viewElements(FieldItemListInterface $items, $langcode) {
+    $elements = [];
+    $settings = $this->getSettings();
+    // Pour ce cas, on ajoute les attributs necessaires.
+    if ($settings['lazy_method'] == 'lazy' || $settings['lazy_method'] == 'eager') {
+      $filesTemplate = parent::viewElements($items, $langcode);
+      $attributes = [
+        'loading' => $settings['lazy_method'],
+        'fetchpriority' => $settings['fetchpriority'],
+        'decoding' => $settings['decoding']
+      ];
+      foreach ($filesTemplate as &$value) {
+        $value['#item_attributes'] = $attributes + $value['#item_attributes'];
+      }
+      return $filesTemplate;
+    }
+    // on applique le necessaire sur la sortie.
+    $files = $this->getEntitiesToView($items, $langcode);
+    // Early opt-out if the field is empty.
+    if (empty($files)) {
+      return $elements;
+    }
+    $image_style_setting = $this->getSetting('image_style');
+    // Collect cache tags to be added for each item in the field.
+    $base_cache_tags = [];
+    if (!empty($image_style_setting)) {
+      $image_style = $this->imageStyleStorage->load($image_style_setting);
+      $base_cache_tags = $image_style->getCacheTags();
+    }
+    // build link of image
+    $url = NULL;
+    $image_link_setting = $this->getSetting('image_link');
+    // Check if the formatter involves a link.
+    if ($image_link_setting == 'content') {
+      $entity = $items->getEntity();
+      if (!$entity->isNew()) {
+        $url = $entity->toUrl();
+      }
+    }
+    elseif ($image_link_setting == 'file') {
+      $link_file = TRUE;
+    }
+    
+    $lazyFiles = [];
+    foreach ($files as $delta => $file) {
+      /**
+       *
+       * @var \Drupal\image\Plugin\Field\FieldType\ImageItem $item
+       */
+      $item = $file->_referringItem;
+      $attributes = [
+        'loading' => $settings['lazy_method'],
+        'alt' => $item->alt ?: '',
+        'title' => $item->title ?: '',
+        'width' => $item->width,
+        'height' => $item->height,
+        'class' => [
+          'img-fluid',
+          'lazy-image'
+        ]
+      ];
+      $image_url = $this->buildImageUrl($file->getFileUri(), $settings['image_style']);
+      $placeholder_url = $this->buildPlaceholderUrl((int) $attributes['width'], (int) $attributes['height'], $settings);
+      // Apply lazy loading method.
+      switch ($settings['lazy_method']) {
+        case 'data-src':
+          $attributes['data-src'] = $image_url;
+          $attributes['src'] = $placeholder_url;
+          $attributes['data-threshold'] = $settings['threshold'];
+          break;
+        
+        case 'both':
+          $attributes['data-src'] = $image_url;
+          $attributes['src'] = $placeholder_url;
+          $attributes['loading'] = 'lazy';
+          $attributes['data-threshold'] = $settings['threshold'];
+          break;
+      }
+      
+      if (isset($link_file)) {
+        $image_uri = $file->getFileUri();
+        $url = $this->fileUrlGenerator->generate($image_uri);
+      }
+      $cache_tags = Cache::mergeTags($base_cache_tags, $file->getCacheTags());
+      $image_render = [
+        '#theme' => 'image',
+        '#cache' => $cache_tags,
+        '#attributes' => $attributes
+      ];
+      if ($url) {
+        $lazyFiles[$delta] = [
+          '#type' => 'link',
+          '#cache' => $cache_tags,
+          '#url' => $url,
+          '#title' => $image_render
+        ];
+      }
+      else
+        $lazyFiles[$delta] = $image_render;
+    }
+    if (in_array($settings['lazy_method'], [
+      'data-src',
+      'both'
+    ])) {
+      $lazyFiles['#attached']['library'][] = 'more_fields/lazy-load';
+    }
+    return $lazyFiles;
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
   public function settingsSummary() {
     $summary = [];
     $settings = $this->getSettings();
@@ -194,96 +308,6 @@ class LazyImageFormatter extends ImageFormatter {
       '@fetchpriority' => $fetchpriority_options[$settings['fetchpriority']]
     ]);
     return $summary;
-  }
-  
-  /**
-   *
-   * {@inheritdoc}
-   */
-  public function viewElements(FieldItemListInterface $items, $langcode) {
-    $elements = [];
-    $settings = $this->getSettings();
-    $cacheability = new CacheableMetadata();
-    
-    /** @var \Drupal\file\FileInterface|null $entity */
-    foreach ($items as $delta => $item) {
-      if (!$item->entity) {
-        continue;
-      }
-      
-      $file = $item->entity;
-      $image_uri = $file->getFileUri();
-      $cacheability->addCacheableDependency($file);
-      
-      // Generate URL with or without style.
-      $image_url = $this->buildImageUrl($image_uri, $settings['image_style']);
-      
-      // Build base attributes.
-      $attributes = [
-        'alt' => $item->alt ?: '',
-        'title' => $item->title ?: '',
-        'width' => $item->width,
-        'height' => $item->height,
-        'class' => [
-          'img-fluid',
-          'lazy-image'
-        ]
-      ];
-      
-      // Add decoding attribute if not auto.
-      if ($settings['decoding'] !== 'auto') {
-        $attributes['decoding'] = $settings['decoding'];
-      }
-      
-      // Add fetchpriority attribute if not auto.
-      if ($settings['fetchpriority'] !== 'auto') {
-        $attributes['fetchpriority'] = $settings['fetchpriority'];
-      }
-      
-      // Handle placeholder.
-      \Stephane888\Debug\debugLog::kintDebugDrupal([
-        $attributes,
-        $settings
-      ], 'buildPlaceholderUrl', true);
-      $placeholder_url = $this->buildPlaceholderUrl((int) $attributes['width'], (int) $attributes['height'], $settings);
-      
-      // Apply lazy loading method.
-      switch ($settings['lazy_method']) {
-        case 'data-src':
-          $attributes['data-src'] = $image_url;
-          $attributes['src'] = $placeholder_url;
-          $attributes['data-threshold'] = $settings['threshold'];
-          break;
-        
-        case 'loading':
-          $attributes['src'] = $image_url;
-          $attributes['loading'] = 'lazy';
-          break;
-        
-        case 'both':
-          $attributes['data-src'] = $image_url;
-          $attributes['src'] = $placeholder_url;
-          $attributes['loading'] = 'lazy';
-          $attributes['data-threshold'] = $settings['threshold'];
-          break;
-      }
-      
-      $elements[$delta] = [
-        '#theme' => 'image',
-        '#attributes' => $attributes
-      ];
-    }
-    
-    // Attach JS library if needed.
-    if (in_array($settings['lazy_method'], [
-      'data-src',
-      'both'
-    ])) {
-      $elements['#attached']['library'][] = 'more_fields/lazy-load';
-    }
-    
-    $cacheability->applyTo($elements);
-    return $elements;
   }
   
   /**

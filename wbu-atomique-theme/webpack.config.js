@@ -25,8 +25,7 @@ module.exports = {
   plugins,
   mode: env || "development",
   entry: {
-    popin: "./src/js/popin-drupal.js",
-    "drupal-whatsapp": "./src/js/whatsapp/drupal-whatsapp.js",
+    "lazy-load": "./src/js/lazy-load/lazy-load.js",
   },
   output: {
     // path: path.resolve(__dirname, "../css/"),

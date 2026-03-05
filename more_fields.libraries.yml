@@ -45,3 +45,11 @@ restrained_field:
       css/field-restrained.css: {}
   dependencies:
     - core/drupalSettings
+
+lazy-load:
+  version: 1.0.x
+  js:
+    js/lazy-load.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
